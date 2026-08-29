@@ -171,7 +171,21 @@ una falsa certeza.
 - Muestra hipótesis alternativas y datos faltantes.
 - No habilita acción fuerte mientras la evidencia no alcance.
 
-#### US-10 — Operar el trial by fire
+#### US-10 — Investigar con Centinel Copilot
+
+Como operador, quiero hacer preguntas sobre el incidente activo y comparar ventanas sin reconstruir
+manualmente el contexto en distintos dashboards.
+
+**Criterios de aceptación**
+
+- El Copilot se abre dentro del contexto de un incidente, no como chatbot global vacío.
+- La demo incluye una comparación sugerida entre los últimos 60 s y el baseline contextual de 14 días.
+- Cada respuesta cita evidence IDs, explicita ventanas, confidence, limitaciones y próxima acción.
+- Puede enfocar una dimensión o ventana mediante intents de vista tipados; no modifica datos ni reglas.
+- `Operations / Executive` cambia el lenguaje, no los hechos del evidence bundle.
+- Si OpenAI no responde, renderiza una explicación estructurada determinística.
+
+#### US-11 — Operar el trial by fire
 
 Como juez, quiero inyectar una combinación no ensayada para validar que el diagnóstico generaliza.
 
@@ -185,7 +199,7 @@ Como juez, quiero inyectar una combinación no ensayada para validar que el diag
 
 ### P1 — Debe diseñarse; puede simplificarse técnicamente
 
-#### US-11 — Cambiar audiencia
+#### US-12 — Cambiar audiencia
 
 Como operador, quiero derivar una explicación ejecutiva y una operacional del mismo evidence bundle.
 
@@ -193,14 +207,14 @@ Como operador, quiero derivar una explicación ejecutiva y una operacional del m
 - `Operations`: baseline, dimensiones, códigos, confidence y acción.
 - Ninguna versión introduce hechos no presentes en la evidencia.
 
-#### US-12 — Escalar al provider
+#### US-13 — Escalar al provider
 
 Como operador, quiero generar un evidence bundle para contactar al probable provider owner.
 
 - Incluye ventana, muestra, request/error codes, provider text, controles y timestamps.
 - La UI puede simular `Send to provider`; no envía mensajes reales en el MVP.
 
-#### US-13 — Contrastar merchant y provider truth
+#### US-14 — Contrastar merchant y provider truth
 
 Como investigador, quiero comparar ambos lados para detectar errores nuevos, códigos mal mapeados o
 problemas de integración.
@@ -211,12 +225,12 @@ problemas de integración.
 
 ### P2 — Roadmap / bonus
 
-- **US-14:** reconocer un incidente parecido y mostrar resolución previa.
-- **US-15:** proponer umbral, baseline o política mediante lenguaje natural; convertirlo en regla
+- **US-15:** reconocer un incidente parecido y mostrar resolución previa.
+- **US-16:** proponer umbral, baseline o política mediante lenguaje natural; convertirlo en regla
   estructurada, validarla, correr replay y requerir aprobación antes de activarla. El LLM nunca
   modifica el detector directamente. Ver `10-agent-governance.md`.
-- **US-16:** enviar resumen a Slack/WhatsApp.
-- **US-17:** auto-remediación gobernada por políticas y approval gates.
+- **US-17:** enviar resumen a Slack/WhatsApp.
+- **US-18:** auto-remediación gobernada por políticas y approval gates.
 
 ## 4. Requerimientos funcionales
 
@@ -237,6 +251,7 @@ problemas de integración.
 | FR-13 | Derivar explicación ejecutiva y operacional | P1 | Bonus |
 | FR-14 | Contrastar merchant y provider evidence | P1 | Research + transcript |
 | FR-15 | Renderizar fallback estructurado si OpenAI falla | P0 | Demo resilience |
+| FR-16 | Guiar la investigación mediante un Copilot contextual que compara agregados y cita evidence IDs | P0 | Demo path + producto/UX |
 
 ## 5. Requerimientos no funcionales
 
@@ -261,8 +276,9 @@ problemas de integración.
     └── Watch the live incident
         └── /control-tower
             ├── Command Center — composición A
-            ├── /incidents/:id — investigación, composición C
-            └── Executive / Operations explanation
+            ├── /incidents/:id — investigación guiada, composición C
+            │   └── Centinel Copilot — compare, explain, decide
+            └── Executive / Operations — mismo evidence bundle
 
 /demo-control
 └── Judge injector — superficie separada
@@ -300,6 +316,8 @@ Hasta recibir el modelo definitivo del backend, el frontend consume un adapter c
 - `IncidentEvidence`: baseline, sample, winning dimensions, controls, codes, alternatives, missingData.
 - `RecommendedAction`: type, owner, rationale, steps, evidenceIds, confidence, status,
   simulationOnly, reviewedBy, appliedAt y outcome.
+- `CopilotResponse`: answer, audience, comparison, evidenceIds, confidence, limitations,
+  suggestedQuestions, suggestedActions y viewIntent tipado.
 - `DemoScenario`: supported dimensions, magnitude, duration and fixture seed.
 
 La UI no importa tipos del backend directamente: un adapter normaliza nombres, nullability y estados.

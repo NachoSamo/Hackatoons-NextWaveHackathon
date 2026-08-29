@@ -16,8 +16,9 @@
 ## Pre-event proposal — validate and freeze on Saturday
 
 **Story:** the public promise becomes a live operational proof. The system moves from trustworthy
-silence to two separate diagnoses, explains the impact for two audiences and ends with an
-unrehearsed incident created by the judge.
+silence to a guided investigation: it detects, localizes, compares the active window against its
+contextual baseline, explains the evidence for two audiences and recommends the next human action.
+It ends with an unrehearsed incident created by the judge.
 
 | # | What appears on screen | Presenter action | Status | Owner |
 |---|---|---|---|---|
@@ -25,8 +26,8 @@ unrehearsed incident created by the judge.
 | 1 | Command Center in `SIMULATION MODE`, state `READY`, with `Start live stream` visible | Starts the stream. Approved and rejected synthetic records enter in real time and settle inside the expected range: “Variation is normal. Noise is not an incident.” | ⬜ | Juani |
 | 2 | Injection panel with merchant, provider, method, country, issuer, magnitude and duration dropdowns | Injects the prepared case: one provider degrades only in Brazil | ⬜ | Samo |
 | 3 | The signal enters `validating` before triggering. An incident appears with start time, severity and estimated impact | Does nothing and lets the detector react | ⬜ | Luca + Pena |
-| 4 | Incident Detail converges from the global drop to `Provider X × Brazil`; shows baseline, sample, codes and confidence | Opens “Why this diagnosis?” | ⬜ | Luca + Juani |
-| 5 | Two explanations of the same incident: executive one-liner and operations detail. Recommended action is visible but not executed | Switches `Executive / Operations` | ⬜ | Luca + Juani |
+| 4 | Incident Detail converges from the global drop to `Provider X × Brazil`; the investigation stage changes to `Diagnose` and shows baseline, sample, codes, healthy controls and confidence | Opens `Investigate with Centinel` | ⬜ | Luca + Juani |
+| 5 | A contextual Copilot rail compares the current 60 s against the 14-day contextual baseline. Its answer cites evidence, states confidence and limitations, assigns likely ownership and proposes the next human action | Runs the suggested comparison, then switches `Operations / Executive` over the same evidence bundle | ⬜ | Luca + Juani |
 | 6 | A Mexican issuer fails for one merchant at the same time. Centinel creates a second incident without mixing causes | Triggers the second prepared case | ⬜ | Samo + Luca |
 | 7 | Both incidents are prioritized by impact, scope, persistence and confidence; every score is explainable | Briefly opens priority #1 | ⬜ | Juani |
 | 8 | Ambiguous or low-sample case: the system shows `Insufficient evidence`, alternatives and missing data | Injects a weak-signal case | ⬜ | Luca + Juani |
@@ -43,6 +44,8 @@ Statuses: ⬜ pending · 🟡 in progress · ✅ ready · 🔧 hardcoded · ❌ 
 - [ ] The stream resets to a known state with one button
 - [ ] Every prepared scenario can replay from deterministic fixtures
 - [ ] If OpenAI fails, a structured template renders the same evidence without a blank state
+- [ ] The Copilot never calculates metrics from raw transactions: it explains backend aggregates and references evidence IDs
+- [ ] The scripted comparison remains usable through suggested prompts and a deterministic response if free-form chat is unavailable
 - [ ] If SSE/WebSocket disconnects, the frontend reconnects or falls back to polling
 - [ ] The judge panel restricts inputs to valid combinations and never requires raw JSON
 - [ ] Cost is presented as an estimate with visible assumptions, not reconciled money
