@@ -81,7 +81,7 @@ function Brand({ compact = false }: { compact?: boolean }) {
     <a className={`brand ${compact ? "brand--compact" : ""}`} href="/" aria-label="Centinel home">
       <span>Centinel</span>
       <span className="brand__divider" aria-hidden="true" />
-      <span className="brand__powered">by <strong>yuno</strong></span>
+      <span className="brand__powered">by <strong>toons</strong></span>
     </a>
   );
 }
@@ -186,8 +186,8 @@ function CommandCenter({ preview = false }: { preview?: boolean }) {
           <div className="metric-rail">
             <div><span>Approval rate (observed)</span><strong>{observed}</strong><small>{incidentActive ? "3,900" : "3,884"} attempts</small></div>
             <div><span>Approval rate (expected)</span><strong>86.1%</strong><small>3,925 forecast attempts</small></div>
-            <div><span>Delta</span><strong className="signal-ink">{delta}</strong><small>vs. expected</small></div>
-            <div><span>Revenue at risk</span><strong>{incidentActive ? "$16.5k" : "$0"}</strong><small>Estimate: approval gap × attempts × average ticket</small></div>
+            <div title="Observed approval rate minus expected approval rate, expressed in percentage points"><span>Delta</span><strong className="signal-ink">{delta}</strong><small>{observed} observed − 86.1% expected</small></div>
+            <div title="Estimated recoverable payment volume per hour, not reconciled revenue"><span>Revenue at risk</span><strong>{incidentActive ? "$16.5k" : "$0"}</strong><small>Per hour · approval gap × attempts × avg. ticket</small></div>
           </div>
 
           <div className="chart-panel">

@@ -212,7 +212,9 @@ problemas de integración.
 ### P2 — Roadmap / bonus
 
 - **US-14:** reconocer un incidente parecido y mostrar resolución previa.
-- **US-15:** editar umbral, baseline o política mediante lenguaje natural con preview y aprobación.
+- **US-15:** proponer umbral, baseline o política mediante lenguaje natural; convertirlo en regla
+  estructurada, validarla, correr replay y requerir aprobación antes de activarla. El LLM nunca
+  modifica el detector directamente. Ver `10-agent-governance.md`.
 - **US-16:** enviar resumen a Slack/WhatsApp.
 - **US-17:** auto-remediación gobernada por políticas y approval gates.
 
@@ -296,7 +298,8 @@ Hasta recibir el modelo definitivo del backend, el frontend consume un adapter c
 - `TimeComparison`: observed window, reference type/window, timezone, buckets.
 - `IncidentSummary`: id, priority, status, scope, startedAt, impact, confidence, likelyOwner.
 - `IncidentEvidence`: baseline, sample, winning dimensions, controls, codes, alternatives, missingData.
-- `RecommendedAction`: type, owner, rationale, steps, evidenceIds, simulationOnly.
+- `RecommendedAction`: type, owner, rationale, steps, evidenceIds, confidence, status,
+  simulationOnly, reviewedBy, appliedAt y outcome.
 - `DemoScenario`: supported dimensions, magnitude, duration and fixture seed.
 
 La UI no importa tipos del backend directamente: un adapter normaliza nombres, nullability y estados.

@@ -20,6 +20,7 @@ empezar, leé este archivo primero.
 | `docs/07-decisiones-core.md` | Disparador de las decisiones técnicas core de C2 + resumen del research | Reunión de arranque |
 | `docs/08-product-ux-gtm.md` | Cliente, problema, propuesta de valor, UX, venta, guía para mentores y storyboard C2 | Juani + definición de producto |
 | `docs/09-user-stories-requirements.md` | Historias de usuario, requerimientos, estados y trazabilidad del MVP de Centinel | Antes de tocar frontend/backend |
+| `docs/10-agent-governance.md` | Cómo se versionan políticas, diagnósticos, recomendaciones y feedback humano | Producto + agente + frontend |
 | `docs/01-kickoff.md` | Dinámica exacta de las primeras 2 horas | Sábado 12:30 |
 | `docs/02-timeline.md` | Presupuesto de horas, checkpoints, reglas de recorte | Todo el evento (Samo lo gestiona) |
 | `docs/03-reglas-equipo.md` | Roles, feedback de mentores, git, hardware | Antes del kickoff |

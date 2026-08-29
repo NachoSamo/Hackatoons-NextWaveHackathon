@@ -12,6 +12,12 @@ Calm payment infrastructure under pressure: precise, dark, evidence-first and qu
 The interface should feel native to Yuno and credible to an operations specialist, not like a
 generic analytics template or an AI assistant skin.
 
+## Brand Signature
+
+- Primary lockup: `Centinel by toons`.
+- `Centinel` carries product recognition; `toons` is the creator signature, always lowercase.
+- Yuno remains the target platform and visual-family reference, not the product author in the lockup.
+
 ## Palette
 
 - `ink`: `#050505` — primary environment.

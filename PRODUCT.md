@@ -67,7 +67,8 @@ it is not another generic dashboard or an LLM guessing over raw transactions.
 
 ## Brand Commitments
 
-- Product name: **Centinel**. Use this exact spelling in every public surface.
+- Product name: **Centinel**. Product signature: **Centinel by toons**. Use this exact spelling and
+  lowercase `toons` in every public surface.
 - Category descriptor: `Payment operations control tower`.
 - Operational, calm, precise and evidence-first.
 - Visual and marketing authority: Yuno Payments Concierge. Extend its black/white foundation,
