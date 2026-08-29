@@ -7,6 +7,10 @@ Contexto para cualquier agente de código que trabaje en este repo.
 Prototipo funcional para el NextWave Hackathon 2026 (Yuno × Nauta × OpenAI). Ventana real de
 construcción: ~14 horas.
 
+Hay 4 challenges posibles (2 de Yuno, 2 de Nauta), desarrollados en `docs/05-challenges.md`.
+**Todavía no elegimos uno.** Cuando se elija, este archivo y el resto del harness se actualizan con
+el challenge fijado, la arquitectura y los contratos de API.
+
 ## Stack
 
 - **Backend:** Python + FastAPI + Uvicorn. Gestión con pip.

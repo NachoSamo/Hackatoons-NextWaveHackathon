@@ -7,7 +7,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 Prototipo para el **NextWave Hackathon 2026** (Yuno × Nauta, sponsor OpenAI), Buenos Aires, 29–30 agosto 2026.
 Ventana real de construcción ≈ 14 horas. Hoy `backend/` y `frontend/` están vacíos: el código se escribe durante el evento.
 
-**Antes de picar código, leer en este orden:** `harness/HARNESS.md` (mapa de todo) → `harness/AGENTS.md` (reglas y contratos de API) → `harness/pitch/demo-path.md` (qué tiene que funcionar).
+**Antes de picar código, leer en este orden:** `harness/HARNESS.md` (mapa de todo) → `harness/AGENTS.md` (reglas y contratos de API) → `harness/docs/05-challenges.md` (los 4 challenges; **aún sin elegir**) → `harness/pitch/demo-path.md` (qué tiene que funcionar).
 
 ## Stack
 

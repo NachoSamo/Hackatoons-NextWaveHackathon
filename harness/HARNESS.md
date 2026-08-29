@@ -14,7 +14,8 @@ empezar, leé este archivo primero.
 | Archivo | Qué contiene | Cuándo se lee |
 |---|---|---|
 | `AGENTS.md` | Reglas del proyecto para agentes de código | Siempre, antes de picar código |
-| `docs/00-dominios.md` | Qué hacen Yuno y Nauta, dolores reales, problemáticas por dominio | Antes del kickoff y al leer los briefs |
+| `docs/00-dominios.md` | Qué hacen Yuno y Nauta, dolores reales, qué challenge ataca cada dolor | Antes del kickoff |
+| `docs/05-challenges.md` | Los 4 briefs desarrollados en español + análisis de selección + ángulos posibles | Antes de la convergencia del sábado; **challenge aún sin elegir** |
 | `docs/01-kickoff.md` | Dinámica exacta de las primeras 2 horas | Sábado 12:30 |
 | `docs/02-timeline.md` | Presupuesto de horas, checkpoints, reglas de recorte | Todo el evento (Samo lo gestiona) |
 | `docs/03-reglas-equipo.md` | Roles, feedback de mentores, git, hardware | Antes del kickoff |

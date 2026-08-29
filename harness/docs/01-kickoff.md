@@ -1,7 +1,12 @@
 # 01 — Kickoff: las primeras 2 horas
 
-**Contexto:** los 4 challenge files están sellados hasta el sábado 12:00 (hora BUE). Se asume que la
-presentación de challenges se come hasta ~12:30. Ese es el arranque efectivo.
+**Contexto:** los 4 briefs ya son públicos (llegaron el 28/08). Están desarrollados en español, con
+análisis de selección y ángulos posibles, en **`05-challenges.md`**. Esto cambia el kickoff: **cada
+uno llega el sábado ya habiendo leído los 4 y con una candidata + una Y en una frase.** No se quema
+la primera media hora leyendo en frío.
+
+La presentación oficial de challenges del sábado se come hasta ~12:30 igual. Ese es el arranque
+efectivo del bloque de convergencia.
 
 ---
 
@@ -28,8 +33,9 @@ distinto: ahí está el diferencial.
 
 | Hora | Bloque | Detalle |
 |---|---|---|
-| ~12:30 | **Lectura individual, en silencio** (15–20 min) | Los 4 leen los 4 files. Sin hablar. Cada uno anota: qué challenge le cierra más + una Y en UNA frase |
-| ~12:50 | **Convergencia** (máx 40 min, ideal 25) | 2 min por persona para exponer (8 min) → 15 min de debate → **Samo cierra**. Si no hay consenso, Samo desempata |
+| Antes del sábado | **Lectura individual** de `05-challenges.md` | Cada uno llega con: qué challenge le cierra más + una Y en UNA frase. Escrito, no de memoria |
+| ~12:30 | **Re-lectura rápida** (10 min) | Se relee solo el brief oficial del/los challenge(s) candidato(s), por si la presentación en vivo aclaró algo. Sin hablar |
+| ~12:40 | **Convergencia** (máx 40 min, ideal 25) | 2 min por persona para exponer (8 min) → 15 min de debate → **Samo cierra**. Si no hay consenso, Samo desempata |
 | ~13:20 | **Congelar el demo path** | Los N pasos exactos que se van a mostrar en el pitch. Va a `pitch/demo-path.md` |
 | ~13:30 | Almuerzo + instalación de dependencias | Samo arma timelines individuales con Luca y Pena. Juani sale a mentores |
 | ~14:00 | **CÓDIGO** | Arranca la ventana real de construcción |
