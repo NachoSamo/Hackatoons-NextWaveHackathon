@@ -44,3 +44,7 @@ No hay `requirements.txt` ni `package.json` todavía; se crean al arrancar cada 
 ## Norte de producto (para no desviarse)
 
 Patrón que buscan los briefs de Yuno y Nauta: *datos fragmentados multi-fuente → capa de IA que unifica, explica y **actúa** → interfaz simple y accionable (a veces conversacional), no otro dashboard.* La IA tiene que ser el motor de la decisión, anticipar en vez de reportar, y explicar su porqué.
+
+## Importante
+Cada vez que se toma una decisión o se hace un cambio en el código, se debe actualizar el `harness/docs/decision-log.md`y artifact html 'harness/docs/arquitectura.html' con la hora y el motivo.
+
