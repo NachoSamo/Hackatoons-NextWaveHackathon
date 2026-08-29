@@ -369,13 +369,43 @@ function InvestigationWorkspace({ incident, onClose, onMonitoring }: { incident:
   );
 }
 
+function ControlTowerTransition() {
+  return (
+    <div className="launch-transition" role="status" aria-live="assertive" aria-label="Opening Centinel control tower">
+      <div className="launch-transition__grid" aria-hidden="true" />
+      <div className="launch-transition__content">
+        <div className="launch-object" aria-hidden="true">
+          <div className="launch-ring launch-ring--horizontal"><i /><i /></div>
+          <div className="launch-ring launch-ring--vertical"><i /><i /></div>
+          <div className="launch-ring launch-ring--diagonal"><i /><i /></div>
+          <div className="launch-core"><Activity size={22} /></div>
+        </div>
+        <span className="eyebrow">CENTINEL · LIVE OPERATIONS</span>
+        <h2>Opening control tower</h2>
+        <p>Synchronizing merchant and provider truth.</p>
+        <div className="launch-progress" aria-hidden="true"><i /></div>
+        <div className="launch-dimensions" aria-hidden="true"><span>Merchant</span><span>Provider</span><span>Method</span><span>Country</span></div>
+      </div>
+    </div>
+  );
+}
+
 function Landing() {
+  const [launching, setLaunching] = useState(false);
+
+  useEffect(() => {
+    if (!launching) return;
+    const timer = window.setTimeout(() => window.location.assign("/control-tower"), 1450);
+    return () => window.clearTimeout(timer);
+  }, [launching]);
+
   return (
     <main className="landing">
+      {launching && <ControlTowerTransition />}
       <nav className="landing-nav">
         <Brand />
         <div className="landing-nav__links"><a href="#how">How it works</a><a href="#proof">Why Centinel</a></div>
-        <a className="button button--light" href="/control-tower">Open control tower <ArrowRight size={15} /></a>
+        <button className="button button--light" type="button" onClick={() => setLaunching(true)}>Open control tower <ArrowRight size={15} /></button>
       </nav>
 
       <section className="hero">
@@ -384,7 +414,7 @@ function Landing() {
           <h1>Know what’s breaking<br />before revenue disappears.</h1>
           <p>Centinel monitors payment performance in real time, isolates the smallest affected path and turns evidence into the next best human action.</p>
           <div className="hero-actions">
-            <a className="button button--light" href="/control-tower">Watch the live incident <ArrowRight size={16} /></a>
+            <button className="button button--light" type="button" onClick={() => setLaunching(true)}>Watch the live incident <ArrowRight size={16} /></button>
             <a className="text-link" href="#how">See how the diagnosis works <ArrowDown size={15} /></a>
           </div>
           <span className="hero-note">Built for Yuno’s cross-provider view. Synthetic demo data.</span>
@@ -428,7 +458,7 @@ function Landing() {
       <section className="closing-section">
         <Activity size={30} aria-hidden="true" />
         <h2>Every rejected payment is a signal.<br />Centinel tells you which ones matter.</h2>
-        <a className="button button--light" href="/control-tower">Start the simulation <ArrowRight size={16} /></a>
+        <button className="button button--light" type="button" onClick={() => setLaunching(true)}>Start the simulation <ArrowRight size={16} /></button>
       </section>
 
       <footer><Brand compact /><span>NextWave Hackathon 2026 · Yuno × Nauta · Supported by OpenAI</span></footer>
