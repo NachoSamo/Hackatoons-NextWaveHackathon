@@ -111,6 +111,7 @@ button:focus-visible, a:focus-visible { outline: 2px solid var(--signal-soft); o
 .command-nav a span { display: grid; place-items: center; width: 18px; height: 18px; background: #262629; border-radius: 50%; font: 10px var(--mono); }
 .window-rail { height: 74px; display: grid; grid-template-columns: auto 240px 270px 220px 1fr; align-items: center; gap: 12px; padding: 0 22px; color: var(--muted); border-bottom: 1px solid var(--line); }
 .window-rail > button, .stream-controls > button:not(.button) { height: 42px; display: inline-flex; align-items: center; justify-content: space-between; gap: 9px; padding: 0 14px; border: 1px solid var(--line); border-radius: 7px; background: #0a0a0b; color: var(--text); cursor: pointer; }
+.window-rail > button:disabled { cursor: default; opacity: .82; }
 .micro-live { margin-left: auto; padding: 3px 6px; border-radius: 4px; background: #211818; color: #ffaaa4; font: 9px var(--mono); }
 .stream-controls { justify-self: end; display: flex; gap: 10px; }
 .stream-controls > button:not(.button) { justify-content: center; min-width: 92px; }

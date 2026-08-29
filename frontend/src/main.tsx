@@ -36,7 +36,7 @@ type Incident = {
   startedAt: string;
   declineCode: string;
   latency: string;
-  slice: PaymentSlice;
+  slice: Partial<PaymentSlice>;
   lifecycle: Pick<IncidentRow, "endsAt" | "stoppedAt" | "mitigatedAt">;
 };
 
@@ -66,7 +66,7 @@ const incidents: Incident[] = [
     startedAt: "14:03:12 UTC",
     declineCode: "05 · Do Not Honor",
     latency: "1.1× baseline",
-    slice: { merchantId: "rappido", providerId: "mercadopago", paymentMethod: "card", country: "MX" },
+    slice: { merchantId: "rappido", paymentMethod: "card", country: "MX" },
     lifecycle: { endsAt: null, stoppedAt: null, mitigatedAt: null },
   },
 ];
@@ -86,13 +86,13 @@ function Brand({ compact = false }: { compact?: boolean }) {
   );
 }
 
-function SignalChart({ running, compact = false }: { running: boolean; compact?: boolean }) {
+function SignalChart({ incidentActive, compact = false }: { incidentActive: boolean; compact?: boolean }) {
   return (
-    <div className={`signal-chart ${running ? "is-running" : ""} ${compact ? "is-compact" : ""}`}>
+    <div className={`signal-chart ${incidentActive ? "is-running" : ""} ${compact ? "is-compact" : ""}`}>
       <div className="chart-grid" aria-hidden="true" />
-      <svg viewBox="0 0 920 170" role="img" aria-label="Observed approval rate diverges from the expected reference at 14:03">
+      <svg viewBox="0 0 920 170" role="img" aria-label={incidentActive ? "Observed approval rate diverges from the expected reference at 14:03" : "Observed approval rate remains aligned with the expected reference"}>
         <path className="chart-reference" d={expectedPath} />
-        <path className="chart-observed" d={observedPath} />
+        <path className="chart-observed" d={incidentActive ? observedPath : expectedPath} />
         <line className="chart-marker" x1="620" x2="620" y1="26" y2="151" />
         <circle className="chart-pulse" cx="620" cy="78" r="6" />
       </svg>
@@ -128,9 +128,17 @@ function IncidentCard({ incident, selected }: { incident: Incident; selected?: b
 
 function CommandCenter({ preview = false }: { preview?: boolean }) {
   const [status, setStatus] = useState<StreamStatus>(preview ? "RUNNING" : "READY");
+  const [incidentsVisible, setIncidentsVisible] = useState(preview);
   const running = status === "RUNNING";
-  const observed = running ? "72.4%" : "84.8%";
-  const delta = running ? "−13.7 pp" : "−1.3 pp";
+  const incidentActive = preview || incidentsVisible;
+  const observed = incidentActive ? "72.4%" : "84.8%";
+  const delta = incidentActive ? "−13.7 pp" : "−1.3 pp";
+
+  useEffect(() => {
+    if (!running || preview || incidentsVisible) return;
+    const timer = window.setTimeout(() => setIncidentsVisible(true), 2200);
+    return () => window.clearTimeout(timer);
+  }, [running, preview, incidentsVisible]);
 
   useEffect(() => {
     if (status !== "RUNNING" || preview) return;
@@ -138,7 +146,12 @@ function CommandCenter({ preview = false }: { preview?: boolean }) {
     return () => window.clearTimeout(timer);
   }, [status, preview]);
 
-  const reset = () => setStatus("READY");
+  const reset = () => {
+    setStatus("READY");
+    setIncidentsVisible(false);
+  };
+
+  const start = () => setStatus("RUNNING");
 
   return (
     <section className={`command-center ${preview ? "command-center--preview" : ""}`} aria-label="Centinel payment operations command center">
@@ -156,12 +169,12 @@ function CommandCenter({ preview = false }: { preview?: boolean }) {
 
       <div className="window-rail">
         <span>Time window</span>
-        <button type="button">Observed · Last 60 seconds <span className="micro-live">LIVE</span><ChevronDown size={13} /></button>
-        <button type="button">Reference · Contextual 14-day baseline <ChevronDown size={13} /></button>
-        <button type="button">Scope · All payment traffic <ChevronDown size={13} /></button>
+        <button type="button" disabled title="Fixed for the deterministic demo">Observed · Last 60 seconds <span className="micro-live">LIVE</span><ChevronDown size={13} /></button>
+        <button type="button" disabled title="Fixed for the deterministic demo">Reference · Contextual 14-day baseline <ChevronDown size={13} /></button>
+        <button type="button" disabled title="Fixed for the deterministic demo">Scope · All payment traffic <ChevronDown size={13} /></button>
         <div className="stream-controls">
-          <button className="button button--signal" type="button" onClick={() => setStatus("RUNNING")} disabled={running}>
-            <Play size={15} fill="currentColor" /> {status === "READY" ? "Start live stream" : status === "COMPLETE" ? "Replay stream" : "Stream running"}
+          <button className="button button--signal" type="button" onClick={start} disabled={running}>
+            <Play size={15} fill="currentColor" /> {status === "READY" ? "Start live stream" : status === "PAUSED" ? "Resume stream" : status === "COMPLETE" ? "Replay stream" : "Stream running"}
           </button>
           <button type="button" onClick={() => setStatus("PAUSED")} disabled={!running}><Pause size={15} /> Pause</button>
           <button type="button" onClick={reset}><RotateCcw size={15} /> Reset</button>
@@ -171,30 +184,30 @@ function CommandCenter({ preview = false }: { preview?: boolean }) {
       <div className="command-body">
         <div className="command-main">
           <div className="metric-rail">
-            <div><span>Approval rate (observed)</span><strong>{observed}</strong><small>{running ? "3,900" : "3,884"} attempts</small></div>
+            <div><span>Approval rate (observed)</span><strong>{observed}</strong><small>{incidentActive ? "3,900" : "3,884"} attempts</small></div>
             <div><span>Approval rate (expected)</span><strong>86.1%</strong><small>3,925 forecast attempts</small></div>
             <div><span>Delta</span><strong className="signal-ink">{delta}</strong><small>vs. expected</small></div>
-            <div><span>Revenue at risk</span><strong>{running ? "$16.5k" : "$0"}</strong><small>Estimated per hour</small></div>
+            <div><span>Revenue at risk</span><strong>{incidentActive ? "$16.5k" : "$0"}</strong><small>Estimate: approval gap × attempts × average ticket</small></div>
           </div>
 
           <div className="chart-panel">
             <div className="panel-heading">
               <div><strong>Approval rate over time</strong><span><i className="legend-observed" />Observed <i className="legend-reference" />Expected</span></div>
-              <span className={`system-state system-state--${status.toLowerCase()}`}>{status}</span>
+              <span className={`system-state system-state--${status.toLowerCase()}`} role="status" aria-live="polite">{status}</span>
             </div>
-            <SignalChart running={running} compact={preview} />
+            <SignalChart incidentActive={incidentActive} compact={preview} />
           </div>
         </div>
 
         <aside className="incident-queue">
-          <div className="queue-heading"><strong>Incident queue ({running ? 2 : 0})</strong><a href="#all">View all</a></div>
-          {running ? incidents.map((incident, index) => <IncidentCard key={incident.id} incident={incident} selected={index === 0} />) : (
+          <div className="queue-heading"><strong>Incident queue ({incidentActive ? 2 : 0})</strong><a href="#all">View all</a></div>
+          {incidentActive ? incidents.map((incident, index) => <IncidentCard key={incident.id} incident={incident} selected={index === 0} />) : (
             <div className="healthy-empty"><Check size={19} /><strong>No active incidents</strong><span>Traffic remains inside its expected range.</span></div>
           )}
         </aside>
       </div>
 
-      {running && <div className="selected-incident is-visible">
+      {incidentActive && <div className="selected-incident is-visible">
         <div className="selected-title"><span>Selected incident</span><strong><span className="priority priority--p1">P1</span> Adyen · Brazil</strong><span>Started 14:03:05 UTC</span></div>
         <div className="evidence-column">
           <strong>Key evidence</strong>
@@ -221,13 +234,45 @@ function CommandCenter({ preview = false }: { preview?: boolean }) {
   );
 }
 
-function IncidentInvestigation() {
-  const evidence = [
-    { source: "Merchant logs", observation: "Approval fell 13.2 pp across 1,184 affected attempts", implication: "The impact is real and concentrated" },
-    { source: "Provider response", observation: "91 · Issuer Unavailable became the dominant decline code", implication: "Failure happens after Yuno routes the request" },
-    { source: "Latency control", observation: "P95 latency is 3.8× the expected baseline", implication: "Provider degradation is more likely than buyer input" },
-    { source: "Healthy controls", observation: "Other providers in BR remain within ±1.1 pp", implication: "Country-wide or merchant-wide failure is unlikely" },
-  ];
+function IncidentInvestigation({ incident }: { incident: Incident }) {
+  const [mitigated, setMitigated] = useState(false);
+  const issuerCase = incident.id === "bank-y-mx";
+  const view = issuerCase ? {
+    title: <>Banorte declines are concentrated<br />on Rappido traffic in Mexico.</>,
+    confidence: "Medium · 78%",
+    signals: "3 corroborating signals",
+    slice: "rappido · card · MX · issuer: banorte",
+    owner: "Banorte / issuer path",
+    merchantTruth: "The degradation is isolated to one merchant and issuer.",
+    merchantDetail: "Other Mexican merchants and issuers remain inside their expected ranges.",
+    providerTruth: "Do Not Honor responses concentrate on Banorte.",
+    providerDetail: "Provider-level performance remains healthy outside this issuer cohort.",
+    providerMeta: "05 · Do Not Honor · issuer evidence",
+    action: "Escalate with issuer-level evidence before recommending retry.",
+    evidence: [
+      { source: "Merchant slice", observation: "Approval fell 4.6 pp across 284 attempts", implication: "The effect is meaningful but narrower" },
+      { source: "Issuer evidence", observation: "Banorte concentrates 05 · Do Not Honor", implication: "Issuer ownership is plausible, not confirmed" },
+      { source: "Healthy controls", observation: "Other MX issuers remain within ±1.0 pp", implication: "A country-wide outage is unlikely" },
+    ],
+  } : {
+    title: <>Adyen is degrading<br />PIX approvals in Brazil.</>,
+    confidence: "High · 92%",
+    signals: "4 corroborating signals",
+    slice: "rappido · adyen · pix · BR",
+    owner: "Adyen",
+    merchantTruth: "Requests leave the merchant correctly.",
+    merchantDetail: "Attempt volume, amount distribution and buyer input remain consistent with the baseline.",
+    providerTruth: "Issuer-unavailable responses emerge after Adyen receives traffic.",
+    providerDetail: "The dominant code and latency spike appear only on this provider path.",
+    providerMeta: "91 · Issuer Unavailable · P95 4,860 ms",
+    action: "Escalate to Adyen with this evidence bundle.",
+    evidence: [
+      { source: "Merchant logs", observation: "Approval fell 13.2 pp across 1,184 affected attempts", implication: "The impact is real and concentrated" },
+      { source: "Provider response", observation: "91 · Issuer Unavailable became the dominant decline code", implication: "Failure happens after Yuno routes the request" },
+      { source: "Latency control", observation: "P95 latency is 3.8× the expected baseline", implication: "Provider degradation is more likely than buyer input" },
+      { source: "Healthy controls", observation: "Other providers in BR remain within ±1.1 pp", implication: "Country-wide or merchant-wide failure is unlikely" },
+    ],
+  };
 
   return (
     <main className="investigation">
@@ -239,47 +284,47 @@ function IncidentInvestigation() {
 
       <section className="investigation-hero">
         <div>
-          <span className="eyebrow">INCIDENT #provider-x-br · ACTIVE</span>
-          <h1>Adyen is degrading<br />PIX approvals in Brazil.</h1>
+          <span className="eyebrow">INCIDENT #{incident.id} · {mitigated ? "MONITORING RECOVERY" : "ACTIVE"}</span>
+          <h1>{view.title}</h1>
         </div>
-        <div className="confidence-block"><span>Diagnosis confidence</span><strong>High · 92%</strong><small>4 corroborating signals</small></div>
+        <div className="confidence-block"><span>Diagnosis confidence</span><strong>{view.confidence}</strong><small>{view.signals}</small></div>
       </section>
 
       <section className="investigation-summary">
-        <div><span>Affected slice</span><strong>rappido · adyen · pix · BR</strong></div>
+        <div><span>Affected slice</span><strong>{view.slice}</strong></div>
         <div><span>Observed vs expected</span><strong>72.4% / 86.1%</strong></div>
         <div><span>Revenue at risk</span><strong>$12.4k /h</strong></div>
-        <div><span>Likely owner</span><strong>Adyen</strong></div>
+        <div><span>Likely owner</span><strong>{view.owner}</strong></div>
       </section>
 
       <section className="truth-contrast">
         <div className="truth-side">
           <span>Merchant-side truth</span>
-          <strong>Requests leave the merchant correctly.</strong>
-          <p>Attempt volume, amount distribution and buyer input remain consistent with the baseline.</p>
+          <strong>{view.merchantTruth}</strong>
+          <p>{view.merchantDetail}</p>
           <small>3,900 attempts · PagoTotal merchant logs</small>
         </div>
         <div className="contrast-spine"><span>VS</span><i /></div>
         <div className="truth-side truth-side--provider">
           <span>Provider-side truth</span>
-          <strong>Issuer-unavailable responses emerge after Adyen receives traffic.</strong>
-          <p>The dominant code and latency spike appear only on this provider path.</p>
-          <small>91 · Issuer Unavailable · P95 4,860 ms</small>
+          <strong>{view.providerTruth}</strong>
+          <p>{view.providerDetail}</p>
+          <small>{view.providerMeta}</small>
         </div>
       </section>
 
       <section className="evidence-ledger">
         <div className="ledger-heading"><div><span className="eyebrow">PAYMENT TRUTH</span><h2>Evidence before explanation.</h2></div><p>Every conclusion below is traceable to deterministic evidence. AI explains the bundle; it does not create the diagnosis.</p></div>
         <div className="ledger-table" role="table" aria-label="Incident evidence ledger">
-          <div className="ledger-row ledger-row--header" role="row"><span>Source</span><span>Observation</span><span>Implication</span></div>
-          {evidence.map((item) => <div className="ledger-row" role="row" key={item.source}><strong>{item.source}</strong><span>{item.observation}</span><span>{item.implication}</span></div>)}
+          <div className="ledger-row ledger-row--header" role="row"><span role="columnheader">Source</span><span role="columnheader">Observation</span><span role="columnheader">Implication</span></div>
+          {view.evidence.map((item) => <div className="ledger-row" role="row" key={item.source}><strong role="cell">{item.source}</strong><span role="cell">{item.observation}</span><span role="cell">{item.implication}</span></div>)}
         </div>
       </section>
 
       <section className="investigation-action">
         <TriangleAlert size={24} />
-        <div><span>Recommended human action</span><h2>Escalate to Adyen with this evidence bundle.</h2><p>Confirm provider status, prepare backup routing and notify the merchant. Do not retry buyer transactions automatically.</p></div>
-        <button className="button button--light" type="button">Apply action (simulated) <ArrowRight size={15} /></button>
+        <div><span>Recommended human action</span><h2>{mitigated ? "Simulated action applied. Monitor recovery." : view.action}</h2><p>Confirm status, prepare backup routing and notify the merchant. Do not retry buyer transactions automatically.</p></div>
+        <button className="button button--light" type="button" onClick={() => setMitigated(true)} disabled={mitigated}>{mitigated ? "Applied (simulated)" : "Apply action (simulated)"} <ArrowRight size={15} /></button>
       </section>
     </main>
   );
@@ -295,7 +340,7 @@ function Landing() {
       </nav>
 
       <section className="hero">
-        <div className="hero-signal" aria-hidden="true"><SignalChart running compact /></div>
+        <div className="hero-signal" aria-hidden="true"><SignalChart incidentActive compact /></div>
         <div className="hero-copy">
           <h1>Know what’s breaking<br />before revenue disappears.</h1>
           <p>Centinel monitors payment performance in real time, isolates the smallest affected path and turns evidence into the next best human action.</p>
@@ -356,11 +401,12 @@ function App() {
   const path = window.location.pathname;
   const isIncident = path.startsWith("/incidents/");
   const isControlTower = path.startsWith("/control-tower");
+  const selectedIncident = incidents.find((incident) => path.endsWith(incident.id)) ?? incidents[0];
   const content = useMemo(() => isIncident
-    ? <IncidentInvestigation />
+    ? <IncidentInvestigation incident={selectedIncident} />
     : isControlTower
       ? <div className="app-shell"><CommandCenter /></div>
-      : <Landing />, [isControlTower, isIncident]);
+      : <Landing />, [isControlTower, isIncident, selectedIncident]);
   return content;
 }
 
