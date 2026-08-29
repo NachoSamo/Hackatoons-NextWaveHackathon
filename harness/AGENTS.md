@@ -7,9 +7,10 @@ Contexto para cualquier agente de código que trabaje en este repo.
 Prototipo funcional para el NextWave Hackathon 2026 (Yuno × Nauta × OpenAI). Ventana real de
 construcción: ~14 horas.
 
-Hay 4 challenges posibles (2 de Yuno, 2 de Nauta), desarrollados en `docs/05-challenges.md`.
-**Todavía no elegimos uno.** Cuando se elija, este archivo y el resto del harness se actualizan con
-el challenge fijado, la arquitectura y los contratos de API.
+**Challenge elegido: C2 · The Control Tower (Yuno)** — monitoreo de pagos en vivo + diagnóstico de
+causa raíz. Dominio en `docs/06-dominio-pagos.md`, enfoque técnico y decisiones en
+`docs/07-decisiones-core.md`. Los 4 briefs y por qué se eligió C2: `docs/05-challenges.md`.
+Los contratos de API (abajo) se completan cuando se cierren las decisiones core.
 
 ## Stack
 

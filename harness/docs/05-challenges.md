@@ -2,10 +2,16 @@
 
 > Fuente: `NextWave Hackathon 2026 — Challenges MASTER (EN)` (PDF en el root del repo).
 > Los 4 briefs ya son públicos para toda la hackathon. Este archivo los desarrolla en español y
-> los evalúa contra los criterios del kickoff. **Todavía no elegimos challenge.**
+> los evalúa contra los criterios del kickoff.
 >
 > Se lee: en el kickoff del sábado, antes de la convergencia. Cada uno llega con una candidata y
 > una Y en una frase (ver `01-kickoff.md`).
+
+> ## ✅ CHALLENGE ELEGIDO: C2 · The Control Tower (Yuno) — 29/08
+>
+> Vamos por acá. El resto de este archivo queda como registro del análisis de selección.
+> - Contexto del dominio (pagos): **`06-dominio-pagos.md`**
+> - Decisiones técnicas core (sin tomar aún): **`07-decisiones-core.md`**
 
 ---
 
@@ -146,7 +152,9 @@ $300 → panel muestra RECHAZO con motivo → el jurado revoca el mandato → si
 
 ---
 
-## Challenge 2 · Yuno — The Control Tower
+## Challenge 2 · Yuno — The Control Tower  ✅ ELEGIDO
+
+> Desarrollo del dominio y del enfoque técnico: `06-dominio-pagos.md` y `07-decisiones-core.md`.
 
 **Tema:** monitoreo de pagos en vivo y diagnóstico de causa raíz.
 

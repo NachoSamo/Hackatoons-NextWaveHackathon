@@ -15,7 +15,9 @@ empezar, leé este archivo primero.
 |---|---|---|
 | `AGENTS.md` | Reglas del proyecto para agentes de código | Siempre, antes de picar código |
 | `docs/00-dominios.md` | Qué hacen Yuno y Nauta, dolores reales, qué challenge ataca cada dolor | Antes del kickoff |
-| `docs/05-challenges.md` | Los 4 briefs desarrollados en español + análisis de selección + ángulos posibles | Antes de la convergencia del sábado; **challenge aún sin elegir** |
+| `docs/05-challenges.md` | Los 4 briefs desarrollados + análisis de selección. **Elegido: C2 · The Control Tower** | Registro; el análisis ya está hecho |
+| `docs/06-dominio-pagos.md` | Dominio de pagos en profundidad: circuito, actores, decline codes, dimensiones. Vocabulario + defensa técnica | Antes de codear C2 |
+| `docs/07-decisiones-core.md` | Disparador de las decisiones técnicas core de C2 + resumen del research | Reunión de arranque |
 | `docs/01-kickoff.md` | Dinámica exacta de las primeras 2 horas | Sábado 12:30 |
 | `docs/02-timeline.md` | Presupuesto de horas, checkpoints, reglas de recorte | Todo el evento (Samo lo gestiona) |
 | `docs/03-reglas-equipo.md` | Roles, feedback de mentores, git, hardware | Antes del kickoff |
