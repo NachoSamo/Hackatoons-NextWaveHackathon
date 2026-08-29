@@ -18,6 +18,7 @@ empezar, leé este archivo primero.
 | `docs/05-challenges.md` | Los 4 briefs desarrollados + análisis de selección. **Elegido: C2 · The Control Tower** | Registro; el análisis ya está hecho |
 | `docs/06-dominio-pagos.md` | Dominio de pagos en profundidad: circuito, actores, decline codes, dimensiones. Vocabulario + defensa técnica | Antes de codear C2 |
 | `docs/07-decisiones-core.md` | Disparador de las decisiones técnicas core de C2 + resumen del research | Reunión de arranque |
+| `docs/08-product-ux-gtm.md` | Cliente, problema, propuesta de valor, UX, venta, guía para mentores y storyboard C2 | Juani + definición de producto |
 | `docs/01-kickoff.md` | Dinámica exacta de las primeras 2 horas | Sábado 12:30 |
 | `docs/02-timeline.md` | Presupuesto de horas, checkpoints, reglas de recorte | Todo el evento (Samo lo gestiona) |
 | `docs/03-reglas-equipo.md` | Roles, feedback de mentores, git, hardware | Antes del kickoff |
@@ -27,8 +28,8 @@ empezar, leé este archivo primero.
 | `docs/arquitectura.md` | Diagrama + descripción técnica (ENTREGABLE, inglés) | Se llena el sábado |
 | `docs/arquitectura.html` | Borrador de la arquitectura de C2, capa por capa, con decisiones abiertas | Ahora — alinear al equipo |
 | `pitch/demo-path.md` | Los N pasos exactos que se muestran en el pitch | Se congela antes de codear |
-| `pitch/script.md` | Guión del pitch de 3 minutos | Juani, sábado post-cena |
-| `README.md` | Entregable público en GitHub — **EN INGLÉS** | Se arma desde el día 1 |
+| `pitch/script-demo.md` | Guión del pitch de 3 minutos | Juani, sábado post-cena |
+| `../README.md` | Entregable público en la raíz de GitHub — **EN INGLÉS** | Se arma desde el día 1 |
 
 ---
 
@@ -40,3 +41,4 @@ empezar, leé este archivo primero.
 4. **Docs internos en español. Entregables (README, arquitectura, pitch) en inglés** — la organización lo exige.
 5. **Cada vez que alguien tome decisiones importantes lo escribe en el decision-log.md, es clave que todos mantengamos el harness**
 6. **El proyecto se entrega con un video de maximo 3 minutos, no mas.**
+7. **Antes de editar decisiones, traer `develop`; al terminar, actualizar el harness, commitear y pushear.** Si hay cambios locales, preservarlos y rebasar sin pisar trabajo del equipo.

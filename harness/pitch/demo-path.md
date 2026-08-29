@@ -15,12 +15,14 @@
 
 ## Pre-event proposal — validate and freeze on Saturday
 
-**Story:** the system moves from trustworthy silence to two separate diagnoses, explains the impact
-for two audiences and ends with an unrehearsed incident created by the judge.
+**Story:** the public promise becomes a live operational proof. The system moves from trustworthy
+silence to two separate diagnoses, explains the impact for two audiences and ends with an
+unrehearsed incident created by the judge.
 
 | # | What appears on screen | Presenter action | Status | Owner |
 |---|---|---|---|---|
-| 1 | Healthy Command Center. Live stream, actual vs. expected approval rate within range and zero incidents | Opens the app: “Variation is normal. Noise is not an incident.” | ⬜ | Juani |
+| 0 | Public landing page with the promise, a real product preview and `Watch the live incident` CTA | Opens the pitch on the landing, then clicks the CTA when the live demo begins | ⬜ | Juani |
+| 1 | Command Center in `SIMULATION MODE`, state `READY`, with `Start live stream` visible | Starts the stream. Approved and rejected synthetic records enter in real time and settle inside the expected range: “Variation is normal. Noise is not an incident.” | ⬜ | Juani |
 | 2 | Injection panel with merchant, provider, method, country, issuer, magnitude and duration dropdowns | Injects the prepared case: one provider degrades only in Brazil | ⬜ | Samo |
 | 3 | The signal enters `validating` before triggering. An incident appears with start time, severity and estimated impact | Does nothing and lets the detector react | ⬜ | Luca + Pena |
 | 4 | Incident Detail converges from the global drop to `Provider X × Brazil`; shows baseline, sample, codes and confidence | Opens “Why this diagnosis?” | ⬜ | Luca + Juani |
@@ -36,6 +38,8 @@ Statuses: ⬜ pending · 🟡 in progress · ✅ ready · 🔧 hardcoded · ❌ 
 
 ## Required fallbacks
 
+- [ ] Stream controls are visible and deterministic: `Start live stream`, `Pause`, `Reset`
+- [ ] Persistent `SIMULATION MODE` badge; synthetic data is never presented as customer production data
 - [ ] The stream resets to a known state with one button
 - [ ] Every prepared scenario can replay from deterministic fixtures
 - [ ] If OpenAI fails, a structured template renders the same evidence without a blank state
@@ -46,7 +50,8 @@ Statuses: ⬜ pending · 🟡 in progress · ✅ ready · 🔧 hardcoded · ❌ 
 
 ## Scope-cut order at 22:30
 
-1. Never cut steps 1–5 or 9: they are the minimum challenge.
+1. Never cut steps 1–5 or 9: they are the minimum challenge. Step 0 may become a static opening frame,
+   but the landing and app must still share the same visual system.
 2. First cut: incident memory, if it was added outside this path.
 3. Second cut: simplify step 8 to a visible confidence interval.
 4. Last allowed simplification: prepare step 6 as a fixture, but still show two separate incidents
