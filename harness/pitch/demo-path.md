@@ -28,6 +28,7 @@ It ends with an unrehearsed incident created by the judge.
 | 3 | The signal enters `validating` before triggering. An incident appears with start time, severity and estimated impact | Does nothing and lets the detector react | ⬜ | Luca + Pena |
 | 4 | Incident Detail converges from the global drop to `Provider X × Brazil`; the investigation stage changes to `Diagnose` and shows baseline, sample, codes, healthy controls and confidence | Opens `Investigate with Centinel` | ⬜ | Luca + Juani |
 | 5 | A contextual Copilot rail compares the current 60 s against the 14-day contextual baseline. Its answer cites evidence, states confidence and limitations, assigns likely ownership and proposes the next human action | Runs the suggested comparison, then switches `Operations / Executive` over the same evidence bundle | ⬜ | Luca + Juani |
+| 5A | `Explore` compares two custom historical windows over an explicit payment scope; the result can become a structured `PolicyDraft`, never an active alert from a prompt | Interprets the prepared query, runs analysis, opens the draft and shows replay governance | 🟡 | Juani |
 | 6 | A Mexican issuer fails for one merchant at the same time. Centinel creates a second incident without mixing causes | Triggers the second prepared case | ⬜ | Samo + Luca |
 | 7 | Both incidents are prioritized by impact, scope, persistence and confidence; every score is explainable | Briefly opens priority #1 | ⬜ | Juani |
 | 8 | Ambiguous or low-sample case: the system shows `Insufficient evidence`, alternatives and missing data | Injects a weak-signal case | ⬜ | Luca + Juani |
@@ -55,7 +56,8 @@ Statuses: ⬜ pending · 🟡 in progress · ✅ ready · 🔧 hardcoded · ❌ 
 
 1. Never cut steps 1–5 or 9: they are the minimum challenge. Step 0 may become a static opening frame,
    but the landing and app must still share the same visual system.
-2. First cut: incident memory, if it was added outside this path.
-3. Second cut: simplify step 8 to a visible confidence interval.
-4. Last allowed simplification: prepare step 6 as a fixture, but still show two separate incidents
+2. First timed-pitch cut: step 5A (`Explore + PolicyDraft`) if the full rehearsal exceeds seven minutes.
+3. Second cut: incident memory, if it was added outside this path.
+4. Third cut: simplify step 8 to a visible confidence interval.
+5. Last allowed simplification: prepare step 6 as a fixture, but still show two separate incidents
    because that is an expected challenge result.

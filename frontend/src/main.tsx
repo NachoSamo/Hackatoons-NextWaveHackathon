@@ -5,6 +5,7 @@ import {
   ArrowDown,
   ArrowRight,
   Bell,
+  CalendarRange,
   Check,
   ChevronDown,
   Clock3,
@@ -12,8 +13,10 @@ import {
   Pause,
   Play,
   RotateCcw,
+  Search,
   Send,
   ShieldCheck,
+  SlidersHorizontal,
   Sparkles,
   X,
 } from "lucide-react";
@@ -25,6 +28,18 @@ import { formatPaymentSlice } from "./domain";
 
 type StreamStatus = "READY" | "RUNNING" | "VALIDATING" | "PAUSED" | "COMPLETE" | "MONITORING";
 type Audience = "operations" | "executive";
+type AnalysisMode = "live" | "explore";
+
+type AnalysisQuery = {
+  observedFrom: string;
+  observedTo: string;
+  referenceFrom: string;
+  referenceTo: string;
+  merchant: string;
+  provider: string;
+  method: string;
+  country: string;
+};
 
 type Incident = {
   id: string;
@@ -132,12 +147,34 @@ function CommandCenter({ preview = false }: { preview?: boolean }) {
   const [incidentsVisible, setIncidentsVisible] = useState(preview);
   const [selectedIncidentId, setSelectedIncidentId] = useState<string | null>(preview ? incidents[0].id : null);
   const [investigationOpen, setInvestigationOpen] = useState(false);
+  const [analysisMode, setAnalysisMode] = useState<AnalysisMode>("live");
+  const [queryText, setQueryText] = useState("Compare PIX approvals in Brazil over the last 2 hours against August 22 at the same time.");
+  const [queryParsed, setQueryParsed] = useState(false);
+  const [analysisApplied, setAnalysisApplied] = useState(false);
+  const [policyOpen, setPolicyOpen] = useState(false);
+  const [analysisQuery, setAnalysisQuery] = useState<AnalysisQuery>({
+    observedFrom: "2026-08-29T12:00",
+    observedTo: "2026-08-29T14:00",
+    referenceFrom: "2026-08-22T12:00",
+    referenceTo: "2026-08-22T14:00",
+    merchant: "all",
+    provider: "all",
+    method: "pix",
+    country: "BR",
+  });
   const running = status === "RUNNING";
+  const exploring = analysisMode === "explore";
   const streamActive = status === "RUNNING" || status === "VALIDATING" || status === "MONITORING";
   const incidentActive = preview || incidentsVisible;
   const selectedIncident = incidents.find((incident) => incident.id === selectedIncidentId) ?? incidents[0];
-  const observed = incidentActive ? "72.4%" : "84.8%";
-  const delta = incidentActive ? "−13.7 pp" : "−1.3 pp";
+  const comparisonActive = exploring && analysisApplied;
+  const chartDiverges = incidentActive || comparisonActive;
+  const observed = comparisonActive ? "78.9%" : incidentActive ? "72.4%" : "84.8%";
+  const expected = comparisonActive ? "85.4%" : "86.1%";
+  const delta = comparisonActive ? "−6.5 pp" : incidentActive ? "−13.7 pp" : "−1.3 pp";
+  const attempts = comparisonActive ? "11,482" : incidentActive ? "3,900" : "3,884";
+  const expectedAttempts = comparisonActive ? "11,530 reference attempts" : "3,925 forecast attempts";
+  const risk = comparisonActive ? "$8.2k" : incidentActive ? "$16.5k" : "$0";
 
   useEffect(() => {
     if (!running || preview || incidentsVisible) return;
@@ -166,12 +203,25 @@ function CommandCenter({ preview = false }: { preview?: boolean }) {
     setIncidentsVisible(false);
     setSelectedIncidentId(null);
     setInvestigationOpen(false);
+    setAnalysisMode("live");
+    setAnalysisApplied(false);
+    setQueryParsed(false);
+    setPolicyOpen(false);
   };
 
   const start = () => setStatus("RUNNING");
+  const updateQuery = (field: keyof AnalysisQuery, value: string) => setAnalysisQuery((current) => ({ ...current, [field]: value }));
+  const interpretQuery = () => {
+    setAnalysisQuery((current) => ({ ...current, method: "pix", country: "BR" }));
+    setQueryParsed(true);
+  };
+  const runAnalysis = () => {
+    setQueryParsed(true);
+    setAnalysisApplied(true);
+  };
 
   return (
-    <section className={`command-center ${preview ? "command-center--preview" : ""}`} aria-label="Centinel payment operations command center">
+    <section className={`command-center mode--${analysisMode} ${preview ? "command-center--preview" : ""}`} aria-label="Centinel payment operations command center">
       <header className="command-rail">
         <Brand compact />
         <span className="simulation-badge"><ShieldCheck size={13} /> SIMULATION MODE</span>
@@ -184,41 +234,62 @@ function CommandCenter({ preview = false }: { preview?: boolean }) {
         </nav>
       </header>
 
-      <div className="window-rail">
-        <span>Time window</span>
-        <button type="button" disabled title="Fixed for the deterministic demo">Observed · Last 60 seconds <span className="micro-live">LIVE</span><ChevronDown size={13} /></button>
-        <button type="button" disabled title="Fixed for the deterministic demo">Reference · Contextual 14-day baseline <ChevronDown size={13} /></button>
-        <button type="button" disabled title="Fixed for the deterministic demo">Scope · All payment traffic <ChevronDown size={13} /></button>
-        <div className="stream-controls">
-          <button className="button button--signal" type="button" onClick={start} disabled={streamActive}>
-            <Play size={15} fill="currentColor" /> {status === "READY" ? "Start live stream" : status === "PAUSED" ? "Resume stream" : status === "COMPLETE" ? "Replay stream" : "Stream running"}
-          </button>
-          <button type="button" onClick={() => setStatus("PAUSED")} disabled={!running}><Pause size={15} /> Pause</button>
-          <button type="button" onClick={reset}><RotateCcw size={15} /> Reset</button>
+      <div className={`query-surface ${exploring ? "is-explore" : ""}`}>
+        <div className="query-toolbar">
+          <div className="mode-switch" aria-label="Analysis mode">
+            <button className={!exploring ? "is-active" : ""} type="button" onClick={() => setAnalysisMode("live")}>Live monitoring</button>
+            <button className={exploring ? "is-active" : ""} type="button" onClick={() => setAnalysisMode("explore")}>Explore</button>
+          </div>
+          {!exploring ? <>
+            <div className="live-query-summary"><span>Observed</span><strong>Last 60 seconds</strong><i>LIVE</i></div>
+            <div className="live-query-summary"><span>Reference</span><strong>Contextual 14-day baseline</strong></div>
+            <div className="live-query-summary"><span>Scope</span><strong>All payment traffic</strong></div>
+            <div className="stream-controls">
+              <button className="button button--signal" type="button" onClick={start} disabled={streamActive}>
+                <Play size={15} fill="currentColor" /> {status === "READY" ? "Start live stream" : status === "PAUSED" ? "Resume stream" : status === "COMPLETE" ? "Replay stream" : "Stream running"}
+              </button>
+              <button type="button" onClick={() => setStatus("PAUSED")} disabled={!running}><Pause size={15} /> Pause</button>
+              <button type="button" onClick={reset}><RotateCcw size={15} /> Reset</button>
+            </div>
+          </> : <>
+            <form className="query-composer" onSubmit={(event) => { event.preventDefault(); interpretQuery(); }}>
+              <Sparkles size={15} />
+              <input value={queryText} onChange={(event) => setQueryText(event.target.value)} aria-label="Describe an analysis" />
+              <button type="submit">Interpret query <ArrowRight size={13} /></button>
+            </form>
+            <span className="query-safety"><ShieldCheck size={13} /> Analysis only · detector unchanged</span>
+          </>}
         </div>
+        {exploring && <div className="explore-controls">
+          <label><span>Observed range</span><div><input type="datetime-local" value={analysisQuery.observedFrom} onChange={(event) => updateQuery("observedFrom", event.target.value)} /><i>→</i><input type="datetime-local" value={analysisQuery.observedTo} onChange={(event) => updateQuery("observedTo", event.target.value)} /></div></label>
+          <label><span>Reference range</span><div><input type="datetime-local" value={analysisQuery.referenceFrom} onChange={(event) => updateQuery("referenceFrom", event.target.value)} /><i>→</i><input type="datetime-local" value={analysisQuery.referenceTo} onChange={(event) => updateQuery("referenceTo", event.target.value)} /></div></label>
+          <div className="scope-controls"><span>Scope</span><select aria-label="Merchant" value={analysisQuery.merchant} onChange={(event) => updateQuery("merchant", event.target.value)}><option value="all">All merchants</option><option value="rappido">Rappido</option><option value="tiendita">Tiendita</option><option value="streamplus">Streamplus</option></select><select aria-label="Provider" value={analysisQuery.provider} onChange={(event) => updateQuery("provider", event.target.value)}><option value="all">All providers</option><option value="adyen">Adyen</option><option value="dlocal">dLocal</option><option value="mercadopago">MercadoPago</option></select><select aria-label="Payment method" value={analysisQuery.method} onChange={(event) => updateQuery("method", event.target.value)}><option value="all">All methods</option><option value="pix">PIX</option><option value="card">Card</option><option value="pse">PSE</option></select><select aria-label="Country" value={analysisQuery.country} onChange={(event) => updateQuery("country", event.target.value)}><option value="all">All countries</option><option value="BR">Brazil</option><option value="MX">Mexico</option><option value="CO">Colombia</option></select></div>
+          <button className="run-analysis" type="button" onClick={runAnalysis}><Search size={14} /> Run analysis</button>
+          <div className={`query-preview ${queryParsed ? "is-ready" : ""}`}><CalendarRange size={13} /><span>{analysisQuery.method === "pix" ? "PIX" : "Payment"} approval · {analysisQuery.country === "BR" ? "Brazil" : "Selected markets"}</span><small>Custom observed vs custom reference · UTC</small></div>
+        </div>}
       </div>
 
       <div className="command-body">
         <div className="command-main">
           <div className="metric-rail">
-            <div><span>Approval rate (observed)</span><strong>{observed}</strong><small>{incidentActive ? "3,900" : "3,884"} attempts</small></div>
-            <div><span>Approval rate (expected)</span><strong>86.1%</strong><small>3,925 forecast attempts</small></div>
-            <div title="Observed approval rate minus expected approval rate, expressed in percentage points"><span>Delta</span><strong className="signal-ink">{delta}</strong><small>{observed} observed − 86.1% expected</small></div>
-            <div title="Estimated recoverable payment volume per hour, not reconciled revenue"><span>Revenue at risk</span><strong>{incidentActive ? "$16.5k" : "$0"}</strong><small>Per hour · approval gap × attempts × avg. ticket</small></div>
+            <div><span>Approval rate (observed)</span><strong>{observed}</strong><small>{attempts} attempts</small></div>
+            <div><span>Approval rate (reference)</span><strong>{expected}</strong><small>{expectedAttempts}</small></div>
+            <div title="Observed approval rate minus reference approval rate, expressed in percentage points"><span>Delta</span><strong className="signal-ink">{delta}</strong><small>{observed} observed − {expected} reference</small></div>
+            <div title="Estimated recoverable payment volume per hour, not reconciled revenue"><span>Revenue at risk</span><strong>{risk}</strong><small>Estimated per hour · assumptions visible</small></div>
           </div>
 
           <div className="chart-panel">
             <div className="panel-heading">
-              <div><strong>Approval rate over time</strong><span><i className="legend-observed" />Observed <i className="legend-reference" />Expected</span></div>
-              <span className={`system-state system-state--${status.toLowerCase()}`} role="status" aria-live="polite">{status}</span>
+              <div><strong>{comparisonActive ? "PIX approval rate in Brazil" : "Approval rate across all payment traffic"}</strong><span className="chart-context">{comparisonActive ? "Aug 29, 12:00–14:00 vs Aug 22, 12:00–14:00 · UTC" : "Last 60 seconds vs expected behavior now · UTC"}</span><span><i className="legend-observed" />Observed <i className="legend-reference" />Reference</span></div>
+              <div className="chart-actions">{comparisonActive && <button type="button" onClick={() => setPolicyOpen(true)}><SlidersHorizontal size={13} /> Create alert from this analysis</button>}<span className={`system-state system-state--${status.toLowerCase()}`} role="status" aria-live="polite">{comparisonActive ? "ANALYSIS READY" : status}</span></div>
             </div>
-            <SignalChart incidentActive={incidentActive} compact={preview} />
+            <SignalChart incidentActive={chartDiverges} compact={preview} />
           </div>
         </div>
 
         <aside className="incident-queue">
-          <div className="queue-heading"><strong>Incident queue ({incidentActive ? 2 : 0})</strong><a href="#all">View all</a></div>
-          {incidentActive ? incidents.map((incident) => <IncidentCard key={incident.id} incident={incident} selected={incident.id === selectedIncidentId} onSelect={() => setSelectedIncidentId(incident.id)} />) : status === "VALIDATING" ? (
+          <div className="queue-heading"><strong>{exploring ? "Analysis findings" : `Incident queue (${incidentActive ? 2 : 0})`}</strong><a href="#all">{exploring ? "Export" : "View all"}</a></div>
+          {exploring ? comparisonActive ? <div className="analysis-finding"><span>SIGNIFICANT DEVIATION</span><h3>PIX approval is 6.5 pp below the selected reference.</h3><p>The loss concentrates on Adyen traffic in Brazil. Other providers remain inside the expected range.</p><dl><div><dt>Sample</dt><dd>11,482 attempts</dd></div><div><dt>Estimated impact</dt><dd>$8.2k /h</dd></div><div><dt>Confidence</dt><dd>High · 89%</dd></div></dl><button type="button" onClick={() => setPolicyOpen(true)}>Create an alert for this pattern <ArrowRight size={13} /></button></div> : <div className="explore-empty"><CalendarRange size={20} /><strong>Define a comparison</strong><span>Select two ranges and a scope, then run the analysis.</span></div> : incidentActive ? incidents.map((incident) => <IncidentCard key={incident.id} incident={incident} selected={incident.id === selectedIncidentId} onSelect={() => setSelectedIncidentId(incident.id)} />) : status === "VALIDATING" ? (
             <div className="validating-empty"><span className="validating-orbit" /><strong>Validating signal</strong><span>Checking persistence, controls and sample quality before creating an incident.</span></div>
           ) : (
             <div className="healthy-empty"><Check size={19} /><strong>No active incidents</strong><span>Traffic remains inside its expected range.</span></div>
@@ -226,7 +297,7 @@ function CommandCenter({ preview = false }: { preview?: boolean }) {
         </aside>
       </div>
 
-      {incidentActive && <div className="selected-incident is-visible">
+      {!exploring && incidentActive && <div className="selected-incident is-visible">
         <div className="selected-title"><span>Selected incident</span><strong><span className="priority priority--p1">P1</span> Adyen · Brazil</strong><span>Started 14:03:05 UTC</span></div>
         <div className="evidence-column">
           <strong>Key evidence</strong>
@@ -250,7 +321,41 @@ function CommandCenter({ preview = false }: { preview?: boolean }) {
         </div>
       </div>}
       {investigationOpen && <InvestigationWorkspace incident={selectedIncident} onClose={() => setInvestigationOpen(false)} onMonitoring={() => setStatus("MONITORING")} />}
+      {policyOpen && <PolicyDraftPanel query={analysisQuery} onClose={() => setPolicyOpen(false)} />}
     </section>
+  );
+}
+
+function PolicyDraftPanel({ query, onClose }: { query: AnalysisQuery; onClose: () => void }) {
+  const [threshold, setThreshold] = useState("8");
+  const [duration, setDuration] = useState("90");
+  const [minImpact, setMinImpact] = useState("5000");
+  const [replayStatus, setReplayStatus] = useState<"idle" | "running" | "done">("idle");
+  const [saved, setSaved] = useState(false);
+
+  const runReplay = () => {
+    setReplayStatus("running");
+    window.setTimeout(() => setReplayStatus("done"), 900);
+  };
+
+  return (
+    <div className="policy-scrim" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}>
+      <aside className="policy-panel" role="dialog" aria-modal="false" aria-label="Alert policy draft">
+        <header className="policy-header"><div><SlidersHorizontal size={16} /><strong>Alert policy draft</strong><span>DRAFT · NOT ACTIVE</span></div><button className="icon-button" type="button" onClick={onClose} aria-label="Close alert policy"><X size={18} /></button></header>
+        <div className="policy-intent"><span>Created from analysis</span><h2>Alert me when this payment pattern degrades again.</h2><p>Centinel translated the active comparison into a structured proposal. Review every field before testing it.</p></div>
+        <div className="policy-fields">
+          <label><span>Metric</span><input value="Approval rate delta" disabled /></label>
+          <label><span>Scope</span><input value={`${query.method.toUpperCase()} · ${query.country} · All merchants · All providers`} disabled /></label>
+          <label><span>Trigger below reference</span><div className="field-with-unit"><input type="number" value={threshold} onChange={(event) => setThreshold(event.target.value)} /><span>pp</span></div></label>
+          <label><span>Minimum persistence</span><div className="field-with-unit"><input type="number" value={duration} onChange={(event) => setDuration(event.target.value)} /><span>seconds</span></div></label>
+          <label><span>Minimum estimated impact</span><div className="field-with-unit"><input type="number" value={minImpact} onChange={(event) => setMinImpact(event.target.value)} /><span>USD / h</span></div></label>
+          <label><span>Baseline</span><input value="Contextual historical behavior" disabled /></label>
+        </div>
+        <div className="policy-readable"><span>Human-readable rule</span><p>If <strong>PIX approval in Brazil</strong> falls more than <strong>{threshold} pp</strong> below its reference for <strong>{duration} seconds</strong> and exposes at least <strong>${Number(minImpact || 0).toLocaleString()} per hour</strong>, propose a high-priority incident.</p></div>
+        <div className={`replay-result is-${replayStatus}`}><div><span>Replay validation</span><strong>{replayStatus === "idle" ? "Not tested" : replayStatus === "running" ? "Testing against fixture…" : "3 true incidents · 0 noise alerts"}</strong></div>{replayStatus === "done" && <small>Fixture: previous 2 hours · 7,800 buckets evaluated</small>}</div>
+        <footer className="policy-actions"><button type="button" onClick={runReplay} disabled={replayStatus === "running"}>{replayStatus === "running" ? "Running replay…" : "Run replay"}</button><button className="button button--light" type="button" onClick={() => setSaved(true)}>{saved ? "Draft saved" : "Save draft"} <ArrowRight size={14} /></button><p><ShieldCheck size={12} /> Saving does not activate this policy. Approval is required.</p></footer>
+      </aside>
+    </div>
   );
 }
 
