@@ -149,6 +149,13 @@ button:focus-visible, a:focus-visible { outline: 2px solid var(--signal-soft); o
 .live-query-summary span { color: var(--muted); font-size: 9px; text-transform: uppercase; }
 .live-query-summary strong { min-width: 0; overflow: hidden; color: #dedee1; font-size: 11px; font-weight: 500; text-overflow: ellipsis; white-space: nowrap; }
 .live-query-summary i { padding: 3px 5px; border-radius: 3px; background: #211818; color: #ffaaa4; font: normal 8px var(--mono); }
+.live-query-control { min-width: 0; height: 44px; padding: 0 10px 0 12px; display: grid; grid-template-columns: auto minmax(0, 1fr) auto auto; align-items: center; gap: 8px; border: 1px solid var(--line); border-radius: 6px; background: #080809; cursor: pointer; transition: border-color 160ms ease, background 160ms ease; }
+.live-query-control:hover { border-color: var(--line-strong); background: #0c0c0e; }
+.live-query-control > span { color: var(--muted); font-size: 9px; text-transform: uppercase; }
+.live-query-control select { min-width: 0; width: 100%; height: 42px; padding: 0; border: 0; outline: 0; appearance: none; overflow: hidden; background: transparent; color: #dedee1; font-size: 11px; font-weight: 520; text-overflow: ellipsis; cursor: pointer; }
+.live-query-control:focus-within { border-color: var(--signal-soft); box-shadow: 0 0 0 2px rgba(89,100,242,.13); }
+.live-query-control > i { padding: 3px 5px; border-radius: 3px; background: #211818; color: #ffaaa4; font: normal 8px var(--mono); }
+.live-query-control > svg { color: #77777c; pointer-events: none; }
 .query-composer { height: 42px; display: grid; grid-template-columns: 34px 1fr auto; align-items: center; border: 1px solid var(--line-strong); border-radius: 6px; background: #050506; overflow: hidden; }
 .query-composer > svg { justify-self: center; color: var(--signal-soft); }
 .query-composer input { min-width: 0; height: 100%; border: 0; outline: 0; background: transparent; color: #e6e6e8; font-size: 12px; }
@@ -383,7 +390,7 @@ button:focus-visible, a:focus-visible { outline: 2px solid var(--signal-soft); o
 .command-center--preview .command-rail { height: 52px; }
 .command-center--preview .query-toolbar { min-height: 60px; padding: 0 16px; grid-template-columns: 180px repeat(3, minmax(130px, 1fr)) auto; }
 .command-center--preview .mode-switch { height: 34px; }
-.command-center--preview .live-query-summary { height: 38px; }
+.command-center--preview .live-query-control { height: 38px; }
 .command-center--preview .command-body { height: 470px; min-height: 0; }
 .command-center--preview .selected-incident { min-height: 245px; }
 .command-center--preview .metric-rail { height: 110px; }

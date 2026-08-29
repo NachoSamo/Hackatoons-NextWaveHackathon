@@ -87,6 +87,25 @@ const incidents: Incident[] = [
   },
 ];
 
+const liveScopeOptions = {
+  all: { label: "All payment traffic", title: "Approval rate across all payment traffic", healthy: 84.8, incident: 72.4, attempts: 3884, risk: "$16.5k" },
+  pix_br: { label: "PIX · Brazil", title: "PIX approval rate in Brazil", healthy: 85.2, incident: 74.1, attempts: 1640, risk: "$12.4k" },
+  adyen_br: { label: "Adyen · Brazil", title: "Adyen approval rate in Brazil", healthy: 84.9, incident: 68.7, attempts: 1184, risk: "$12.4k" },
+  rappido_mx: { label: "Rappido · Mexico", title: "Rappido approval rate in Mexico", healthy: 86.4, incident: 81.5, attempts: 284, risk: "$4.1k" },
+} as const;
+
+const liveWindowOptions = {
+  "60s": { label: "Last 60 sec", context: "Last 60 seconds", multiplier: 1 },
+  "5m": { label: "Last 5 min", context: "Last 5 minutes", multiplier: 5 },
+  "15m": { label: "Last 15 min", context: "Last 15 minutes", multiplier: 15 },
+} as const;
+
+const liveReferenceOptions = {
+  contextual: { label: "14-day baseline", context: "Contextual 14-day baseline", rate: 86.1 },
+  previous: { label: "Previous period", context: "Previous equivalent period", rate: 85.7 },
+  threshold: { label: "Contract threshold", context: "Contractual threshold", rate: 82.0 },
+} as const;
+
 const observedPath =
   "M18 80 C88 76 150 82 220 78 S350 76 420 74 S515 72 585 73 L620 78 C655 95 700 110 742 112 S830 126 902 130";
 const expectedPath =
@@ -148,6 +167,9 @@ function CommandCenter({ preview = false }: { preview?: boolean }) {
   const [selectedIncidentId, setSelectedIncidentId] = useState<string | null>(preview ? incidents[0].id : null);
   const [investigationOpen, setInvestigationOpen] = useState(false);
   const [analysisMode, setAnalysisMode] = useState<AnalysisMode>("live");
+  const [liveObservedWindow, setLiveObservedWindow] = useState<keyof typeof liveWindowOptions>("60s");
+  const [liveReference, setLiveReference] = useState<keyof typeof liveReferenceOptions>("contextual");
+  const [liveScope, setLiveScope] = useState<keyof typeof liveScopeOptions>("all");
   const [queryText, setQueryText] = useState("Compare PIX approvals in Brazil over the last 2 hours against August 22 at the same time.");
   const [queryParsed, setQueryParsed] = useState(false);
   const [analysisApplied, setAnalysisApplied] = useState(false);
@@ -167,14 +189,20 @@ function CommandCenter({ preview = false }: { preview?: boolean }) {
   const streamActive = status === "RUNNING" || status === "VALIDATING" || status === "MONITORING";
   const incidentActive = preview || incidentsVisible;
   const selectedIncident = incidents.find((incident) => incident.id === selectedIncidentId) ?? incidents[0];
+  const liveWindow = liveWindowOptions[liveObservedWindow];
+  const referenceProfile = liveReferenceOptions[liveReference];
+  const scopeProfile = liveScopeOptions[liveScope];
   const comparisonActive = exploring && analysisApplied;
   const chartDiverges = incidentActive || comparisonActive;
-  const observed = comparisonActive ? "78.9%" : incidentActive ? "72.4%" : "84.8%";
-  const expected = comparisonActive ? "85.4%" : "86.1%";
-  const delta = comparisonActive ? "−6.5 pp" : incidentActive ? "−13.7 pp" : "−1.3 pp";
-  const attempts = comparisonActive ? "11,482" : incidentActive ? "3,900" : "3,884";
-  const expectedAttempts = comparisonActive ? "11,530 reference attempts" : "3,925 forecast attempts";
-  const risk = comparisonActive ? "$8.2k" : incidentActive ? "$16.5k" : "$0";
+  const liveObserved = incidentActive ? scopeProfile.incident : scopeProfile.healthy;
+  const liveExpected = referenceProfile.rate;
+  const liveDelta = liveObserved - liveExpected;
+  const observed = comparisonActive ? "78.9%" : `${liveObserved.toFixed(1)}%`;
+  const expected = comparisonActive ? "85.4%" : `${liveExpected.toFixed(1)}%`;
+  const delta = comparisonActive ? "−6.5 pp" : `${liveDelta < 0 ? "−" : "+"}${Math.abs(liveDelta).toFixed(1)} pp`;
+  const attempts = comparisonActive ? "11,482" : Math.round(scopeProfile.attempts * liveWindow.multiplier).toLocaleString("en-US");
+  const expectedAttempts = comparisonActive ? "11,530 reference attempts" : `${Math.round(scopeProfile.attempts * liveWindow.multiplier * 1.01).toLocaleString("en-US")} reference attempts`;
+  const risk = comparisonActive ? "$8.2k" : incidentActive ? scopeProfile.risk : "$0";
 
   useEffect(() => {
     if (!running || preview || incidentsVisible) return;
@@ -207,6 +235,9 @@ function CommandCenter({ preview = false }: { preview?: boolean }) {
     setAnalysisApplied(false);
     setQueryParsed(false);
     setPolicyOpen(false);
+    setLiveObservedWindow("60s");
+    setLiveReference("contextual");
+    setLiveScope("all");
   };
 
   const start = () => setStatus("RUNNING");
@@ -241,9 +272,9 @@ function CommandCenter({ preview = false }: { preview?: boolean }) {
             <button className={exploring ? "is-active" : ""} type="button" onClick={() => setAnalysisMode("explore")}>Explore</button>
           </div>
           {!exploring ? <>
-            <div className="live-query-summary"><span>Observed</span><strong>Last 60 seconds</strong><i>LIVE</i></div>
-            <div className="live-query-summary"><span>Reference</span><strong>Contextual 14-day baseline</strong></div>
-            <div className="live-query-summary"><span>Scope</span><strong>All payment traffic</strong></div>
+            <label className="live-query-control"><span>Observed</span><select aria-label="Observed live window" value={liveObservedWindow} onChange={(event) => setLiveObservedWindow(event.target.value as keyof typeof liveWindowOptions)}>{Object.entries(liveWindowOptions).map(([value, option]) => <option value={value} key={value}>{option.label}</option>)}</select><i>LIVE</i><ChevronDown size={13} /></label>
+            <label className="live-query-control"><span>Reference</span><select aria-label="Live reference" value={liveReference} onChange={(event) => setLiveReference(event.target.value as keyof typeof liveReferenceOptions)}>{Object.entries(liveReferenceOptions).map(([value, option]) => <option value={value} key={value}>{option.label}</option>)}</select><ChevronDown size={13} /></label>
+            <label className="live-query-control"><span>Scope</span><select aria-label="Live payment scope" value={liveScope} onChange={(event) => setLiveScope(event.target.value as keyof typeof liveScopeOptions)}>{Object.entries(liveScopeOptions).map(([value, option]) => <option value={value} key={value}>{option.label}</option>)}</select><ChevronDown size={13} /></label>
             <div className="stream-controls">
               <button className="button button--signal" type="button" onClick={start} disabled={streamActive}>
                 <Play size={15} fill="currentColor" /> {status === "READY" ? "Start live stream" : status === "PAUSED" ? "Resume stream" : status === "COMPLETE" ? "Replay stream" : "Stream running"}
@@ -280,7 +311,7 @@ function CommandCenter({ preview = false }: { preview?: boolean }) {
 
           <div className="chart-panel">
             <div className="panel-heading">
-              <div><strong>{comparisonActive ? "PIX approval rate in Brazil" : "Approval rate across all payment traffic"}</strong><span className="chart-context">{comparisonActive ? "Aug 29, 12:00–14:00 vs Aug 22, 12:00–14:00 · UTC" : "Last 60 seconds vs expected behavior now · UTC"}</span><span><i className="legend-observed" />Observed <i className="legend-reference" />Reference</span></div>
+              <div><strong>{comparisonActive ? "PIX approval rate in Brazil" : scopeProfile.title}</strong><span className="chart-context">{comparisonActive ? "Aug 29, 12:00–14:00 vs Aug 22, 12:00–14:00 · UTC" : `${liveWindow.context} vs ${referenceProfile.context} · UTC · View only`}</span><span><i className="legend-observed" />Observed <i className="legend-reference" />Reference</span></div>
               <div className="chart-actions">{comparisonActive && <button type="button" onClick={() => setPolicyOpen(true)}><SlidersHorizontal size={13} /> Create alert from this analysis</button>}<span className={`system-state system-state--${status.toLowerCase()}`} role="status" aria-live="polite">{comparisonActive ? "ANALYSIS READY" : status}</span></div>
             </div>
             <SignalChart incidentActive={chartDiverges} compact={preview} />
