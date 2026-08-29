@@ -49,7 +49,8 @@ GET /api/incidents/{id}/diagnosis
 Cada incidente tiene `incident_id`, `detected_at`, `estimated_start`, `slice` (`merchant_id`,
 `provider_id`, `payment_method`, `country`, todos `str | null` = sub-cubo parcial),
 `diagnosis_category` (lo clasifica el motor de Luca, determinístico), `diagnosis_status`
-(`supported` | `insufficient` | `ambiguous`), `confidence_score` / `confidence_level`,
+(`supported` | `insufficient_evidence` | `unclassified`; la capa explain tolera los aliases legacy
+`insufficient` / `ambiguous`), `confidence_score` / `confidence_level`,
 `baseline_rate` / `observed_rate`, `sample_size`, `wilson_ci`, `estimated_lost_approvals`
 (`{ value, window_seconds }`), `decline_shift[]`, `issuer_evidence[]`, `reason_codes[]`, `alternatives[]`.
 

@@ -18,6 +18,10 @@ from backend.explain.prioritize import score_incidents
 
 ROOT = Path(__file__).parent
 TEMPLATES = Environment(loader=FileSystemLoader(ROOT / "templates"), autoescape=False, trim_blocks=True, lstrip_blocks=True)
+CATEGORY_ALIASES = {
+    "issuer_over_declining": "issuer_declining",
+    "payment_method_outage": "method_degradation",
+}
 
 
 @lru_cache(maxsize=1)
@@ -36,7 +40,7 @@ def _format(value: Any, context: dict[str, Any]) -> Any:
 
 
 def _action(incident: IncidentEvidence) -> RecommendedAction:
-    key = "monitor" if incident.diagnosis_status != "supported" else incident.diagnosis_category
+    key = _playbook_key(incident)
     entry = _catalog().get(key, _catalog()["monitor"])
     context = {key: value or "the affected slice" for key, value in incident.slice.model_dump().items()}
     context["issuer_bank"] = incident.issuer_evidence[0].issuer_bank if incident.issuer_evidence else "the affected issuer"
@@ -49,8 +53,17 @@ def _action(incident: IncidentEvidence) -> RecommendedAction:
     )
 
 
+def _playbook_key(incident: IncidentEvidence) -> str:
+    if incident.diagnosis_status != "supported":
+        return "monitor"
+    return CATEGORY_ALIASES.get(
+        incident.diagnosis_category,
+        incident.diagnosis_category,
+    )
+
+
 def _fallback(incident: IncidentEvidence, action: RecommendedAction, evidence: list[str], cost: Any) -> dict[str, str]:
-    template_key = "monitor" if incident.diagnosis_status != "supported" else incident.diagnosis_category
+    template_key = _playbook_key(incident)
     if not (ROOT / "templates" / f"{template_key}.exec.j2").exists():
         template_key = "monitor"
     context = {"incident": incident, "action": action, "evidence": evidence, "cost": cost}

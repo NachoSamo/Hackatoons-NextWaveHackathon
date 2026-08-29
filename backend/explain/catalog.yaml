@@ -43,6 +43,28 @@ actions:
     expected_impact: "May reduce customer exposure while the method is investigated."
     reevaluate_after: "10 minutes"
     guidance: "Verify the method configuration and surface an available alternative where appropriate."
+  merchant_integration_error:
+    action_id: inspect_merchant_integration
+    title: "Inspect {merchant_id} integration across affected providers"
+    owner: merchant
+    param_template:
+      - name: integration_change
+        current: "current deployment"
+        proposed: "review or roll back the latest affected change"
+    expected_impact: "May restore authorization quality if a merchant-side integration change caused the decline pattern."
+    reevaluate_after: "5 minutes"
+    guidance: "Compare recent merchant integration changes with healthy provider controls before rolling back or correcting the mapping."
+  merchant_configuration:
+    action_id: review_merchant_configuration
+    title: "Review {merchant_id} payment configuration"
+    owner: merchant
+    param_template:
+      - name: payment_configuration
+        current: "active configuration"
+        proposed: "validate against the last known healthy configuration"
+    expected_impact: "May restore approvals when a merchant-side rule or limit is misconfigured."
+    reevaluate_after: "10 minutes"
+    guidance: "Validate the affected merchant settings and simulate the correction before applying any configuration change."
   monitor:
     action_id: monitor_for_evidence
     title: "Monitor the affected payment slice"

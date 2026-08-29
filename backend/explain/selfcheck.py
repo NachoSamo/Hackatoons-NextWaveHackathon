@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from backend.contracts import EngineOutput
+from backend.contracts import EngineOutput, Slice
 from backend.explain.build import diagnose
 from backend.explain.prioritize import score_incidents
 
@@ -18,7 +18,8 @@ def _load(name: str) -> EngineOutput:
 
 
 def main() -> None:
-    provider = diagnose(_load("engine_output_provider_degradation"))
+    provider_input = _load("engine_output_provider_degradation")
+    provider = diagnose(provider_input)
     assert len(provider) == 1
     d = provider[0]
     assert d.recommended_action and d.recommended_action.action_id == "reroute_provider_slice"
@@ -37,6 +38,37 @@ def main() -> None:
     assert weak[0].cost is None
     assert weak[0].recommended_action and weak[0].recommended_action.action_id == "monitor_for_evidence"
     assert weak[0].missing_data, "insufficient-evidence incident must list missing data"
+
+    seed = provider_input.incidents[0]
+    core_categories = {
+        "issuer_over_declining": (
+            "escalate_issuer_declines",
+            Slice(merchant_id="rappido", country="MX"),
+        ),
+        "payment_method_outage": (
+            "review_payment_method",
+            Slice(payment_method="pix", country="BR"),
+        ),
+        "merchant_integration_error": (
+            "inspect_merchant_integration",
+            Slice(merchant_id="rappido", country="BR"),
+        ),
+        "merchant_configuration": (
+            "review_merchant_configuration",
+            Slice(merchant_id="rappido", country="BR"),
+        ),
+    }
+    for category, (expected_action, slice_) in core_categories.items():
+        incident = seed.model_copy(
+            update={
+                "incident_id": f"CHECK-{category}",
+                "diagnosis_category": category,
+                "slice": slice_,
+            }
+        )
+        diagnosis = diagnose(EngineOutput(incidents=[incident]))[0]
+        assert diagnosis.recommended_action
+        assert diagnosis.recommended_action.action_id == expected_action
 
     print("explain self-check passed\n")
     for label, group in (("PROVIDER", provider), ("DUAL", dual), ("WEAK", weak)):
