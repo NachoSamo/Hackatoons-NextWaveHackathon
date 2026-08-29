@@ -228,7 +228,7 @@ problemas de integración.
 - **US-15:** reconocer un incidente parecido y mostrar resolución previa.
 - **US-16:** proponer umbral, baseline o política mediante lenguaje natural; convertirlo en regla
   estructurada, validarla, correr replay y requerir aprobación antes de activarla. El LLM nunca
-  modifica el detector directamente. Ver `10-agent-governance.md`.
+  modifica el detector directamente. Ver `11-agent-governance.md`.
 - **US-17:** enviar resumen a Slack/WhatsApp.
 - **US-18:** auto-remediación gobernada por políticas y approval gates.
 

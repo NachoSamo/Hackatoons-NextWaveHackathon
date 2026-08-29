@@ -1,0 +1,10 @@
+{
+  "incidents": [{
+    "incident_id": "INC-0003", "detected_at": "2026-08-30T14:05:00Z", "estimated_start": "2026-08-30T14:04:00Z",
+    "slice": {"merchant_id": "streamplus", "provider_id": "dlocal", "payment_method": "cash_oxxo", "country": "MX"},
+    "diagnosis_category": "issuer_declining", "diagnosis_status": "insufficient", "confidence_score": 0.32, "confidence_level": "low",
+    "baseline_rate": 0.78, "observed_rate": 0.53, "sample_size": 15, "wilson_ci": [0.28, 0.77],
+    "estimated_lost_approvals": {"value": 4, "window_seconds": 60}, "decline_shift": [], "issuer_evidence": [],
+    "reason_codes": ["LOW_SAMPLE_SIZE"], "alternatives": [{"category": "method_degradation", "score": 0.28}]
+  }]
+}

@@ -1,0 +1,21 @@
+{
+  "incidents": [{
+    "incident_id": "INC-0001",
+    "detected_at": "2026-08-30T14:03:12Z",
+    "estimated_start": "2026-08-30T13:58:40Z",
+    "slice": {"merchant_id": null, "provider_id": "adyen", "payment_method": null, "country": "BR"},
+    "diagnosis_category": "provider_degradation",
+    "diagnosis_status": "supported",
+    "confidence_score": 0.94,
+    "confidence_level": "high",
+    "baseline_rate": 0.90,
+    "observed_rate": 0.49,
+    "sample_size": 430,
+    "wilson_ci": [0.44, 0.54],
+    "estimated_lost_approvals": {"value": 176, "window_seconds": 60},
+    "decline_shift": [{"code": "91", "label": "Issuer Unavailable", "kind": "soft", "count_before": 12, "count_after": 208, "share_before": 0.06, "share_after": 0.71}],
+    "issuer_evidence": [{"issuer_bank": "itau", "attempts": 180, "approval_rate": 0.41, "delta_points": -47}],
+    "reason_codes": ["CODE_91_SPIKE", "MULTIPLE_ISSUERS_AFFECTED", "ALTERNATIVE_PROVIDERS_HEALTHY"],
+    "alternatives": [{"category": "issuer_unavailable", "score": 0.31}]
+  }]
+}

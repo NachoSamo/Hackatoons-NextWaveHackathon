@@ -4,3 +4,7 @@ psycopg[binary]
 pandas
 pyarrow
 numpy
+pydantic-ai-slim[openai]
+jinja2
+pyyaml
+python-frontmatter
