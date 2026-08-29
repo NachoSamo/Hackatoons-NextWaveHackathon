@@ -223,12 +223,36 @@ problemas de integración.
 - Distingue falta de documentación, provider outage y mapping defect de Yuno.
 - Un código desconocido nunca se presenta automáticamente como hard decline.
 
+#### US-15 — Explorar y comparar ventanas personalizadas
+
+Como operador, quiero salir del monitoreo global y consultar un scope y dos rangos temporales
+personalizados para contrastar hipótesis sin reconstruir filtros en varios dashboards.
+
+- El Command Center distingue claramente `Live Monitoring` de `Explore`.
+- `Live Monitoring` conserva el detector automático y su baseline contextual por defecto.
+- `Explore` permite elegir rango observado, rango de referencia, timezone y filtros por merchant,
+  provider, method y country.
+- Antes de ejecutar, muestra una oración y chips con la consulta estructurada completa.
+- KPIs, título, gráfico, leyenda, sample size y revenue at risk responden al mismo scope.
+- Una consulta natural puede proponer esa estructura, pero el usuario confirma con `Run analysis`.
+
+#### US-16 — Proponer criterios de alerta gobernados
+
+Como operador, quiero describir o completar un criterio de alerta y recibir una propuesta revisable
+sin alterar directamente el detector activo.
+
+- La propuesta siempre produce un `PolicyDraft` estructurado y legible.
+- Inputs explícitos y lenguaje natural son alternativas de interacción aún por decidir.
+- El draft muestra métrica, scope, ventana, baseline, umbral, persistencia y severidad.
+- Activarlo requiere validación, replay, aprobación humana y una nueva versión auditable.
+- Esta capacidad no modifica el hot path del trial by fire.
+
 ### P2 — Roadmap / bonus
 
 - **US-15:** reconocer un incidente parecido y mostrar resolución previa.
 - **US-16:** proponer umbral, baseline o política mediante lenguaje natural; convertirlo en regla
   estructurada, validarla, correr replay y requerir aprobación antes de activarla. El LLM nunca
-  modifica el detector directamente. Ver `11-agent-governance.md`.
+  modifica el detector directamente. Ver `10-agent-governance.md`.
 - **US-17:** enviar resumen a Slack/WhatsApp.
 - **US-18:** auto-remediación gobernada por políticas y approval gates.
 
@@ -252,6 +276,9 @@ problemas de integración.
 | FR-14 | Contrastar merchant y provider evidence | P1 | Research + transcript |
 | FR-15 | Renderizar fallback estructurado si OpenAI falla | P0 | Demo resilience |
 | FR-16 | Guiar la investigación mediante un Copilot contextual que compara agregados y cita evidence IDs | P0 | Demo path + producto/UX |
+| FR-17 | Separar `Live Monitoring` de `Explore` y permitir comparar dos rangos históricos personalizados sobre un scope explícito | P1 | Producto/UX |
+| FR-18 | Traducir una consulta natural a ventanas y filtros estructurados, con confirmación antes de ejecutarla | P1 | Producto/UX |
+| FR-19 | Proponer criterios de alerta como `PolicyDraft` sujeto a validación, replay y aprobación; nunca activar desde el input | P1 | Producto/IA + gobernanza |
 
 ## 5. Requerimientos no funcionales
 
@@ -275,10 +302,14 @@ problemas de integración.
 └── Landing
     └── Watch the live incident
         └── /control-tower
-            ├── Command Center — composición A
-            ├── /incidents/:id — investigación guiada, composición C
-            │   └── Centinel Copilot — compare, explain, decide
-            └── Executive / Operations — mismo evidence bundle
+            ├── Query surface — Live Monitoring / Explore
+            │   ├── Observed range / Reference range / Scope
+            │   └── Query assistant → structured preview → Run analysis
+            ├── Command Center — composición A, responde a una sola AnalysisQuery
+            ├── Investigation workspace inline — composición C
+            │   ├── Centinel Copilot — compare, explain, decide
+            │   └── Executive / Operations — mismo evidence bundle
+            └── El gráfico y la cola conservan contexto detrás del workspace
 
 /demo-control
 └── Judge injector — superficie separada
@@ -318,6 +349,10 @@ Hasta recibir el modelo definitivo del backend, el frontend consume un adapter c
   simulationOnly, reviewedBy, appliedAt y outcome.
 - `CopilotResponse`: answer, audience, comparison, evidenceIds, confidence, limitations,
   suggestedQuestions, suggestedActions y viewIntent tipado.
+- `AnalysisQuery`: mode, observedRange, referenceRange, timezone, filters y source
+  (`controls | natural_language`).
+- `AlertPolicyDraft`: metric, filters, window, baseline, threshold, persistence, severity,
+  validationStatus, replayResult y approvalStatus.
 - `DemoScenario`: supported dimensions, magnitude, duration and fixture seed.
 
 La UI no importa tipos del backend directamente: un adapter normaliza nombres, nullability y estados.
