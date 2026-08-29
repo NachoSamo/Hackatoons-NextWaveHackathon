@@ -9,7 +9,8 @@ construcción: ~14 horas.
 
 **Challenge elegido: C2 · The Control Tower (Yuno)** — monitoreo de pagos en vivo + diagnóstico de
 causa raíz. Dominio en `docs/06-dominio-pagos.md`, enfoque técnico y decisiones en
-`docs/07-decisiones-core.md`. Los 4 briefs y por qué se eligió C2: `docs/05-challenges.md`.
+`docs/07-decisiones-core.md`, y producto/UX en `docs/08-product-ux-gtm.md`. Los 4 briefs y por qué se
+eligió C2: `docs/05-challenges.md`.
 Los contratos de API (abajo) se completan cuando se cierren las decisiones core.
 
 ## Stack
