@@ -276,9 +276,10 @@ problemas de integración.
     └── Watch the live incident
         └── /control-tower
             ├── Command Center — composición A
-            ├── /incidents/:id — investigación guiada, composición C
-            │   └── Centinel Copilot — compare, explain, decide
-            └── Executive / Operations — mismo evidence bundle
+            ├── Investigation workspace inline — composición C
+            │   ├── Centinel Copilot — compare, explain, decide
+            │   └── Executive / Operations — mismo evidence bundle
+            └── El gráfico y la cola conservan contexto detrás del workspace
 
 /demo-control
 └── Judge injector — superficie separada
