@@ -53,7 +53,7 @@ button:focus-visible, a:focus-visible { outline: 2px solid var(--signal-soft); o
 .landing-nav__links a:hover { color: var(--text); }
 .landing-nav > .button { justify-self: end; }
 
-.hero { min-height: 1080px; position: relative; padding: 145px 4vw 0; border-bottom: 1px solid var(--line); background-image: linear-gradient(var(--line) 1px, transparent 1px), linear-gradient(90deg, var(--line) 1px, transparent 1px); background-size: 25vw 100%, 25vw 100%; }
+.hero { position: relative; padding: 145px 4vw 0; border-bottom: 1px solid var(--line); background-image: linear-gradient(var(--line) 1px, transparent 1px), linear-gradient(90deg, var(--line) 1px, transparent 1px); background-size: 25vw 100%, 25vw 100%; }
 .hero::after { content: ""; position: absolute; inset: 0; pointer-events: none; background: radial-gradient(circle at 55% 27%, rgba(89,100,242,.15), transparent 28%); }
 .hero-copy { position: relative; z-index: 3; max-width: 1160px; margin: 0 auto; text-align: center; }
 .hero h1 { margin: 0; font-size: clamp(4.6rem, 7vw, 6rem); line-height: .91; letter-spacing: -.04em; font-weight: 580; text-wrap: balance; }
@@ -63,7 +63,7 @@ button:focus-visible, a:focus-visible { outline: 2px solid var(--signal-soft); o
 .text-link:hover { color: white; }
 .hero-note { display: block; margin-top: 25px; color: #77777c; font: 11px/1.4 var(--mono); text-transform: uppercase; letter-spacing: .08em; }
 .hero-signal { position: absolute; z-index: 1; top: 50px; left: 50%; width: min(960px, 80vw); opacity: .48; transform: translateX(-50%) scale(1.15); mask-image: linear-gradient(to bottom, black 35%, transparent 90%); }
-.hero-preview { position: absolute; z-index: 4; width: min(1300px, 92vw); left: 50%; bottom: -300px; transform: translateX(-50%); filter: drop-shadow(0 50px 80px rgba(0,0,0,.55)); }
+.hero-preview { position: relative; z-index: 4; width: min(1300px, 92vw); margin: 72px auto -300px; filter: drop-shadow(0 50px 80px rgba(0,0,0,.55)); }
 
 .problem-section { padding: 430px 5vw 150px; display: grid; grid-template-columns: 1.35fr .65fr; gap: 9vw; border-bottom: 1px solid var(--line); }
 .problem-section h2, .truth-heading h2, .contrast-section h2, .closing-section h2 { margin: 0; font-size: clamp(3.5rem, 6vw, 7rem); line-height: .96; letter-spacing: -.04em; font-weight: 560; }
@@ -101,7 +101,7 @@ button:focus-visible, a:focus-visible { outline: 2px solid var(--signal-soft); o
 
 .app-shell { min-height: 100vh; background: #050505; display: grid; place-items: start center; overflow: auto; }
 .command-center { width: 100vw; min-width: 1120px; min-height: 100vh; background: #080809; border: 1px solid #26282a; position: relative; font-size: 13px; overflow: hidden; }
-.command-center--preview { width: 1300px; min-width: 0; min-height: 0; aspect-ratio: 1505 / 1045; transform-origin: top center; box-shadow: 0 0 0 1px rgba(255,255,255,.06), 0 28px 90px rgba(0,0,0,.5); pointer-events: none; }
+.command-center--preview { width: 100%; min-width: 0; min-height: 0; aspect-ratio: 1505 / 1045; transform-origin: top center; box-shadow: 0 0 0 1px rgba(255,255,255,.06), 0 28px 90px rgba(0,0,0,.5); pointer-events: none; }
 .command-rail { height: 62px; display: grid; grid-template-columns: 1.2fr auto 1fr auto 1.4fr; align-items: center; gap: 24px; padding: 0 22px; border-bottom: 1px solid var(--line); }
 .simulation-badge { display: inline-flex; align-items: center; justify-self: center; gap: 7px; padding: 6px 10px; border-radius: 5px; background: var(--signal); font: 11px var(--mono); }
 .command-clock { justify-self: end; display: inline-flex; align-items: center; gap: 7px; color: #c5c5c8; font: 12px var(--mono); }
@@ -244,11 +244,11 @@ button:focus-visible, a:focus-visible { outline: 2px solid var(--signal-soft); o
   .landing-nav { grid-template-columns: 1fr auto; padding: 0 22px; }
   .landing-nav__links { display: none; }
   .landing-nav > .button { min-height: 38px; padding: 0 12px; font-size: 12px; }
-  .hero { min-height: 840px; padding: 110px 22px 0; background-size: 50vw 100%, 50vw 100%; }
+  .hero { padding: 110px 22px 0; background-size: 50vw 100%, 50vw 100%; }
   .hero h1 { font-size: clamp(3.6rem, 15vw, 6rem); }
   .hero-copy > p { margin-top: 28px; font-size: 17px; }
   .hero-actions { flex-direction: column; gap: 18px; }
-  .hero-preview { width: 1000px; bottom: -120px; }
+  .hero-preview { width: 1000px; margin-top: 64px; margin-bottom: -120px; }
   .hero-signal { width: 130vw; }
   .problem-section { padding: 240px 22px 100px; grid-template-columns: 1fr; gap: 60px; }
   .problem-section h2, .truth-heading h2, .contrast-section h2, .closing-section h2 { font-size: clamp(3rem, 12vw, 5rem); }
