@@ -27,7 +27,7 @@ unrehearsed incident created by the judge.
 | 3 | The signal enters `validating` before triggering. An incident appears with start time, severity and estimated impact | Does nothing and lets the detector react | ⬜ | Luca + Pena |
 | 4 | Incident Detail converges from the global drop to `Provider X × Brazil`; shows baseline, sample, codes and confidence | Opens “Why this diagnosis?” | ⬜ | Luca + Juani |
 | 5 | Two explanations of the same incident: executive one-liner and operations detail. Recommended action is visible but not executed | Switches `Executive / Operations` | ⬜ | Luca + Juani |
-| 6 | A Mexican issuer fails for one merchant at the same time. Control Tower creates a second incident without mixing causes | Triggers the second prepared case | ⬜ | Samo + Luca |
+| 6 | A Mexican issuer fails for one merchant at the same time. Centinel creates a second incident without mixing causes | Triggers the second prepared case | ⬜ | Samo + Luca |
 | 7 | Both incidents are prioritized by impact, scope, persistence and confidence; every score is explainable | Briefly opens priority #1 | ⬜ | Juani |
 | 8 | Ambiguous or low-sample case: the system shows `Insufficient evidence`, alternatives and missing data | Injects a weak-signal case | ⬜ | Luca + Juani |
 | 9 | Trial by fire: the judge selects and triggers a new combination; the system detects, localizes and explains without team intervention | Hands the injection panel to the judge | ⬜ | Whole team |
