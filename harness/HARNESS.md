@@ -31,7 +31,7 @@ empezar, leé este archivo primero.
 | `docs/arquitectura.md` | Diagrama + descripción técnica (ENTREGABLE, inglés) | Se llena el sábado |
 | `docs/arquitectura.html` | Borrador de la arquitectura de C2, capa por capa, con decisiones abiertas | Ahora — alinear al equipo |
 | `pitch/demo-path.md` | Los N pasos exactos que se muestran en el pitch | Se congela antes de codear |
-| `pitch/script-demo.md` | Guión del pitch de 3 minutos | Juani, sábado post-cena |
+| `pitch/script-demo.md` | Guión del pitch de 7 minutos: 2 de producto + 5 de demo | Juani, sábado post-cena |
 | `../README.md` | Entregable público en la raíz de GitHub — **EN INGLÉS** | Se arma desde el día 1 |
 
 ---
