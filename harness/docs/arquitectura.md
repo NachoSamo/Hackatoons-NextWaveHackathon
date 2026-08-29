@@ -4,7 +4,14 @@
 > la profundidad técnica no es un detalle de ejecución, es un entregable formal.
 
 ## Diagrama
-Se encontrará en un artifact HTML dentro de arquitectura. Este archivo debe estar en ingles.
+Se encontrará en un artifact HTML. Este archivo (entregable) debe estar en inglés y se completa
+cuando cierren las decisiones core.
+
+**Borrador de trabajo (español, con decisiones abiertas):** `arquitectura.html` en esta carpeta ·
+artifact: https://claude.ai/code/artifact/00acbfd4-203c-4d91-99d6-e07fd0f209da
+
+Pipeline de 5 capas: Generador → Motor determinístico (detector → localizador) → Agente RAG →
+Playbook + templates → Entrega (dashboard + canal). Regla: lo determinístico calcula, la IA entiende.
 
 ## Capas (son mutables dependiendo la solución que elijamos)
 | Capa | Qué hace | Tech | Responsable |

@@ -24,7 +24,8 @@ empezar, leé este archivo primero.
 | `docs/04-checklist-preevento.md` | Qué dejar listo/instalado/impreso ANTES del sábado | Esta semana |
 | `docs/decision-log.md` | Toda decisión con hora y motivo | Se escribe durante el evento |
 | `docs/mentor-feedback.md` | Lo que traen los mentores (datos, no veredictos) | Juani lo llena |
-| `docs/arquitectura.md` | Diagrama + descripción técnica (ENTREGABLE) | Se llena el sábado |
+| `docs/arquitectura.md` | Diagrama + descripción técnica (ENTREGABLE, inglés) | Se llena el sábado |
+| `docs/arquitectura.html` | Borrador de la arquitectura de C2, capa por capa, con decisiones abiertas | Ahora — alinear al equipo |
 | `pitch/demo-path.md` | Los N pasos exactos que se muestran en el pitch | Se congela antes de codear |
 | `pitch/script.md` | Guión del pitch de 3 minutos | Juani, sábado post-cena |
 | `README.md` | Entregable público en GitHub — **EN INGLÉS** | Se arma desde el día 1 |
