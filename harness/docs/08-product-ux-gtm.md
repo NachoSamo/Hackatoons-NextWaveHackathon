@@ -1,4 +1,4 @@
-# 08 — Producto, UX y go-to-market · Control Tower
+# 08 — Producto, UX y go-to-market · Centinel
 
 > Tesis de producto, experiencia, venta e investigación de usuarios. Para el dominio técnico ver
 > `06-dominio-pagos.md`; para decisiones de arquitectura y algoritmo ver `07-decisiones-core.md`.
@@ -7,7 +7,7 @@
 
 ## 1. Síntesis ejecutiva
 
-**Control Tower es una capa de inteligencia de incidentes para Yuno que vigila el stream de pagos, detecta caídas de conversión que realmente importan, aísla la causa raíz entre múltiples dimensiones y explica qué está pasando, cuánto cuesta y qué debería revisar una persona.**
+**Centinel es una capa de inteligencia de incidentes para Yuno que vigila el stream de pagos, detecta caídas de conversión que realmente importan, aísla la causa raíz entre múltiples dimensiones y explica qué está pasando, cuánto cuesta y qué debería revisar una persona.**
 
 No es otro dashboard ni otro sistema de alertas. Convierte miles de eventos fragmentados en una historia operacional defendible:
 
@@ -47,7 +47,7 @@ Providers / bancos / adquirentes / wallets
                  ↓ señales y respuestas
              Plataforma Yuno
                  ↓ stream normalizado
-         Control Tower de incidentes
+             Centinel
           ↙                         ↘
 Operaciones y soporte Yuno      Equipo de pagos del merchant
           ↘                         ↙
@@ -131,7 +131,7 @@ Valor:
 
 ## 6. El producto
 
-Nombre funcional de trabajo: **Yuno Control Tower**. No cerrar branding hasta validar con el equipo y los mentores.
+Nombre aprobado: **Centinel**. Descriptor funcional: `Payment operations control tower`.
 
 ### 6.1 Flujo principal
 
@@ -483,11 +483,11 @@ Incident Detail: evidencia, ownership y acción
 
 **Subtítulo**
 
-> Control Tower detects meaningful conversion drops, isolates the affected payment path and explains the evidence, impact and next best action in real time.
+> Centinel detects meaningful conversion drops, isolates the affected payment path and explains the evidence, impact and next best action in real time.
 
 **CTA primario:** `Watch the live incident`
 
-**CTA secundario:** `Open Control Tower`
+**CTA secundario:** `Open control tower`
 
 ### Versión en español para conversación
 
@@ -507,7 +507,7 @@ Incident Detail: evidencia, ownership y acción
    posible contrastar señales que un PSP aislado no puede ver.
 6. **Dos audiencias, una verdad:** resumen ejecutivo y detalle operacional derivados del mismo
    evidence bundle.
-7. **La forma tradicional vs. Control Tower:** días investigando y escalando sin contexto frente a
+7. **La forma tradicional vs. Centinel:** días investigando y escalando sin contexto frente a
    alerta, evidencia y siguiente acción en minutos.
 8. **Incertidumbre honesta:** mostrar `Insufficient evidence` como contrato de confianza.
 9. **CTA final:** `See Payment Truth in action` → abre la aplicación lista para iniciar el stream.
@@ -537,7 +537,7 @@ pero llevarla a nuestro diferencial:
 
 ### Contrato responsive
 
-- **Desktop:** landing completa y Control Tower de tres zonas.
+- **Desktop:** landing completa y Command Center de tres zonas.
 - **Tablet:** dos zonas; Incident Detail se abre como panel dedicado.
 - **Mobile:** la landing mantiene el relato. En la app solo se hace triage: estado, prioridad,
   impacto, ownership, resumen y enlace al detalle. No intentar comprimir el Evidence Explorer.
@@ -548,7 +548,7 @@ pero llevarla a nuestro diferencial:
 
 ```text
 ┌──────────────────────────────────────────────────────────────────────────┐
-│ Control Tower   LIVE/SIMULATION   time windows   Start · Pause · Reset  │
+│ Centinel        LIVE/SIMULATION   time windows   Start · Pause · Reset  │
 ├──────────────────────────────────────────────────────────────────────────┤
 │ Approval observed vs expected     Revenue at risk     Active incidents │
 ├───────────────────────────────────────────┬──────────────────────────────┤

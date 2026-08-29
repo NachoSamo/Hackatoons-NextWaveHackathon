@@ -1,4 +1,4 @@
-# Control Tower
+# Centinel
 
 > Working product name for NextWave Hackathon 2026 · Challenge 2 by Yuno.
 
@@ -12,7 +12,7 @@ still have to cross thousands of transactions to isolate the root cause and expl
 
 ## The solution
 
-Control Tower watches a live transaction stream, separates meaningful conversion drops from normal
+Centinel watches a live transaction stream, separates meaningful conversion drops from normal
 variation and localizes the smallest affected segment across merchant, provider, method, country and
 issuer. It produces an evidence-backed diagnosis, estimated revenue impact and recommended next
 step for both operations and executive audiences—and says when the evidence is insufficient.

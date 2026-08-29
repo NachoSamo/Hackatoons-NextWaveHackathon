@@ -26,14 +26,14 @@ merchant may discover it first through customer complaints.”
 
 ### 0:30 — Solution
 
-“We built Control Tower: explainable incident intelligence for Yuno. It watches the live payment
+“We built Centinel: explainable incident intelligence for Yuno. It watches the live payment
 stream, distinguishes meaningful drops from normal variation, isolates the smallest affected
 segment and turns the evidence into a diagnosis, estimated impact and recommended next step. It
 never hides uncertainty, and it never executes a remediation without a human.”
 
 ### 1:00 — Demo
 
-“Right now the stream is healthy. The rate moves, but Control Tower stays silent because variation
+“Right now the stream is healthy. The rate moves, but Centinel stays silent because variation
 is not an incident.”
 
 “Now a provider starts over-declining only in Brazil. The detector validates that the drop is
@@ -41,7 +41,7 @@ persistent, then the localizer compares merchant, provider, method, country and 
 the affected path and shows the evidence behind that conclusion.”
 
 “Operations gets the full diagnosis. An executive gets one line with the money at risk. When a
-second issuer incident appears in Mexico for a single merchant, Control Tower separates both stories
+second issuer incident appears in Mexico for a single merchant, Centinel separates both stories
 and prioritizes them.”
 
 “And when the sample is not strong enough, it says so instead of inventing a cause.”
@@ -58,7 +58,7 @@ underlying aggregates.”
 
 ### 2:30 — Impact
 
-“Yuno already has the unique view across providers. Control Tower turns that visibility into
+“Yuno already has the unique view across providers. Centinel turns that visibility into
 operational trust: less time blind, fewer hours crossing dashboards and faster, evidence-backed
 communication with merchants. Yuno no longer only sees every payment — it can explain what is
 breaking before revenue disappears.”
@@ -78,7 +78,7 @@ breaking before revenue disappears.”
   emits incidents through an API and notification channels; providers and merchants do not need a
   new point-to-point integration.
 - Why isn't this just Monitors? → Monitors detects anomalies and can redistribute traffic. Control
-  Tower adds multidimensional root-cause localization, evidence, uncertainty and incident memory.
+  Centinel adds multidimensional root-cause localization, evidence, uncertainty and incident memory.
 - How do you estimate lost revenue? → It is an estimate: affected attempts × approval-rate gap ×
   average ticket. The assumptions are visible and the value is never presented as reconciled money.
 

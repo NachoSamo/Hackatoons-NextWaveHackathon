@@ -8,7 +8,7 @@ web
 
 ## Stack
 
-TypeScript, React and Tailwind CSS in `frontend/`. Desktop-first web interface. Frontend deploy target: Vercel.
+TypeScript, React and authored CSS in `frontend/`. Desktop-first web interface. Frontend deploy target: Vercel.
 
 ## Users
 
@@ -22,14 +22,14 @@ TypeScript, React and Tailwind CSS in `frontend/`. Desktop-first web interface. 
 
 ## Product Purpose
 
-Control Tower watches payment performance, compares an observed time window with a trusted
+Centinel watches payment performance, compares an observed time window with a trusted
 reference, distinguishes meaningful approval-rate drops from normal variation, localizes the
 smallest affected payment segment and produces an evidence-backed diagnosis and recommended next
 step. Success means Yuno understands and communicates an incident before the merchant has to ask.
 
 ## Positioning
 
-Yuno is uniquely positioned between merchants and multiple payment providers. Control Tower uses
+Yuno is uniquely positioned between merchants and multiple payment providers. Centinel uses
 that cross-provider visibility to contrast comparable traffic and infer likely ownership. It adds
 explainable multidimensional diagnosis, evidence, uncertainty and recommended action to monitoring;
 it is not another generic dashboard or an LLM guessing over raw transactions.
@@ -67,13 +67,14 @@ it is not another generic dashboard or an LLM guessing over raw transactions.
 
 ## Brand Commitments
 
-- Working name: Control Tower. Final name remains open.
+- Product name: **Centinel**. Use this exact spelling in every public surface.
+- Category descriptor: `Payment operations control tower`.
 - Operational, calm, precise and evidence-first.
 - Visual and marketing authority: Yuno Payments Concierge. Extend its black/white foundation,
   Geist typography, technical grid, oversized type and restrained electric blue-violet accent
   without cloning its page.
 - Landing and application are one product family: the landing is spacious and persuasive; the
-  Control Tower is dense and operational.
+  Centinel's Command Center is dense and operational.
 - Avoid generic AI aesthetics, sci-fi spectacle, uncontrolled gradients, glassmorphism and
   chatbot-first composition.
 - The interface must make temporal comparison and evidence memorable, not AI branding.
@@ -84,7 +85,7 @@ it is not another generic dashboard or an LLM guessing over raw transactions.
 
 - `/`: public landing. Hero, real product preview, problem, signal-to-action story, evidence and
   final CTA. Primary CTA: `Watch the live incident`.
-- `/control-tower`: operational application. Command Center first; Incident Detail second.
+- `/control-tower`: Centinel operational application. Command Center first; Incident Detail second.
 - `/demo-control` or an equivalent separated surface: judge-only incident injection. It must not
   compete with the operator interface.
 - The demo stream exposes `READY`, `RUNNING`, `PAUSED` and `COMPLETE`, with `Start live stream`,
