@@ -83,13 +83,15 @@ export function CommandCenter({ preview = false }: { preview?: boolean }) {
   }, [preview]);
 
   useEffect(() => {
-    if (!filtersOpen) return;
+    if (!filtersOpen && !viewOpen) return;
     const closeOnEscape = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setFiltersOpen(false);
+      if (event.key !== "Escape") return;
+      setFiltersOpen(false);
+      setViewOpen(false);
     };
     document.addEventListener("keydown", closeOnEscape);
     return () => document.removeEventListener("keydown", closeOnEscape);
-  }, [filtersOpen]);
+  }, [filtersOpen, viewOpen]);
 
   useEffect(() => {
     if (!live.ticker) return;
@@ -218,7 +220,7 @@ export function CommandCenter({ preview = false }: { preview?: boolean }) {
 
   const signalSimulator = (
     <div className="demo-menu">
-    <button className="demo-menu__trigger detection-trigger" aria-expanded={filtersOpen} aria-controls="detection-scope-panel" onClick={() => setFiltersOpen((open) => !open)}>
+    <button className="demo-menu__trigger detection-trigger" aria-expanded={filtersOpen} aria-controls="detection-scope-panel" onClick={() => { setFiltersOpen((open) => !open); setViewOpen(false); }}>
       <SlidersHorizontal size={15} />
       <span className="detection-trigger__copy">
         <strong>{text("Signal simulator", "Simulador de señal")}</strong>
@@ -269,7 +271,7 @@ export function CommandCenter({ preview = false }: { preview?: boolean }) {
           {towerState === "PAUSED" && <button className="button button--signal" onClick={resume}><Play size={15} />{text("Resume live view", "Retomar vista en vivo")}</button>}
           <button onClick={reset} disabled={busy}><RotateCcw size={15} />{text("Reset", "Reiniciar")}</button>
           <div className="demo-menu">
-            <button className="demo-menu__trigger view-filter-trigger" aria-expanded={viewOpen} aria-controls="view-filter-panel" onClick={() => setViewOpen((open) => !open)}>
+            <button className="demo-menu__trigger view-filter-trigger" aria-expanded={viewOpen} aria-controls="view-filter-panel" onClick={() => { setViewOpen((open) => !open); setFiltersOpen(false); }}>
               <Filter size={15} />
               <span className="detection-trigger__copy">
                 <strong>{text("View filter", "Filtro de vista")}</strong>

@@ -1072,7 +1072,23 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .tower-simulator .demo-menu { width: 100%; }
 .tower-simulator .demo-menu__trigger { width: 100%; justify-content: space-between; }
 .tower-simulator .detection-trigger__copy { min-width: 0; flex: 1; }
-.tower-simulator .demo-menu__panel { z-index: 40; right: 0; left: auto; background: #111113; }
+/* El panel del simulador NO puede ser absolute: vive dentro de .tower-incidents,
+   que tiene overflow-y auto y lo recortaría, y al estar a media altura sus últimos
+   campos (incluido "Inject test signal") caían fuera del viewport. Con fixed escapa
+   del scroller, se ancla al borde inferior y scrollea internamente si no entra.
+   Verificado: ningún ancestro tiene transform/filter, así que fixed es seguro acá. */
+.tower-simulator .demo-menu__panel {
+  position: fixed;
+  z-index: 60;
+  top: auto;
+  right: clamp(16px, 2vw, 28px);
+  bottom: clamp(16px, 3vh, 32px);
+  left: auto;
+  max-height: min(78vh, 560px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  background: #111113;
+}
 
 /* El filtro de vista deja de usar el rojo de alerta. */
 .demo-menu__trigger.view-filter-trigger {
@@ -1186,3 +1202,8 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
   min-height: 0;
   aspect-ratio: 920 / 190;
 }
+
+/* Un desplegable abierto va por encima de todo lo de la torre, incluido el
+   simulador de la columna derecha (z-index 30). Sin esto el panel del filtro
+   quedaba debajo y los selects no se podían clickear. */
+.demo-menu__panel { z-index: 60; }
