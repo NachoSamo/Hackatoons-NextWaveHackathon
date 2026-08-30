@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { ArrowRight, ChevronLeft, ChevronRight, Clock3, ExternalLink, X } from "lucide-react";
-import { Brand } from "../components/Brand";
-import "../pitch.css";
+import { Brand } from "./Brand";
+import "./pitch.css";
 
 type Slide = {
   id: string;
@@ -77,7 +77,7 @@ export function Pitch() {
     {
       id: "demo", eyebrow: "Product proof · recorded demo", owner: "SAMO · OSO · JUANI", time: "03:05–06:30",
       note: "Keep the original speaker contract: Samo narrates healthy/injection/detection/stacked incidents; Oso narrates filters/diagnosis/comparison; Juani owns the Slack handoff; Samo covers executive view; Samo and Oso close the video. Video starts at 03:15.",
-      content: <div className="pitch-demo"><div><p className="pitch-kicker"><i /> Recorded from a clean reset</p><h2>Watch Centinel build the incident.</h2><p>A single continuous execution. No hidden diagnosis and no production actions.</p><a href="/control-tower" target="_blank" rel="noreferrer">Open Command Center fallback <ExternalLink size={17} /></a></div><ol><li><span>01</span>Healthy silence</li><li><span>02</span>Inject degradation</li><li><span>03</span>Stack + filter incidents</li><li><span>04</span>Diagnosis + Slack handoff</li><li><span>05</span>Compare windows</li></ol></div>
+      content: <div className="pitch-demo"><div><p className="pitch-kicker"><i /> Recorded from a clean reset</p><h2>Watch Centinel build the incident.</h2><p>A single continuous execution. No hidden diagnosis and no production actions.</p><a href={import.meta.env.VITE_DEMO_URL ?? "#"} target="_blank" rel="noreferrer">Open Command Center fallback <ExternalLink size={17} /></a></div><ol><li><span>01</span>Healthy silence</li><li><span>02</span>Inject degradation</li><li><span>03</span>Stack + filter incidents</li><li><span>04</span>Diagnosis + Slack handoff</li><li><span>05</span>Compare windows</li></ol></div>
     },
     {
       id: "production", eyebrow: "Production path", owner: "PENNAZI", time: "06:30–06:45",
