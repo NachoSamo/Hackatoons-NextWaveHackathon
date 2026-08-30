@@ -11,6 +11,10 @@ La experiencia principal ya cubre el relato obligatorio `watch → validate → 
 recommend`, pero la limpieza había eliminado una parte P0: comparar el incidente activo contra una
 referencia y ejecutar más de una consulta sin perder contexto.
 
+El Command Center no agrega una subnavegación entre métricas y evidencia: el stream y la cola son
+una sola superficie. El alcance dimensional se muestra como `Applied filters` dentro del control que
+lo configura, evitando presentar el mismo estado como una vista independiente.
+
 El Command Center vuelve a mostrar el proceso que produce esa conclusión, sin fingir un feed que el
 contrato no ofrece: cada tick agrega un punto al gráfico y filas normalizadas de ventana, scope,
 detector y diagnóstico. La cola priorizada permanece visible a la derecha del stream y refleja sólo

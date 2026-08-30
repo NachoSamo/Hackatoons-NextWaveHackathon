@@ -188,7 +188,14 @@ export function CommandCenter({ preview = false }: { preview?: boolean }) {
           {towerState === "PAUSED" && <button className="button button--signal" onClick={resume}><Play size={15} />{text("Resume", "Reanudar")}</button>}
           <button onClick={reset} disabled={busy}><RotateCcw size={15} />{text("Reset", "Reiniciar")}</button>
           <div className="demo-menu">
-            <button className="demo-menu__trigger detection-trigger" onClick={() => setFiltersOpen((open) => !open)}><Filter size={15} />{text("Detection filters", "Filtros de detección")}<ChevronDown size={14} /></button>
+            <button className="demo-menu__trigger detection-trigger" onClick={() => setFiltersOpen((open) => !open)}>
+              <Filter size={15} />
+              <span className="detection-trigger__copy">
+                <strong>{text("Detection filters", "Filtros de detección")}</strong>
+                <small>{text("Applied", "Aplicados")} · {scopeLabel}</small>
+              </span>
+              <ChevronDown size={14} />
+            </button>
             {filtersOpen && <div className="demo-menu__panel detection-panel">
               <header><SlidersHorizontal size={14} /><div><strong>{text("Detection scope", "Alcance de detección")}</strong><span>{text("Choose the dimensional intersection to inspect", "Elegí el cruce dimensional a inspeccionar")}</span></div></header>
               <div className="judge-fields">
@@ -212,11 +219,6 @@ export function CommandCenter({ preview = false }: { preview?: boolean }) {
         <div><span>{text("Delta vs expected", "Delta vs esperado")}</span><strong className={delta < -1 ? "is-negative" : ""}>{delta >= 0 ? "+" : ""}{delta.toFixed(1)} pp</strong></div>
         <div><span>{text("Estimated revenue at risk", "Ingreso estimado en riesgo")}</span><strong>{revenueRisk ? `$${Math.round(revenueRisk).toLocaleString()}/h` : "$0/h"}</strong><small>{text("Estimate · assumptions in diagnosis", "Estimación · supuestos en diagnóstico")}</small></div>
       </section>
-
-      <nav className="tower-workspace-tabs" aria-label={text("Control tower views", "Vistas de la torre")}>
-        <span className="tower-workspace-label"><i className="live-dot" />{text("Live stream", "Stream en vivo")}</span>
-        <p><span>{text("Scope", "Alcance")}</span>{scopeLabel}</p>
-      </nav>
 
       <main className="tower-main">
         <LiveWorkspace points={signalPoints} logs={pipelineLogs} />

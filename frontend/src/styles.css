@@ -499,8 +499,11 @@ button:focus-visible, a:focus-visible { outline: 2px solid var(--signal-soft); o
 }
 
 /* Control Tower v3 — live evidence and prioritized incidents in one operational frame. */
-.detection-trigger { color: #d7d7db; border-color: var(--line-strong) !important; }
+.detection-trigger { min-height: 52px !important; color: #d7d7db; border-color: var(--line-strong) !important; }
 .detection-trigger:hover { color: white; border-color: var(--signal-soft) !important; }
+.detection-trigger__copy { min-width: 150px; display: grid; gap: 3px; text-align: left; }
+.detection-trigger__copy strong { font-size: 11px; font-weight: 540; }
+.detection-trigger__copy small { max-width: 220px; overflow: hidden; color: #85858b; font: 8px var(--mono); text-overflow: ellipsis; white-space: nowrap; }
 .detection-panel { width: min(430px, calc(100vw - 32px)); padding: 12px; gap: 12px; }
 .detection-panel > header { display: flex; align-items: flex-start; gap: 10px; padding: 4px 4px 12px; border-bottom: 1px solid var(--line); }
 .detection-panel > header svg { color: var(--signal-soft); }
@@ -515,11 +518,6 @@ button:focus-visible, a:focus-visible { outline: 2px solid var(--signal-soft); o
 .detection-panel > small { color: #74747a; font: 8px/1.4 var(--mono); }
 
 .tower > .tower-metrics { border-bottom: 1px solid var(--line); }
-.tower-workspace-tabs { min-height: 54px; padding: 0 clamp(18px, 3vw, 44px); display: flex; align-items: stretch; gap: 4px; border-bottom: 1px solid var(--line); background: #080809; }
-.tower-workspace-label { min-width: 145px; padding: 0 15px; display: flex; align-items: center; justify-content: center; gap: 8px; border-bottom: 2px solid var(--signal-soft); color: white; font-size: 11px; }
-.tower-workspace-tabs > p { margin: 0 0 0 auto; display: flex; align-items: center; gap: 9px; color: #c8c8cc; font: 10px var(--mono); }
-.tower-workspace-tabs > p span { color: #69696e; text-transform: uppercase; }
-.live-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--healthy); box-shadow: 0 0 0 4px rgba(103,211,165,.08); }
 
 .tower-main { height: auto; min-height: 520px; }
 .live-workspace { min-width: 0; }
@@ -554,9 +552,6 @@ button:focus-visible, a:focus-visible { outline: 2px solid var(--signal-soft); o
 .incident-grid { display: grid; }
 
 @media (max-width: 900px) {
-  .tower-workspace-tabs { padding: 0 14px; }
-  .tower-workspace-label { min-width: auto; padding: 0 11px; }
-  .tower-workspace-tabs > p { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .tower .live-signal-chart { height: 220px; min-height: 220px; }
   .pipeline-log th:nth-child(2), .pipeline-log td:nth-child(2) { display: none; }
   .pipeline-log th:nth-child(3) { width: 100px; }
@@ -566,8 +561,8 @@ button:focus-visible, a:focus-visible { outline: 2px solid var(--signal-soft); o
 @media (max-width: 560px) {
   .tower-metrics { grid-template-columns: 1fr 1fr; }
   .tower-metrics > div:last-child { grid-column: 1 / -1; border-top: 1px solid var(--line); }
-  .tower-workspace-tabs > p { display: none; }
-  .tower-workspace-tabs button { flex: 1; }
+  .detection-trigger { flex: 1; }
+  .detection-trigger__copy { min-width: 0; }
   .tower-chart-heading > div { align-items: flex-start; flex-direction: column; gap: 7px; }
   .pipeline-log th:nth-child(1), .pipeline-log td:nth-child(1) { display: none; }
   .pipeline-log th:nth-child(3) { width: 92px; }
