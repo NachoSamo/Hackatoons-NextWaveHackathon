@@ -28,7 +28,8 @@ empezar, leé este archivo primero.
 | `docs/02-timeline.md` | Presupuesto de horas, checkpoints, reglas de recorte | Todo el evento (Samo lo gestiona) |
 | `docs/03-reglas-equipo.md` | Roles, feedback de mentores, git, hardware | Antes del kickoff |
 | `docs/04-checklist-preevento.md` | Qué dejar listo/instalado/impreso ANTES del sábado | Esta semana |
-| `docs/decision-log.md` | Toda decisión con hora y motivo | Se escribe durante el evento |
+| `docs/decision-log.md` | Toda decisión con hora y motivo (interno, español) | Se escribe durante el evento |
+| `docs/decision-log-submission.md` | **ENTREGABLE.** Las 12 decisiones definitorias en inglés, en los 4 campos del formulario de los organizadores | Al cargar el flight log |
 | `docs/mentor-feedback.md` | Lo que traen los mentores (datos, no veredictos) | Juani lo llena |
 | `docs/arquitectura.md` | Diagrama + descripción técnica (ENTREGABLE, inglés) | Se llena el sábado |
 | `docs/arquitectura.html` | Borrador de la arquitectura de C2, capa por capa, con decisiones abiertas | Ahora — alinear al equipo |

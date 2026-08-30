@@ -1,6 +1,9 @@
 frontend/node_modules/
 frontend/dist/
 frontend/*.tsbuildinfo
+pitch/node_modules/
+pitch/dist/
+pitch/*.tsbuildinfo
 .DS_Store
 .env
 
