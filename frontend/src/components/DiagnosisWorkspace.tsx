@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { ArrowRight, Bot, CalendarRange, Check, X } from "lucide-react";
+import { ArrowRight, Bot, CalendarRange, Check, ChevronDown, X } from "lucide-react";
 import type { Diagnosis } from "../api";
 import { useLanguage } from "../i18n";
 import { diagnosisHeadline, diagnosisNarrative, localizeAction, localizeEvidence, localizeScope, localizeToken } from "../localization";
@@ -18,6 +18,11 @@ export function DiagnosisWorkspace({ diagnosis, onClose }: Props) {
   const dialogRef = useDialogFocus(onClose);
   const action = diagnosis.recommended_action ? localizeAction(diagnosis.recommended_action, diagnosis, language) : null;
   const scope = localizeScope(diagnosis.slice, language);
+  const strongestEvidence = diagnosis.evidence.find((item) => item.startsWith("Code "))
+    ?? diagnosis.evidence.find((item) => item.startsWith("Signal: "))
+    ?? diagnosis.evidence[1];
+  const evidenceHighlights = [diagnosis.evidence[0], strongestEvidence]
+    .filter((item, index, values): item is string => Boolean(item) && values.indexOf(item) === index);
 
   const suggested = useMemo(() => [
     text("Why this owner?", "¿Por qué este responsable?"),
@@ -85,10 +90,16 @@ export function DiagnosisWorkspace({ diagnosis, onClose }: Props) {
             </div>
             <p className="diagnosis-narrative">{diagnosisNarrative(diagnosis, audience, language)}</p>
 
-            <section className="evidence-list">
-              <div className="section-kicker">{text("Evidence behind the diagnosis", "Evidencia detrás del diagnóstico")}</div>
-              {diagnosis.evidence.map((item) => <p key={item}><Check size={15} />{localizeEvidence(item, language)}</p>)}
-            </section>
+            {audience === "operations" && evidenceHighlights.length > 0 && <section className="diagnosis-highlights" aria-label={text("Evidence basis", "Base de evidencia")}>
+              {evidenceHighlights.map((item, index) => <div key={item}><span>{index === 0 ? text("What changed", "Qué cambió") : text("Why this cause", "Por qué esta causa")}</span><p>{localizeEvidence(item, language)}</p></div>)}
+            </section>}
+
+            <details className="evidence-disclosure">
+              <summary><span>{text("Full evidence trail", "Trail completo de evidencia")}</span><b>{diagnosis.evidence.length} {text("evidence points", "puntos de evidencia")}</b><ChevronDown size={15} /></summary>
+              <section className="evidence-list">
+                {diagnosis.evidence.map((item) => <p key={item}><Check size={15} />{localizeEvidence(item, language)}</p>)}
+              </section>
+            </details>
 
             {(diagnosis.alternatives.length > 0 || diagnosis.missing_data.length > 0) && <section className="diagnosis-limits">
               {diagnosis.alternatives.length > 0 && <div><span>{text("Alternative hypotheses", "Hipótesis alternativas")}</span>{diagnosis.alternatives.map((item) => <p key={item}>{localizeEvidence(item, language)}</p>)}</div>}

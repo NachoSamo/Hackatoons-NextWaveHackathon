@@ -168,14 +168,28 @@ export function localizeAction(action: RecommendedAction, diagnosis: Diagnosis, 
 }
 
 export function diagnosisNarrative(diagnosis: Diagnosis, audience: "operations" | "executive", language: Language) {
-  if (language === "en") return audience === "operations" ? diagnosis.operations : diagnosis.executive;
+  if (language === "en" && audience === "executive") return diagnosis.executive;
   const category = localizeToken(diagnosis.diagnosis_category, language);
   const action = diagnosis.recommended_action ? localizeAction(diagnosis.recommended_action, diagnosis, language) : null;
   if (audience === "executive") {
     const impact = diagnosis.cost ? ` Hay aproximadamente USD ${Math.round(diagnosis.cost.usd_per_hour).toLocaleString("es-AR")} por hora en riesgo.` : " El impacto monetario todavía no puede estimarse con confianza.";
     return `${category[0].toUpperCase()}${category.slice(1)} afecta ${where(diagnosis, language)}.${impact}${action ? ` Próximo paso recomendado: ${action.title}.` : ""}`;
   }
-  const evidence = diagnosis.evidence.map((item) => localizeEvidence(item, language)).join(" ");
-  const opening = diagnosis.diagnosis_status === "supported" ? `La evidencia indica ${category}.` : "La señal todavía no tiene evidencia suficiente para justificar un cambio operativo.";
-  return `${opening} ${evidence}${action ? ` ${action.rationale} Reevaluar en ${action.reevaluate_after}.` : ""} Esto es sólo una simulación.`;
+  const primaryEvidence = diagnosis.evidence[0]
+    ? localizeEvidence(diagnosis.evidence[0], language)
+    : language === "es" ? "Todavía no hay una medición concluyente." : "No conclusive measurement is available yet.";
+  const started = new Date(diagnosis.estimated_start).toLocaleTimeString(language === "es" ? "es-AR" : "en-US", { hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false });
+  if (diagnosis.diagnosis_status !== "supported") {
+    return language === "es"
+      ? `Centinel detectó un desvío en ${where(diagnosis, language)}, pero todavía no hay evidencia suficiente para asignar una causa raíz. ${primaryEvidence}`
+      : `Centinel detected a deviation in ${where(diagnosis, language)}, but the evidence is not sufficient to assign a root cause yet. ${primaryEvidence}`;
+  }
+  const impact = diagnosis.cost
+    ? language === "es"
+      ? `Impacto estimado: USD ${Math.round(diagnosis.cost.usd_per_hour).toLocaleString("es-AR")}/h.`
+      : `Estimated impact: $${Math.round(diagnosis.cost.usd_per_hour).toLocaleString("en-US")}/h.`
+    : language === "es" ? "El impacto monetario todavía no está disponible." : "Monetary impact is not available yet.";
+  return language === "es"
+    ? `Causa raíz: ${category} en ${where(diagnosis, language)} desde las ${started}. ${primaryEvidence} ${impact}`
+    : `Root cause: ${category} in ${where(diagnosis, language)} since ${started}. ${primaryEvidence} ${impact}`;
 }

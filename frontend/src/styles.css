@@ -696,8 +696,19 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .audience-switch { width: fit-content; padding: 3px; display: flex; border: 1px solid var(--line); border-radius: 6px; }
 .audience-switch button { min-height: 32px; padding: 0 13px; border: 0; background: transparent; color: var(--muted); font-size: 11px; }
 .audience-switch button.is-active { color: white; background: #252529; }
-.diagnosis-narrative { min-height: 72px; max-width: 820px; margin: 24px 0 30px; color: #dedee1; font-size: 16px; line-height: 1.55; transition: opacity 180ms ease; }
-.evidence-list { border-top: 1px solid var(--line-strong); padding-top: 20px; }
+.diagnosis-narrative { max-width: 820px; margin: 24px 0; color: #dedee1; font-size: 16px; line-height: 1.55; transition: opacity 180ms ease; }
+.diagnosis-highlights { margin: 0 0 24px; display: grid; grid-template-columns: 1fr 1fr; gap: 1px; border: 1px solid var(--line); background: var(--line); }
+.diagnosis-highlights > div { min-height: 112px; padding: 17px 18px; background: #0b0b0d; }
+.diagnosis-highlights span { color: var(--signal-soft); font: 9px var(--mono); text-transform: uppercase; letter-spacing: .05em; }
+.diagnosis-highlights p { margin: 12px 0 0; color: #d1d1d5; font-size: 12px; line-height: 1.5; }
+.evidence-disclosure { border-top: 1px solid var(--line-strong); border-bottom: 1px solid var(--line-strong); }
+.evidence-disclosure summary { min-height: 54px; padding: 0 4px; display: grid; grid-template-columns: 1fr auto auto; align-items: center; gap: 12px; color: #d2d2d6; cursor: pointer; list-style: none; }
+.evidence-disclosure summary::-webkit-details-marker { display: none; }
+.evidence-disclosure summary span { font-size: 12px; font-weight: 560; }
+.evidence-disclosure summary b { color: #77777d; font: 8px var(--mono); text-transform: uppercase; }
+.evidence-disclosure summary svg { color: var(--signal-soft); transition: transform 180ms ease; }
+.evidence-disclosure[open] summary svg { transform: rotate(180deg); }
+.evidence-list { padding: 0 4px 14px; border-top: 1px solid var(--line); }
 .evidence-list p { margin: 0; padding: 11px 0; display: flex; align-items: flex-start; gap: 10px; border-bottom: 1px solid var(--line); color: #bdbdc1; font-size: 12px; line-height: 1.45; }
 .evidence-list svg { flex: 0 0 auto; color: var(--healthy); }
 .evidence-list p.is-missing { color: var(--warning); }
