@@ -1,0 +1,38 @@
+{
+  "incidents": [
+    {
+      "incident_id": "INC-PIX-01",
+      "detected_at": "2026-08-30T16:12:40Z",
+      "estimated_start": "2026-08-30T16:09:00Z",
+      "slice": { "merchant_id": null, "provider_id": null, "payment_method": "pix", "country": "BR" },
+      "diagnosis_category": "payment_method_outage",
+      "diagnosis_status": "supported",
+      "confidence_score": 0.87,
+      "confidence_level": "high",
+      "baseline_rate": 0.96,
+      "observed_rate": 0.70,
+      "sample_size": 284,
+      "wilson_ci": [0.645, 0.749],
+      "estimated_lost_approvals": { "value": 74, "window_seconds": 60 },
+      "decline_shift": [
+        {
+          "code": "96",
+          "label": "System Malfunction",
+          "kind": "soft",
+          "count_before": 6,
+          "count_after": 61,
+          "share_before": 0.07,
+          "share_after": 0.72
+        }
+      ],
+      "issuer_evidence": [],
+      "reason_codes": [
+        "CODE_96_SPIKE",
+        "METHOD_SLICE_LOCALIZED",
+        "MULTIPLE_PROVIDERS_AFFECTED",
+        "OTHER_METHODS_HEALTHY"
+      ],
+      "alternatives": [{ "category": "provider_degradation", "score": 0.18 }]
+    }
+  ]
+}

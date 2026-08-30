@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { createRoot } from "react-dom/client";
+import { E2EPanel } from "./e2e";
 import {
   Activity,
   ArrowDown,
@@ -604,6 +605,7 @@ function Landing() {
 
 function App() {
   const path = window.location.pathname;
+  if (path.startsWith("/e2e")) return <E2EPanel />;
   const isControlTower = path.startsWith("/control-tower");
   const isLegacyIncident = path.startsWith("/incidents/");
   useEffect(() => {

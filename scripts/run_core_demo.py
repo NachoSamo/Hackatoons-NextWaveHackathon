@@ -128,6 +128,20 @@ def evidence(filters: dict[str, str], _: int) -> dict[str, Any]:
             "sample_size": 165,
             "wilson_ci": [0.43, 0.57],
         }
+    if filters.get("payment_method") == "pix" and filters.get("country") == "BR":
+        return {
+            "decline_codes": {
+                "before": {"05": 10, "96": 4},
+                "after": {"05": 13, "96": 96},
+            },
+            "issuers": [
+                {"issuer_bank": "itau", "attempts": 70, "approval_rate": 0.71, "delta_pts": -25},
+                {"issuer_bank": "nubank", "attempts": 64, "approval_rate": 0.69, "delta_pts": -27},
+                {"issuer_bank": "bradesco", "attempts": 55, "approval_rate": 0.70, "delta_pts": -26},
+            ],
+            "sample_size": 284,
+            "wilson_ci": [0.65, 0.75],
+        }
     if filters.get("merchant_id") == "rappido" and filters.get("country") == "BR":
         return {
             "decline_codes": {

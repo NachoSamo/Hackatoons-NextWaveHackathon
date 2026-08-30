@@ -5,7 +5,9 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
+import os
 import sys
+import time
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 from pathlib import Path
@@ -25,7 +27,9 @@ from backend.data.cube import set_observed_source
 from backend.data.replayer import Replayer, TICK_SECONDS
 from backend.explain.build import diagnose
 from backend.explain.prioritize import score_incidents
+from backend.logging_setup import log, setup
 
+setup()
 
 LOGGER = logging.getLogger(__name__)
 REPLAY_RETRY_SECONDS = 1.0
@@ -96,11 +100,16 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
 
 
 app = FastAPI(title="Centinel Control Tower", lifespan=lifespan)
+
+# Dev: Vite on :5173. Deploy: set FRONTEND_ORIGIN (e.g. the Vercel URL) for the ngrok backend.
+_origins = ["http://localhost:5173", "http://127.0.0.1:5173"]
+if os.getenv("FRONTEND_ORIGIN"):
+    _origins.append(os.environ["FRONTEND_ORIGIN"])
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],
+    allow_origins=_origins,
     allow_credentials=False,
-    allow_methods=["GET", "POST", "OPTIONS"],
+    allow_methods=["*"],
     allow_headers=["*"],
 )
 
@@ -174,21 +183,70 @@ def health() -> dict[str, str]:
 
 @app.post("/api/agent/explain")
 def explain(payload: dict[str, Any] = Body(...)) -> dict[str, Any]:
+    source = f'fixture "{payload["fixture"]}"' if payload.get("fixture") else "EngineOutput directo"
+    log.info("[API]      → POST /api/agent/explain  (%s)", source)
+    started = time.perf_counter()
     try:
-        diagnoses = diagnose(_validate(payload))
+        engine_output = _validate(payload)
+        log.info("[API]      EngineOutput recibido: %d incidente(s)", len(engine_output.incidents))
+        diagnoses = diagnose(engine_output)
+        scored = score_incidents(diagnoses)
         DIAGNOSES.update({item.incident_id: item for item in diagnoses})
+        log.info(
+            "[PRIORIDAD] %s",
+            "  ".join(f"{s.diagnosis.incident_id}={s.score:.2f}" for s in scored) or "(ninguno)",
+        )
+        log.info(
+            "[API]      ← 200  %d diagnóstico(s), %d priorizado(s)  (%.1fs)",
+            len(diagnoses), len(scored), time.perf_counter() - started,
+        )
         return {
             "diagnoses": [item.model_dump(mode="json") for item in diagnoses],
-            "prioritized": [
-                item.model_dump(mode="json") for item in score_incidents(diagnoses)
-            ],
+            "prioritized": [item.model_dump(mode="json") for item in scored],
         }
     except Exception as exc:
+        log.warning("[API]      ← error tras %.1fs: %s", time.perf_counter() - started, exc)
         return {
             "diagnoses": [],
             "prioritized": [],
             "error": f"Explanation unavailable: {exc}",
         }
+
+
+@app.post("/api/debug/stream/reset")
+def debug_reset() -> dict[str, Any]:
+    from backend.debug_pipeline import PIPELINE, PRESETS
+
+    PIPELINE.reset()
+    return {"ok": True, "presets": {k: v["label"] for k, v in PRESETS.items()}}
+
+
+@app.post("/api/debug/inject")
+def debug_inject(payload: dict[str, Any] = Body(default={})) -> dict[str, Any]:
+    from backend.debug_pipeline import PIPELINE
+
+    try:
+        spec = PIPELINE.inject(
+            preset=payload.get("preset"),
+            filters=payload.get("filters"),
+            magnitude=payload.get("magnitude"),
+            decline_code=payload.get("decline_code"),
+        )
+        return {"ok": True, "injection": {k: v for k, v in spec.items() if k != "label"}}
+    except Exception as exc:
+        log.warning("[INYECTOR] rechazado: %s", exc)
+        return {"ok": False, "error": str(exc)}
+
+
+@app.post("/api/debug/stream/tick")
+def debug_tick() -> dict[str, Any]:
+    from backend.debug_pipeline import PIPELINE
+
+    try:
+        return {"ok": True, **PIPELINE.tick()}
+    except Exception as exc:
+        log.warning("[STREAM]   tick falló: %s", exc)
+        return {"ok": False, "error": str(exc), "steps": [f"error: {exc}"]}
 
 
 @app.get("/api/incidents/{incident_id}/diagnosis")

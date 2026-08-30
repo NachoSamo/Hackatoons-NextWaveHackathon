@@ -14,6 +14,7 @@ from backend.explain.agent import write_explanation
 from backend.explain.evidence import build_alternatives, build_evidence, build_missing_data
 from backend.explain.money import cost_for
 from backend.explain.prioritize import score_incidents
+from backend.logging_setup import log, slice_str
 
 
 ROOT = Path(__file__).parent
@@ -67,7 +68,7 @@ def _fallback(incident: IncidentEvidence, action: RecommendedAction, evidence: l
     if not (ROOT / "templates" / f"{template_key}.exec.j2").exists():
         template_key = "monitor"
     context = {"incident": incident, "action": action, "evidence": evidence, "cost": cost}
-    where = " / ".join(p for p in (incident.slice.provider_id, incident.slice.country) if p) or "the affected slice"
+    where = " / ".join(p for p in (incident.slice.provider_id, incident.slice.payment_method, incident.slice.country) if p) or "the affected slice"
     label = incident.diagnosis_category.replace("_", " ").title()
     headline = f"{label} in {where} — about ${cost.usd_per_hour:,.0f}/hr at risk" if cost else f"{label} in {where} — evidence still insufficient"
     return {"headline": headline, "executive": TEMPLATES.get_template(f"{template_key}.exec.j2").render(**context).strip(), "operations": TEMPLATES.get_template(f"{template_key}.ops.j2").render(**context).strip()}
@@ -76,9 +77,25 @@ def _fallback(incident: IncidentEvidence, action: RecommendedAction, evidence: l
 def diagnose(engine_output: EngineOutput) -> list[Diagnosis]:
     diagnoses: list[Diagnosis] = []
     for incident in engine_output.incidents:
+        log.info(
+            "[EXPLAIN]  %s  %s / %s / %s  slice=%s",
+            incident.incident_id, incident.diagnosis_category,
+            incident.diagnosis_status, incident.confidence_level, slice_str(incident.slice),
+        )
         action = _action(incident)
+        key = _playbook_key(incident)
+        if incident.diagnosis_status != "supported":
+            log.info("[EXPLAIN]    acción: monitor (estado=%s) → %s", incident.diagnosis_status, action.action_id)
+        else:
+            alias = f" (alias de {incident.diagnosis_category})" if key != incident.diagnosis_category else ""
+            log.info("[EXPLAIN]    acción: catálogo[%s]%s → %s  responsable=%s", key, alias, action.action_id, action.owner)
         evidence, alternatives, missing = build_evidence(incident), build_alternatives(incident), build_missing_data(incident)
         cost = None if incident.diagnosis_status != "supported" else cost_for(incident.slice, incident.estimated_lost_approvals.window_seconds, incident.estimated_lost_approvals.value)
+        if cost is None:
+            log.info("[EXPLAIN]    evidencia %d · alternativas %d · datos_faltantes %d · costo: ninguno", len(evidence), len(alternatives), len(missing))
+        else:
+            tag = "capa de datos" if cost.avg_ticket_usd != 35.0 else "fallback ticket $35 — falta la capa de datos"
+            log.info("[EXPLAIN]    evidencia %d · alternativas %d · datos_faltantes %d · costo $%s/hora (%s)", len(evidence), len(alternatives), len(missing), f"{cost.usd_per_hour:,.0f}", tag)
         fallback = _fallback(incident, action, evidence, cost)
         llm = write_explanation({"incident": incident.model_dump(mode="json"), "action": action.model_dump(), "evidence": evidence, "cost": cost.model_dump() if cost else None, "missing_data": missing})
         if llm:

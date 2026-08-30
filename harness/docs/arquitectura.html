@@ -558,6 +558,19 @@
   </section>
 
   <section class="open">
+    <span class="label">Estado de integración (30/08)</span>
+    <h2>Qué está conectado</h2>
+    <dl>
+      <dt>Motor → explain: probado end-to-end</dt>
+      <dd><code>scripts/e2e_check.py</code> corre el motor real (detector + localizer + classifier) sobre los escenarios de <code>run_core_demo</code> y lo pasa por el bridge <code>core.EngineOutput → contracts.EngineOutput</code> hasta <code>Diagnosis</code>. <span class="rec">PASS</span> en healthy / provider / dual / overlap / unseen / weak.</dd>
+      <dt>Frontend → backend: panel <code>/e2e</code></dt>
+      <dd>El frontend Vite consume <code>POST /api/agent/explain</code> real y renderiza el <code>Diagnosis</code> completo + prioridad + JSON crudo + log de llamadas. CORS agregado en <code>backend/main.py</code>, proxy <code>/api</code> en Vite. No toca los componentes de Juani.</dd>
+      <dt>Falta para el e2e completo</dt>
+      <dd>La capa de datos de Pena (T4-T8): <code>cube</code>, injector y stream como endpoints HTTP. Con eso, <code>/e2e</code> deja de usar fixtures y el bridge pasa a un endpoint <code>POST /api/pipeline/tick</code>.</dd>
+    </dl>
+  </section>
+
+  <section class="open">
     <span class="label">Todavía sin cerrar</span>
     <h2>Decisiones abiertas</h2>
     <dl>

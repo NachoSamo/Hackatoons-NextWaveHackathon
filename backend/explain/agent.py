@@ -3,10 +3,13 @@
 from __future__ import annotations
 
 import os
+import time
 from pathlib import Path
 from threading import Event, Thread
 
 from pydantic import BaseModel, Field
+
+from backend.logging_setup import log
 
 
 class Explanation(BaseModel):
@@ -42,24 +45,38 @@ SYSTEM_PROMPT = (
 def write_explanation(payload: dict) -> Explanation | None:
     """Returns None on missing credentials, import failure, errors, or a ten-second timeout."""
     if not os.getenv("OPENAI_API_KEY"):
+        log.info("[EXPLAIN]    LLM: sin OPENAI_API_KEY → uso plantillas deterministas")
         return None
     try:
         from pydantic_ai import Agent
-
+    except Exception:
+        log.info("[EXPLAIN]    LLM: pydantic-ai no instalado → plantillas deterministas")
+        return None
+    try:
         agent = Agent("openai:gpt-4o", output_type=Explanation, system_prompt=SYSTEM_PROMPT, model_settings={"temperature": 0})
         result: list[Explanation | None] = [None]
+        errored: list[str] = []
         done = Event()
 
         def run() -> None:
             try:
                 response = agent.run_sync(str(payload))
                 result[0] = response.output
-            except Exception:
-                result[0] = None
+            except Exception as exc:  # noqa: BLE001
+                errored.append(str(exc))
             finally:
                 done.set()
 
+        started = time.perf_counter()
         Thread(target=run, daemon=True).start()
-        return result[0] if done.wait(10) else None
-    except Exception:
+        if not done.wait(10):
+            log.warning("[EXPLAIN]    LLM: gpt-4o cortó por timeout (10s) → fallback determinista")
+            return None
+        if result[0] is None:
+            log.warning("[EXPLAIN]    LLM: gpt-4o falló (%s) → fallback determinista", errored[0] if errored else "desconocido")
+            return None
+        log.info("[EXPLAIN]    LLM: gpt-4o OK (%.1fs) → redacté executive + operations", time.perf_counter() - started)
+        return result[0]
+    except Exception as exc:  # noqa: BLE001
+        log.warning("[EXPLAIN]    LLM: no pude inicializar (%s) → fallback determinista", exc)
         return None
