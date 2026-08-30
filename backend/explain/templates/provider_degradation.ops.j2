@@ -1,0 +1,1 @@
+The evidence indicates a provider-related drop from {{ '%.0f'|format(incident.baseline_rate * 100) }}% to {{ '%.0f'|format(incident.observed_rate * 100) }}%. {{ evidence | join(' ') }} {{ action.rationale }} Re-evaluate in {{ action.reevaluate_after }}. This is simulation only.

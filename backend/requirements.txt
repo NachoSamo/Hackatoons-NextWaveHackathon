@@ -1,0 +1,12 @@
+fastapi
+uvicorn
+psycopg[binary]
+pandas
+pyarrow
+numpy
+pydantic-ai-slim[openai]
+httpx
+jinja2
+pyyaml
+python-frontmatter
+python-dotenv

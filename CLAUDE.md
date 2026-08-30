@@ -7,7 +7,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 Prototipo para el **NextWave Hackathon 2026** (Yuno × Nauta, sponsor OpenAI), Buenos Aires, 29–30 agosto 2026.
 Ventana real de construcción ≈ 14 horas. Hoy `backend/` y `frontend/` están vacíos: el código se escribe durante el evento.
 
-**Antes de picar código, leer en este orden:** `harness/HARNESS.md` (mapa de todo) → `harness/AGENTS.md` (reglas y contratos de API) → `harness/docs/05-challenges.md` (los 4 challenges; **aún sin elegir**) → `harness/pitch/demo-path.md` (qué tiene que funcionar).
+**Challenge elegido: C2 · The Control Tower (Yuno)** — monitoreo de pagos en vivo + diagnóstico de causa raíz.
+
+**Antes de picar código, leer en este orden:** `harness/HARNESS.md` (mapa de todo) → `harness/AGENTS.md` (reglas y contratos de API) → `harness/docs/06-dominio-pagos.md` (el dominio) → `harness/docs/07-decisiones-core.md` (enfoque técnico + decisiones) → `harness/docs/08-product-ux-gtm.md` (producto + UX) → `harness/pitch/demo-path.md` (qué tiene que funcionar).
 
 ## Stack
 
@@ -35,10 +37,14 @@ No hay `requirements.txt` ni `package.json` todavía; se crean al arrancar cada 
 
 ## Idioma y entregables
 
-- **Docs internos (`harness/docs/`) en español.** La organización exige que los **entregables en inglés**: `harness/README.md`, `harness/docs/arquitectura.md`, `harness/pitch/`.
+- **Docs internos (`harness/docs/`) en español.** La organización exige que los **entregables en inglés**: `README.md`, `harness/docs/arquitectura.md`, `harness/pitch/`.
 - El diagrama de arquitectura es un artifact HTML dentro de `harness/docs/arquitectura.md` y es entregable evaluado directamente por el jurado.
 - **Toda decisión core se escribe en `harness/docs/decision-log.md` con hora y motivo.** El repo es la fuente de verdad, no el chat del equipo.
 
 ## Norte de producto (para no desviarse)
 
 Patrón que buscan los briefs de Yuno y Nauta: *datos fragmentados multi-fuente → capa de IA que unifica, explica y **actúa** → interfaz simple y accionable (a veces conversacional), no otro dashboard.* La IA tiene que ser el motor de la decisión, anticipar en vez de reportar, y explicar su porqué.
+
+## Importante
+Cada vez que se toma una decisión o se hace un cambio en el código, se debe actualizar el `harness/docs/decision-log.md`y artifact html 'harness/docs/arquitectura.html' con la hora y el motivo.
+

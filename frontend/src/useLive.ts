@@ -1,0 +1,61 @@
+// Hook de datos vivos para la CommandCenter: pollea el snapshot del loop de
+// diagnóstico + el overview, y escucha el SSE del ticker. Mapea a las formas de Juani.
+import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  api,
+  type DiagnosisSnapshot,
+  type Overview,
+  type StreamSnapshot,
+} from "./api";
+import { buildIncidents, type LiveIncident } from "./live";
+
+export function useLive(active: boolean, viewFilters: Record<string, string> = {}) {
+  const [snapshot, setSnapshot] = useState<DiagnosisSnapshot | null>(null);
+  const [overview, setOverview] = useState<Overview | null>(null);
+  const [ticker, setTicker] = useState<StreamSnapshot | null>(null);
+  const poll = useRef<number | null>(null);
+  const filterKey = JSON.stringify(viewFilters);
+
+  useEffect(() => {
+    if (!active) return;
+    let alive = true;
+    const tick = async () => {
+      const [s, o] = await Promise.all([api.getSnapshot(), api.getOverview(viewFilters)]);
+      if (!alive) return;
+      if (s.data) setSnapshot(s.data);
+      if (o.data) setOverview(o.data);
+    };
+    void tick();
+    poll.current = window.setInterval(tick, 3000);
+    return () => {
+      alive = false;
+      if (poll.current) window.clearInterval(poll.current);
+    };
+    // filterKey: string estable, así cambiar un filtro re-pollea de inmediato
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [active, filterKey]);
+
+  useEffect(() => {
+    if (!active) return;
+    return api.subscribeStream(setTicker);
+  }, [active]);
+
+  const reset = useCallback(async () => {
+    const response = await api.resetDemo();
+    const ok = response.ok && response.call.status !== "ERR" && Number(response.call.status) < 400;
+    if (!ok) return false;
+    setSnapshot(null);
+    setOverview(null);
+    setTicker(null);
+    return true;
+  }, []);
+
+  const injectPreset = useCallback(
+    (presetId: string) => api.inject({ preset_id: presetId }),
+    []
+  );
+
+  const incidents: LiveIncident[] = buildIncidents(snapshot, overview);
+
+  return { snapshot, overview, ticker, incidents, reset, injectPreset };
+}
