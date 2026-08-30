@@ -5,15 +5,16 @@ import {
   api,
   type CallLog,
   type Diagnosis,
+  type DiagnosisSnapshot,
   type ExplainResponse,
+  type Overview,
   type ScoredIncident,
-  type TickResult,
 } from "./api";
 
 const PRESETS = [
-  { id: "pix_outage", label: "PIX BR → 70%" },
   { id: "provider_br", label: "Adyen BR degradado" },
   { id: "issuer_mx", label: "Emisor MX over-declining" },
+  { id: "weak_signal", label: "Señal débil (bajo volumen)" },
 ];
 
 const FIXTURES = [
@@ -109,83 +110,95 @@ export function E2EPanel() {
 }
 
 function StreamPanel({ onLog }: { onLog: (c: CallLog) => void }) {
-  const [preset, setPreset] = useState(PRESETS[0].id);
-  const [running, setRunning] = useState(false);
-  const [tick, setTick] = useState<TickResult | null>(null);
-  const [feed, setFeed] = useState<string[]>([]);
+  const [watching, setWatching] = useState(false);
+  const [snap, setSnap] = useState<DiagnosisSnapshot | null>(null);
+  const [overview, setOverview] = useState<Overview | null>(null);
   const timer = useRef<number | null>(null);
   const feedRef = useRef<HTMLPreElement | null>(null);
 
   const stop = useCallback(() => {
     if (timer.current) window.clearInterval(timer.current);
     timer.current = null;
-    setRunning(false);
+    setWatching(false);
   }, []);
 
-  const doTick = useCallback(async () => {
-    const { data, call } = await api.debugTick();
-    onLog(call);
-    if (data) {
-      setTick(data);
-      setFeed((prev) => [...prev, ...data.steps].slice(-400));
-    }
+  const pollOnce = useCallback(async () => {
+    const [s, o] = await Promise.all([api.getSnapshot(), api.getOverview()]);
+    onLog(s.call);
+    if (s.data) setSnap(s.data);
+    if (o.data) setOverview(o.data);
   }, [onLog]);
 
   const start = useCallback(async () => {
     stop();
-    setFeed([]);
-    setTick(null);
-    const r = await api.debugReset();
-    onLog(r.call);
-    const inj = await api.debugInject(preset);
-    onLog(inj.call);
-    setRunning(true);
-    await doTick();
-    timer.current = window.setInterval(doTick, 2500);
-  }, [preset, stop, doTick, onLog]);
+    await pollOnce();
+    setWatching(true);
+    timer.current = window.setInterval(pollOnce, 2000);
+  }, [stop, pollOnce]);
+
+  const inject = useCallback(
+    async (presetId: string) => {
+      const { call } = await api.inject({ preset_id: presetId });
+      onLog(call);
+      if (!watching) void start();
+    },
+    [onLog, watching, start]
+  );
 
   const reset = useCallback(async () => {
-    stop();
-    setFeed([]);
-    setTick(null);
-    onLog((await api.debugReset()).call);
-  }, [stop, onLog]);
+    const { call } = await api.resetDemo();
+    onLog(call);
+    setSnap(null);
+  }, [onLog]);
 
   useEffect(() => () => stop(), [stop]);
   useEffect(() => {
     if (feedRef.current) feedRef.current.scrollTop = feedRef.current.scrollHeight;
-  }, [feed]);
+  }, [snap]);
+
+  const rate = overview?.stream?.observed_rate ?? overview?.observed_rate;
+  const expected = overview?.stream?.expected_rate ?? overview?.expected_rate;
 
   return (
     <section className="panel">
-      <h3>Pipeline stream (motor real → explain)  ·  el detalle en español va a la consola del backend</h3>
+      <h3>
+        Pipeline vivo (replayer → motor → explain) · la narración en español va a la consola del backend
+      </h3>
       <div className="controls" style={{ marginBottom: 8 }}>
+        <button onClick={start} disabled={watching}>▶ Observar</button>
+        <button onClick={stop} disabled={!watching}>⏸ Pausar</button>
+        <button onClick={reset}>⟲ Reset demo</button>
+        <span className="mono">
+          {rate != null
+            ? `approval ${(rate * 100).toFixed(1)}% vs esperado ${((expected ?? 0) * 100).toFixed(1)}% · ${
+                overview?.stream?.tx_count ?? overview?.attempts ?? 0
+              } tx`
+            : "—"}
+        </span>
+      </div>
+      <div className="controls" style={{ marginBottom: 8 }}>
+        <span className="mono" style={{ opacity: 0.6 }}>inyectar incidente:</span>
         {PRESETS.map((p) => (
-          <button
-            key={p.id}
-            disabled={running}
-            data-sel={p.id === preset}
-            onClick={() => setPreset(p.id)}
-          >
-            {p.label}
-          </button>
+          <button key={p.id} onClick={() => inject(p.id)}>{p.label}</button>
         ))}
       </div>
-      <div className="controls" style={{ marginBottom: 8 }}>
-        <button onClick={start} disabled={running}>▶ Start</button>
-        <button onClick={stop} disabled={!running}>⏸ Pause</button>
-        <button onClick={reset}>⟲ Reset</button>
-        {tick && (
-          <span className="mono">
-            ventana {tick.window} · motor: {tick.engine_incidents.length} · diagnósticos: {tick.diagnoses.length}
-          </span>
-        )}
-      </div>
-      <pre ref={feedRef} className="feed">{feed.join("\n") || "sin datos — apretá Start"}</pre>
-      {tick && tick.diagnoses.length > 0 && (
+
+      <pre ref={feedRef} className="feed">
+        {snap?.log_tail?.length
+          ? snap.log_tail.join("\n")
+          : "sin datos — apretá Observar (y opcionalmente inyectá un incidente)"}
+      </pre>
+
+      {snap?.error && <p className="err">loop error: {snap.error}</p>}
+      {snap && snap.window > 0 && (
+        <p className="mono" style={{ opacity: 0.6 }}>
+          ventana {snap.window} · motor: {snap.engine_incidents.length} · diagnósticos: {snap.diagnoses.length}
+        </p>
+      )}
+      {snap && snap.diagnoses.length > 0 && (
         <>
-          <Priority items={tick.prioritized} />
-          {tick.diagnoses.map((d) => (
+          <Priority items={snap.prioritized} />
+          {snap.diagnoses.map((d) => (
             <DiagnosisCard key={d.incident_id} d={d} />
           ))}
         </>

@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { E2EPanel } from "./e2e";
+import { useLive } from "./useLive";
 import {
   Activity,
   ArrowDown,
@@ -188,8 +189,12 @@ function CommandCenter({ preview = false }: { preview?: boolean }) {
   const running = status === "RUNNING";
   const exploring = analysisMode === "explore";
   const streamActive = status === "RUNNING" || status === "VALIDATING" || status === "MONITORING";
-  const incidentActive = preview || incidentsVisible;
-  const selectedIncident = incidents.find((incident) => incident.id === selectedIncidentId) ?? incidents[0];
+  // Datos vivos del backend (motor + explain). Si no hay nada, cae al mock.
+  const live = useLive(streamActive && !preview);
+  const feed = live.incidents.length ? live.incidents : incidents;
+  const hasLiveIncidents = live.incidents.length > 0;
+  const incidentActive = preview || incidentsVisible || hasLiveIncidents;
+  const selectedIncident = feed.find((incident) => incident.id === selectedIncidentId) ?? feed[0];
   const liveWindow = liveWindowOptions[liveObservedWindow];
   const referenceProfile = liveReferenceOptions[liveReference];
   const scopeProfile = liveScopeOptions[liveScope];
@@ -206,20 +211,27 @@ function CommandCenter({ preview = false }: { preview?: boolean }) {
   const risk = comparisonActive ? "$8.2k" : incidentActive ? scopeProfile.risk : "$0";
 
   useEffect(() => {
-    if (!running || preview || incidentsVisible) return;
+    if (!running || preview || incidentsVisible || hasLiveIncidents) return;
     const validatingTimer = window.setTimeout(() => setStatus("VALIDATING"), 1400);
     return () => window.clearTimeout(validatingTimer);
-  }, [running, preview, incidentsVisible]);
+  }, [running, preview, incidentsVisible, hasLiveIncidents]);
 
   useEffect(() => {
-    if (status !== "VALIDATING" || preview || incidentsVisible) return;
+    if (status !== "VALIDATING" || preview || incidentsVisible || hasLiveIncidents) return;
     const incidentTimer = window.setTimeout(() => {
       setIncidentsVisible(true);
       setSelectedIncidentId(incidents[0].id);
       setStatus("RUNNING");
     }, 1900);
     return () => window.clearTimeout(incidentTimer);
-  }, [status, preview, incidentsVisible]);
+  }, [status, preview, incidentsVisible, hasLiveIncidents]);
+
+  // El primer incidente vivo selecciona solo y saca a la UI de VALIDATING.
+  useEffect(() => {
+    if (!hasLiveIncidents) return;
+    setSelectedIncidentId((current) => current ?? live.incidents[0].id);
+    setStatus((s) => (s === "VALIDATING" || s === "READY" ? "RUNNING" : s));
+  }, [hasLiveIncidents, live.incidents]);
 
   useEffect(() => {
     if (status !== "RUNNING" || preview) return;
@@ -228,6 +240,7 @@ function CommandCenter({ preview = false }: { preview?: boolean }) {
   }, [status, preview]);
 
   const reset = () => {
+    void live.reset();
     setStatus("READY");
     setIncidentsVisible(false);
     setSelectedIncidentId(null);
@@ -283,6 +296,10 @@ function CommandCenter({ preview = false }: { preview?: boolean }) {
               <button type="button" onClick={() => setStatus("PAUSED")} disabled={!running}><Pause size={15} /> Pause</button>
               <button type="button" onClick={reset}><RotateCcw size={15} /> Reset</button>
             </div>
+            <div className="stream-controls" aria-label="Inject incident (demo)">
+              <button type="button" onClick={() => { setStatus("RUNNING"); void live.injectPreset("provider_br"); }}>Inject · Provider BR</button>
+              <button type="button" onClick={() => { setStatus("RUNNING"); void live.injectPreset("issuer_mx"); }}>Inject · Issuer MX</button>
+            </div>
           </> : <>
             <form className="query-composer" onSubmit={(event) => { event.preventDefault(); interpretQuery(); }}>
               <Sparkles size={15} />
@@ -320,8 +337,8 @@ function CommandCenter({ preview = false }: { preview?: boolean }) {
         </div>
 
         <aside className="incident-queue">
-          <div className="queue-heading"><strong>{exploring ? "Analysis findings" : `Incident queue (${incidentActive ? 2 : 0})`}</strong><a href="#all">{exploring ? "Export" : "View all"}</a></div>
-          {exploring ? comparisonActive ? <div className="analysis-finding"><span>SIGNIFICANT DEVIATION</span><h3>PIX approval is 6.5 pp below the selected reference.</h3><p>The loss concentrates on Adyen traffic in Brazil. Other providers remain inside the expected range.</p><dl><div><dt>Sample</dt><dd>11,482 attempts</dd></div><div><dt>Estimated impact</dt><dd>$8.2k /h</dd></div><div><dt>Confidence</dt><dd>High · 89%</dd></div></dl><button type="button" onClick={() => setPolicyOpen(true)}>Create an alert for this pattern <ArrowRight size={13} /></button></div> : <div className="explore-empty"><CalendarRange size={20} /><strong>Define a comparison</strong><span>Select two ranges and a scope, then run the analysis.</span></div> : incidentActive ? incidents.map((incident) => <IncidentCard key={incident.id} incident={incident} selected={incident.id === selectedIncidentId} onSelect={() => setSelectedIncidentId(incident.id)} />) : status === "VALIDATING" ? (
+          <div className="queue-heading"><strong>{exploring ? "Analysis findings" : `Incident queue (${incidentActive ? feed.length : 0})`}</strong><a href="#all">{exploring ? "Export" : "View all"}</a></div>
+          {exploring ? comparisonActive ? <div className="analysis-finding"><span>SIGNIFICANT DEVIATION</span><h3>PIX approval is 6.5 pp below the selected reference.</h3><p>The loss concentrates on Adyen traffic in Brazil. Other providers remain inside the expected range.</p><dl><div><dt>Sample</dt><dd>11,482 attempts</dd></div><div><dt>Estimated impact</dt><dd>$8.2k /h</dd></div><div><dt>Confidence</dt><dd>High · 89%</dd></div></dl><button type="button" onClick={() => setPolicyOpen(true)}>Create an alert for this pattern <ArrowRight size={13} /></button></div> : <div className="explore-empty"><CalendarRange size={20} /><strong>Define a comparison</strong><span>Select two ranges and a scope, then run the analysis.</span></div> : incidentActive ? feed.map((incident) => <IncidentCard key={incident.id} incident={incident} selected={incident.id === selectedIncidentId} onSelect={() => setSelectedIncidentId(incident.id)} />) : status === "VALIDATING" ? (
             <div className="validating-empty"><span className="validating-orbit" /><strong>Validating signal</strong><span>Checking persistence, controls and sample quality before creating an incident.</span></div>
           ) : (
             <div className="healthy-empty"><Check size={19} /><strong>No active incidents</strong><span>Traffic remains inside its expected range.</span></div>

@@ -7,9 +7,14 @@ import time
 from pathlib import Path
 from threading import Event, Thread
 
+from dotenv import load_dotenv
 from pydantic import BaseModel, Field
 
 from backend.logging_setup import log
+
+# Carga .env si existe en backend/ o raíz del proyecto
+load_dotenv(Path(__file__).resolve().parents[1] / ".env")
+load_dotenv(Path(__file__).resolve().parents[2] / ".env")
 
 
 class Explanation(BaseModel):

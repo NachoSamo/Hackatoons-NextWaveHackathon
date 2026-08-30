@@ -22,10 +22,26 @@ from __future__ import annotations
 import logging
 import os
 import sys
+from collections import deque
 
 log = logging.getLogger("centinel")
 
 _DONE = False
+_TAIL: deque[str] = deque(maxlen=80)
+
+
+class _TailHandler(logging.Handler):
+    """Guarda las últimas líneas en memoria para exponerlas por `/api/diagnosis`."""
+
+    def emit(self, record: logging.LogRecord) -> None:
+        try:
+            _TAIL.append(f"{self.format(record)}")
+        except Exception:
+            pass
+
+
+def recent_log() -> list[str]:
+    return list(_TAIL)
 
 
 def setup() -> None:
@@ -38,10 +54,14 @@ def setup() -> None:
         sys.stdout.reconfigure(encoding="utf-8", errors="backslashreplace")
     except Exception:
         pass
+    formatter = logging.Formatter("%(asctime)s  %(message)s", datefmt="%H:%M:%S")
     handler = logging.StreamHandler(sys.stdout)
-    handler.setFormatter(logging.Formatter("%(asctime)s  %(message)s", datefmt="%H:%M:%S"))
+    handler.setFormatter(formatter)
+    tail = _TailHandler()
+    tail.setFormatter(formatter)
     log.handlers.clear()
     log.addHandler(handler)
+    log.addHandler(tail)
     log.setLevel(level)
     log.propagate = False
     # keep the http/openai libraries from drowning the trace

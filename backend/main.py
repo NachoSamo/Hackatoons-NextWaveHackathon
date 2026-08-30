@@ -17,19 +17,26 @@ from fastapi import Body, FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 
+from dotenv import load_dotenv
+
 # También permite ``uvicorn main:app`` ejecutado desde ``backend/``.
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
+
+# Carga variables de entorno desde backend/.env y/o raíz
+load_dotenv(Path(__file__).resolve().parent / ".env")
+load_dotenv(PROJECT_ROOT / ".env")
 
 from backend.contracts import EngineOutput
 from backend.data.cube import set_live_rows_source, set_observed_source
 from backend.data.injector import active as active_injections
 from backend.data.replayer import Replayer, TICK_SECONDS
 from backend.data.routes import router as data_router
+from backend import diagnosis_loop
 from backend.explain.build import diagnose
 from backend.explain.prioritize import score_incidents
-from backend.logging_setup import log, setup
+from backend.logging_setup import log, recent_log, setup
 
 setup()
 
@@ -90,15 +97,18 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         name="payment-replay-supervisor",
     )
     app.state.replay_supervisor = supervisor
+    diag = asyncio.create_task(diagnosis_loop.run(app), name="diagnosis-loop")
+    app.state.diagnosis_loop = diag
 
     try:
         yield
     finally:
-        supervisor.cancel()
-        try:
-            await supervisor
-        except asyncio.CancelledError:
-            pass
+        for task in (diag, supervisor):
+            task.cancel()
+            try:
+                await task
+            except asyncio.CancelledError:
+                pass
         set_observed_source(None)
         set_live_rows_source(None)
         replayer = getattr(app.state, "replayer", None)
@@ -221,40 +231,17 @@ def explain(payload: dict[str, Any] = Body(...)) -> dict[str, Any]:
         }
 
 
-@app.post("/api/debug/stream/reset")
-def debug_reset() -> dict[str, Any]:
-    from backend.debug_pipeline import PIPELINE, PRESETS
-
-    PIPELINE.reset()
-    return {"ok": True, "presets": {k: v["label"] for k, v in PRESETS.items()}}
+@app.get("/api/diagnosis")
+def diagnosis() -> dict[str, Any]:
+    """Último snapshot del loop de diagnóstico vivo + las últimas líneas del trace."""
+    return {**diagnosis_loop.snapshot(), "log_tail": recent_log()}
 
 
-@app.post("/api/debug/inject")
-def debug_inject(payload: dict[str, Any] = Body(default={})) -> dict[str, Any]:
-    from backend.debug_pipeline import PIPELINE
-
-    try:
-        spec = PIPELINE.inject(
-            preset=payload.get("preset"),
-            filters=payload.get("filters"),
-            magnitude=payload.get("magnitude"),
-            decline_code=payload.get("decline_code"),
-        )
-        return {"ok": True, "injection": {k: v for k, v in spec.items() if k != "label"}}
-    except Exception as exc:
-        log.warning("[INYECTOR] rechazado: %s", exc)
-        return {"ok": False, "error": str(exc)}
-
-
-@app.post("/api/debug/stream/tick")
-def debug_tick() -> dict[str, Any]:
-    from backend.debug_pipeline import PIPELINE
-
-    try:
-        return {"ok": True, **PIPELINE.tick()}
-    except Exception as exc:
-        log.warning("[STREAM]   tick falló: %s", exc)
-        return {"ok": False, "error": str(exc), "steps": [f"error: {exc}"]}
+@app.post("/api/diagnosis/reset")
+def diagnosis_reset() -> dict[str, Any]:
+    """Motor de diagnóstico nuevo. El frontend lo llama junto con /api/demo/reset."""
+    diagnosis_loop.reset()
+    return {"ok": True}
 
 
 @app.get("/api/incidents/{incident_id}/diagnosis")

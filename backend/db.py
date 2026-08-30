@@ -55,6 +55,9 @@ def database_url() -> str:
 
 
 def connect(dsn: str | None = None, **kwargs: Any) -> psycopg.Connection[Any]:
+    # PostgreSQL es opcional (archivo frío). Sin timeout, un 5432 filtrado cuelga
+    # la request ~150 s en vez de caer al fallback ring+parquet.
+    kwargs.setdefault("connect_timeout", 2)
     return psycopg.connect(dsn or database_url(), **kwargs)
 
 

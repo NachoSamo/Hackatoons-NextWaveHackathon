@@ -444,7 +444,8 @@
         <dl class="layer__body">
           <div><dt>Hace</dt><dd>Produce transacciones sintéticas creíbles (merchant, proveedor, método, país, aprobada s/n, código de rechazo, monto). Se pre-genera una historia “normal” determinística con perfil diurno; en la demo se reproduce como un replay. Un módulo aparte superpone incidentes.</dd></div>
           <div><dt>No hace</dt><dd class="no">No se genera en vivo — se pre-genera para poder calibrar el detector contra <span class="k">los mismos datos que se muestran</span>. No decide nada.</dd></div>
-          <div><dt>Stack</dt><dd><span class="mono">Python · pandas</span> · replay determinístico a 65 tx/s · ring buffer de 30 min · <span class="mono">COPY</span> batcheado cada segundo.</dd></div>
+          <div><dt>Stack</dt><dd><span class="mono">Python · pandas</span> · replay determinístico a 65 tx/s · el injector degrada probabilidades (no inserta rechazos falsos).</dd></div>
+          <div><dt>Almacenamiento</dt><dd><span class="k">Ring buffer</span> (memoria, ~30 min): camino caliente — cubo de 60 s, evidencia, dinero. <span class="k">Parquet</span> (estático, en el repo): <span class="mono">baseline_profile</span> (forecast de 14 días) + <span class="mono">fixture</span> (90 min sanos que el replayer loopea). <span class="k">Postgres</span> (<em>opcional</em>): archivo de transacciones para auditoría — nadie del camino caliente depende de él.</dd></div>
           <div><dt>Dueño</dt><dd>Pena — camino crítico, arranca primero. Sin esto no hay demo.</dd></div>
         </dl>
       </article>
@@ -559,14 +560,16 @@
 
   <section class="open">
     <span class="label">Estado de integración (30/08)</span>
-    <h2>Qué está conectado</h2>
+    <h2>Pipeline entero, en vivo</h2>
     <dl>
-      <dt>Motor → explain: probado end-to-end</dt>
-      <dd><code>scripts/e2e_check.py</code> corre el motor real (detector + localizer + classifier) sobre los escenarios de <code>run_core_demo</code> y lo pasa por el bridge <code>core.EngineOutput → contracts.EngineOutput</code> hasta <code>Diagnosis</code>. <span class="rec">PASS</span> en healthy / provider / dual / overlap / unseen / weak.</dd>
-      <dt>Frontend → backend: panel <code>/e2e</code></dt>
-      <dd>El frontend Vite consume <code>POST /api/agent/explain</code> real y renderiza el <code>Diagnosis</code> completo + prioridad + JSON crudo + log de llamadas. CORS agregado en <code>backend/main.py</code>, proxy <code>/api</code> en Vite. No toca los componentes de Juani.</dd>
-      <dt>Falta para el e2e completo</dt>
-      <dd>La capa de datos de Pena (T4-T8): <code>cube</code>, injector y stream como endpoints HTTP. Con eso, <code>/e2e</code> deja de usar fixtures y el bridge pasa a un endpoint <code>POST /api/pipeline/tick</code>.</dd>
+      <dt>Loop de diagnóstico</dt>
+      <dd><code>backend/diagnosis_loop.py</code>: un <code>CentinelEngine</code> stateful que cada ~5 s toma el cubo de 60 s del ring buffer, corre detector → localizador → clasificador, lo pasa por el bridge <code>core.EngineOutput → contracts.EngineOutput</code> y por <code>diagnose()</code>. Guarda el snapshot (<code>GET /api/diagnosis</code>) y narra la cadena completa en español por la consola (<code>[GENERADOR] → [INYECTOR] → [MOTOR] → [BRIDGE] → [EXPLAIN] → [PRIORIDAD]</code>). Se monta en el <code>lifespan</code> al lado del supervisor del replay.</dd>
+      <dt>Datos reales</dt>
+      <dd>El costo sale de <code>money_lost</code> de Pena (ticket promedio real por celda), la evidencia de <code>get_evidence</code> sobre el ring. Postgres es opcional: <code>get_evidence</code>/<code>money_lost</code> van ring-first y <code>connect()</code> tiene <code>connect_timeout</code> — la demo corre sin base.</dd>
+      <dt>Frontend</dt>
+      <dd><code>/e2e</code>: panel de debug contra los endpoints reales (inyección con presets, <code>GET /api/diagnosis</code>, ticker SSE, el trace en el feed). <code>/control-tower</code>: la CommandCenter usa <code>useLive()</code> — muestra los incidentes reales del loop cuando los hay, cae al mock si no. Botones de inyección en la barra de stream.</dd>
+      <dt>Follow-up con Juani</dt>
+      <dd>El bloque "Selected incident" y el <code>SignalChart</code> de la CommandCenter siguen mock; pulir con evidencia real. Panel del juez como surface propia (<code>/demo-control</code>).</dd>
     </dl>
   </section>
 

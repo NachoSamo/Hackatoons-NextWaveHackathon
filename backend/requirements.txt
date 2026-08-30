@@ -8,3 +8,4 @@ pydantic-ai-slim[openai]
 jinja2
 pyyaml
 python-frontmatter
+python-dotenv

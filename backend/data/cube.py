@@ -585,6 +585,12 @@ def get_evidence(filters: dict[str, Any], window_s: int) -> dict[str, Any]:
     selected_filters = _filters(filters)
     seconds = _window_seconds(window_s)
 
+    # Con el replay vivo la fuente de verdad es el ring buffer: PostgreSQL queda
+    # como archivo opcional y no debe estar en el camino crítico (un connect() sin
+    # timeout se cuelga si el 5432 está filtrado).
+    if _live_rows_source is not None:
+        return _ring_evidence(selected_filters, seconds)
+
     try:
         with connect() as connection:
             after_start, end = _window_bounds(connection, seconds)
@@ -657,6 +663,10 @@ def money_lost(filters: dict[str, Any], window_s: int) -> dict[str, float]:
     """Estima el costo horario de la diferencia contra el baseline contextual."""
     selected_filters = _filters(filters)
     seconds = _window_seconds(window_s)
+
+    # Ring-first: ver la nota en get_evidence().
+    if _live_rows_source is not None:
+        return _ring_money_lost(selected_filters, seconds)
 
     try:
         with connect() as connection:

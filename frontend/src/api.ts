@@ -117,32 +117,79 @@ async function call<T>(
   }
 }
 
-export type TickResult = {
-  ok: boolean;
+// Snapshot del loop de diagnóstico vivo (GET /api/diagnosis).
+export type DiagnosisSnapshot = {
   window: number;
-  t: string;
+  ts: string | null;
   engine_incidents: { id: string; status: string; category: string; slice: string }[];
   diagnoses: Diagnosis[];
   prioritized: ScoredIncident[];
-  steps: string[];
-  error?: string;
+  active_injections: Record<string, unknown>[];
+  error: string | null;
+  log_tail: string[];
 };
+
+export type Overview = {
+  window_s: number;
+  stream: { ts: string; observed_rate: number; expected_rate: number; tx_count: number } | null;
+  attempts: number;
+  approved: number;
+  observed_rate: number;
+  expected_rate: number;
+  active_incidents: Record<string, unknown>[];
+  replay_error: string | null;
+  copy_error: string | null;
+  simulation_only: boolean;
+};
+
+export type StreamSnapshot = { ts: string; observed_rate: number; expected_rate: number; tx_count: number };
+
+export type InjectBody =
+  | { preset_id: string }
+  | { filters?: Record<string, string>; magnitude: number; decline_code: string; duration_s?: number; label?: string };
+
+const BASE_URL = BASE || "";
 
 export const api = {
   health: () => call<{ status: string }>("GET", "/health"),
   explain: (input: { fixture: string } | EngineOutput) =>
     call<ExplainResponse>("POST", "/api/agent/explain", input),
-  getDiagnosis: (id: string) =>
-    call<{ diagnosis: Diagnosis | null; error?: string }>(
-      "GET",
-      `/api/incidents/${encodeURIComponent(id)}/diagnosis`
+
+  // loop de diagnóstico vivo
+  getSnapshot: () => call<DiagnosisSnapshot>("GET", "/api/diagnosis"),
+  getOverview: () => call<Overview>("GET", "/api/overview"),
+
+  // injector real de Pena
+  getInjectOptions: () => call<Record<string, unknown>>("GET", "/api/inject/options"),
+  inject: (body: InjectBody) =>
+    call<{ incident_id?: string; incident?: unknown; error?: string }>("POST", "/api/inject", body),
+  stopIncident: (id: string) =>
+    call<{ incident_id: string; error?: string }>("POST", `/api/inject/${encodeURIComponent(id)}/stop`),
+  applyAction: (id: string) =>
+    call<{ incident_id: string; simulation_only: boolean; message?: string; error?: string }>(
+      "POST", "/api/actions/apply", { incident_id: id }
     ),
-  debugReset: () =>
-    call<{ ok: boolean; presets: Record<string, string> }>(
-      "POST",
-      "/api/debug/stream/reset"
-    ),
-  debugInject: (preset: string) =>
-    call<{ ok: boolean; error?: string }>("POST", "/api/debug/inject", { preset }),
-  debugTick: () => call<TickResult>("POST", "/api/debug/stream/tick"),
+  // el reset de la demo también resetea el motor del loop
+  resetDemo: async () => {
+    const a = await call<Record<string, unknown>>("POST", "/api/demo/reset");
+    const b = await call<{ ok: boolean }>("POST", "/api/diagnosis/reset");
+    return { data: { demo: a.data, diagnosis: b.data }, call: a.call };
+  },
+
+  // SSE del ticker (GET /api/stream). Devuelve una función para desuscribirse.
+  subscribeStream: (
+    onSnapshot: (s: StreamSnapshot) => void,
+    onError?: (e: Event) => void
+  ): (() => void) => {
+    const es = new EventSource(`${BASE_URL}/api/stream`);
+    es.onmessage = (ev) => {
+      try {
+        onSnapshot(JSON.parse(ev.data) as StreamSnapshot);
+      } catch {
+        /* ignore malformed frame */
+      }
+    };
+    if (onError) es.onerror = onError;
+    return () => es.close();
+  },
 };
