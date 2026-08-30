@@ -142,7 +142,14 @@ export const api = {
       "POST",
       "/api/debug/stream/reset"
     ),
-  debugInject: (preset: string) =>
-    call<{ ok: boolean; error?: string }>("POST", "/api/debug/inject", { preset }),
+  debugInject: (input: string | {
+    filters: Partial<Record<"merchant_id" | "provider_id" | "payment_method" | "country", string>>;
+    magnitude: number;
+    decline_code: string;
+  }) => call<{ ok: boolean; error?: string }>(
+    "POST",
+    "/api/debug/inject",
+    typeof input === "string" ? { preset: input } : input,
+  ),
   debugTick: () => call<TickResult>("POST", "/api/debug/stream/tick"),
 };
