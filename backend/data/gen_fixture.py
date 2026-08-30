@@ -109,9 +109,9 @@ def _latency_ms(rng: random.Random, provider_id: str) -> int:
     return max(40, round(rng.gauss(PROVIDER_LATENCY_MS[provider_id], 35)))
 
 
-def _created_at(index: int) -> datetime:
+def _created_at(index: int, fixture_start: datetime = FIXTURE_START) -> datetime:
     microseconds = (index * 1_000_000) // TX_PER_SECOND
-    return FIXTURE_START + timedelta(microseconds=microseconds)
+    return fixture_start + timedelta(microseconds=microseconds)
 
 
 def _empty_cube_stats() -> dict[tuple[str, str, str, str], dict[str, float | int]]:
@@ -123,6 +123,7 @@ def _empty_cube_stats() -> dict[tuple[str, str, str, str], dict[str, float | int
 
 def _cube_sample(
     cube_stats: dict[tuple[str, str, str, str], dict[str, float | int]],
+    fixture_start: datetime = FIXTURE_START,
 ) -> pd.DataFrame:
     baseline = pd.read_parquet(BASELINE_PATH)
     baseline_index = baseline.set_index(
@@ -135,8 +136,8 @@ def _cube_sample(
             "day_type",
         ]
     )
-    window_day_type = _day_type(FIXTURE_START)
-    window_hour = FIXTURE_START.hour
+    window_day_type = _day_type(fixture_start)
+    window_hour = fixture_start.hour
     profile_factor = CUBE_WINDOW_SECONDS / SECONDS_PER_HOUR / DAYS_BY_TYPE[window_day_type]
     profiles = {
         cell: baseline_index.loc[
@@ -180,17 +181,22 @@ def _cube_sample(
     return pd.DataFrame(rows, columns=LEAF_COLUMNS)
 
 
-def generate_fixture() -> tuple[pd.DataFrame, pd.DataFrame]:
-    """Genera 351.000 transacciones sanas y agrega sus primeros 60 segundos."""
+def generate_fixture(
+    fixture_start: datetime = FIXTURE_START,
+) -> tuple[pd.DataFrame, pd.DataFrame]:
+    """Genera 351.000 transacciones sanas desde el ancla UTC indicada."""
     if not BASELINE_PATH.exists():
         raise FileNotFoundError(f"No existe el baseline requerido: {BASELINE_PATH}")
+    if fixture_start.tzinfo is None:
+        raise ValueError("fixture_start debe incluir zona horaria")
+    fixture_start = fixture_start.astimezone(timezone.utc).replace(microsecond=0)
 
     rng = random.Random(FIXTURE_SEED)
     records: dict[str, list[object]] = {column: [] for column in TRANSACTION_COLUMNS}
     cube_stats = _empty_cube_stats()
 
     for index in range(FIXTURE_TX_COUNT):
-        created_at = _created_at(index)
+        created_at = _created_at(index, fixture_start)
         merchant_id, provider_id, payment_method, country = _next_leaf(rng)
         issuer_bank = rng.choice(ISSUERS_BY_COUNTRY[country])
         context = {
@@ -227,7 +233,7 @@ def generate_fixture() -> tuple[pd.DataFrame, pd.DataFrame]:
             stats["amount_usd_sum"] = float(stats["amount_usd_sum"]) + amount_usd
 
     fixture = pd.DataFrame(records, columns=TRANSACTION_COLUMNS)
-    return fixture, _cube_sample(cube_stats)
+    return fixture, _cube_sample(cube_stats, fixture_start)
 
 
 def main() -> None:
