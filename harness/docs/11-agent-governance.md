@@ -44,7 +44,8 @@ Ejemplo: “Alertame si PIX Brasil cae más de 8 pp durante 90 segundos y afecta
 
 Estados: `DRAFT → VALIDATED → TESTED → APPROVED → ACTIVE → SUPERSEDED/REVOKED`.
 
-Para la hackathon es P2: puede mostrarse como concepto, pero no entra al hot path del trial by fire.
+Para la hackathon es P1: debe quedar diseñada y puede mostrarse como propuesta funcional, pero no
+entra al hot path del trial by fire ni activa reglas sin validación, replay y aprobación.
 
 ## 3. Lifecycle de diagnóstico
 

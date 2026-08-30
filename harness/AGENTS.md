@@ -37,17 +37,35 @@ Definidos en las primeras 2 horas y documentados acá abajo. **No cambiar un con
 al equipo** — la mayoría de los bugs de las 23:00 son de forma de JSON, no de lógica.
 
 ```
-(completar el sábado)
-POST /endpoint
-  request:  { ... }
-  response: { ... }
+POST /api/agent/explain
+  request: EngineOutput  |  { "fixture": "dual_incident" }   (nombre corto o "engine_output_*")
+  response: { diagnoses: Diagnosis[], prioritized: ScoredIncident[] }   (nunca 500; error va en el body)
+
+GET /api/incidents/{id}/diagnosis
+  response: { diagnosis: Diagnosis | null, error?: string }
 ```
+
+`EngineOutput` = `{ incidents: IncidentEvidence[] }` (lista → soporta 2 incidentes simultáneos).
+Cada incidente tiene `incident_id`, `detected_at`, `estimated_start`, `slice` (`merchant_id`,
+`provider_id`, `payment_method`, `country`, todos `str | null` = sub-cubo parcial),
+`diagnosis_category` (lo clasifica el motor de Luca, determinístico), `diagnosis_status`
+(`supported` | `insufficient_evidence` | `unclassified`; la capa explain tolera los aliases legacy
+`insufficient` / `ambiguous`), `confidence_score` / `confidence_level`,
+`baseline_rate` / `observed_rate`, `sample_size`, `wilson_ci`, `estimated_lost_approvals`
+(`{ value, window_seconds }`), `decline_shift[]`, `issuer_evidence[]`, `reason_codes[]`, `alternatives[]`.
+
+`Diagnosis` repite incidente + slice + categoría/estado/confianza y agrega: `headline` (**determinístico**:
+plata + slice), `executive` / `operations` / `alternatives` (LLM, con fallback Jinja), `evidence[]`
+(determinístico), `missing_data[]`, `cost` (`money_lost` de Pena, o fallback), `recommended_action`
+(del catálogo, `simulation_only: true`), `llm_used`. Cuando `diagnosis_status != supported` →
+acción `monitor_for_evidence`, `cost: null`, `missing_data` poblado.
 
 ## Propiedad del código
 
 Cada uno es dueño de su capa y hace merge directo a `develop`. No hay code review.
-- `/backend/core` → Luca (LLM, agentes, visión, lógica compleja)
+- `/backend/core` → Luca (CUSUM, localizador y clasificación determinística)
 - `/backend/data` → Pena (ingesta, modelos, DB, procesamiento)
+- `/backend/explain` y `backend/main.py` → Samo (explicación, playbook, contratos y API)
 - `/frontend` → Juani (Samo puede hacer wiring, Juani manda en lo visual y lo pisa si hace falta)
 - Estructura, integración y comodín → Samo
 

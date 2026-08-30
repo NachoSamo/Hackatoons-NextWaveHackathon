@@ -1,0 +1,75 @@
+actions:
+  provider_degradation:
+    action_id: reroute_provider_slice
+    title: "Simulate rerouting {country} traffic away from {provider_id}"
+    owner: yuno
+    param_template:
+      - name: routing_target
+        current: "{provider_id}"
+        proposed: "healthy alternative provider"
+    expected_impact: "May reduce exposure while alternative provider health remains normal."
+    reevaluate_after: "5 minutes"
+    guidance: "Validate healthy alternatives, then simulate a controlled reroute for the affected slice."
+  issuer_unavailable:
+    action_id: monitor_issuer_recovery
+    title: "Monitor {issuer_bank} availability and escalate evidence"
+    owner: issuer
+    param_template:
+      - name: immediate_retry
+        current: "enabled"
+        proposed: "controlled retry after issuer recovery"
+    expected_impact: "Avoids unnecessary immediate retries while the issuer is unavailable."
+    reevaluate_after: "10 minutes"
+    guidance: "Share the affected issuer evidence and avoid immediate repeated attempts."
+  issuer_declining:
+    action_id: escalate_issuer_declines
+    title: "Escalate elevated issuer declines in {country}"
+    owner: issuer
+    param_template:
+      - name: issuer_escalation
+        current: "not opened"
+        proposed: "open with evidence bundle"
+    expected_impact: "Creates a focused issuer investigation; recovery is not guaranteed."
+    reevaluate_after: "15 minutes"
+    guidance: "Escalate the concentrated issuer pattern with response-code evidence."
+  method_degradation:
+    action_id: review_payment_method
+    title: "Review {payment_method} performance in {country}"
+    owner: merchant
+    param_template:
+      - name: method_availability
+        current: "active"
+        proposed: "surface healthy alternatives"
+    expected_impact: "May reduce customer exposure while the method is investigated."
+    reevaluate_after: "10 minutes"
+    guidance: "Verify the method configuration and surface an available alternative where appropriate."
+  merchant_integration_error:
+    action_id: inspect_merchant_integration
+    title: "Inspect {merchant_id} integration across affected providers"
+    owner: merchant
+    param_template:
+      - name: integration_change
+        current: "current deployment"
+        proposed: "review or roll back the latest affected change"
+    expected_impact: "May restore authorization quality if a merchant-side integration change caused the decline pattern."
+    reevaluate_after: "5 minutes"
+    guidance: "Compare recent merchant integration changes with healthy provider controls before rolling back or correcting the mapping."
+  merchant_configuration:
+    action_id: review_merchant_configuration
+    title: "Review {merchant_id} payment configuration"
+    owner: merchant
+    param_template:
+      - name: payment_configuration
+        current: "active configuration"
+        proposed: "validate against the last known healthy configuration"
+    expected_impact: "May restore approvals when a merchant-side rule or limit is misconfigured."
+    reevaluate_after: "10 minutes"
+    guidance: "Validate the affected merchant settings and simulate the correction before applying any configuration change."
+  monitor:
+    action_id: monitor_for_evidence
+    title: "Monitor the affected payment slice"
+    owner: none
+    param_template: []
+    expected_impact: "Avoids a premature operational change while evidence accumulates."
+    reevaluate_after: "next 60-second window"
+    guidance: "Do not change routing or retry behaviour until the evidence becomes supported."

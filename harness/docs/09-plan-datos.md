@@ -14,7 +14,7 @@
 3. **Sección C — Protocolo de monitoreo.** El paso a paso de Pena entre tarea y tarea.
 4. **Sección D — Gate de revisión final.** Lo que Claude va a revisar al terminar.
 
-**Paso 0, antes de arrancar:** copiar este documento a `harness/docs/08-plan-datos.md` y commitearlo.
+**Paso 0, antes de arrancar:** copiar este documento a `harness/docs/09-plan-datos.md` y commitearlo.
 Regla del harness: *si no está en el repo, no existe* — y el executor lo va a poder leer desde ahí en
 vez de depender de que esté pegado en el chat.
 
@@ -39,8 +39,8 @@ fire"). Nada puede crashear delante de ellos.
 | Quién | Carpeta | Qué hace |
 |---|---|---|
 | **Pena — esta spec** | `backend/data/` | Modelo de datos, generador, stream en vivo, inyector, capa de queries |
-| Luca | `backend/core/` | Detector (CUSUM) + localizador de causa raíz + agente LLM. **No implementar nada de esto** |
-| Samo | `backend/main.py`, integración | Esqueleto FastAPI, panel de inyección (UI) |
+| Luca | `backend/core/` | Detector (CUSUM) + localizador y clasificación determinística. **No implementar nada de esto** |
+| Samo | `backend/explain/`, `backend/main.py`, integración | Capa de explicación, playbook, contratos y API |
 | Juani | `frontend/` | Dashboard React |
 
 **Stack obligatorio:** Python + FastAPI + Uvicorn (pip) · PostgreSQL local · pandas/pyarrow/numpy.
@@ -214,7 +214,7 @@ def money_lost(filters: dict, window_s: int) -> dict
 # = intentos_afectados × (tasa_esperada − tasa_real) × ticket_promedio, extrapolado a la hora
 ```
 
-## A.7 · Endpoints (todos de Pena)
+## A.7 · Endpoints de datos (Pena)
 
 ```
 GET  /api/stream                (SSE)  { ts, observed_rate, expected_rate, tx_count }
@@ -229,7 +229,8 @@ POST /api/actions/apply         { incident_id }
 POST /api/demo/reset            → rebobina el replay, apaga incidentes, borra source='live'
 ```
 
-Luca expone aparte `/api/detector` y `/api/agent/explain` en `backend/core/`. **No implementarlos.**
+Luca puede exponer aparte `/api/detector` desde `backend/core/`. La capa de explicación y
+`POST /api/agent/explain` son de Samo; no pertenecen a `backend/data/`.
 
 ## A.8 · Regla de honestidad (defensa técnica ante el jurado)
 

@@ -353,13 +353,13 @@
   <section>
     <span class="label">El pipeline</span>
     <h2>Cinco capas, un sentido de flujo</h2>
-    <p class="prose">Los datos entran por la izquierda y salen convertidos en un diagnóstico accionable por la derecha. La regla que ordena todo: <strong>lo determinístico calcula, la IA entiende</strong>. La detección y la localización de causa raíz son código auditable y reproducible; el LLM interpreta el resultado contra reglas de negocio, lo redacta para dos audiencias y elige la acción.</p>
+    <p class="prose">Los datos entran por la izquierda y salen convertidos en un diagnóstico accionable por la derecha. La regla que ordena todo: <strong>lo determinístico calcula y decide; la IA sólo comunica</strong>. La detección, localización, clasificación y selección de acción son código auditable y reproducible; Pydantic AI sin tools sólo redacta el resultado para dos audiencias.</p>
 
     <figure class="diagram">
       <div class="diagram__inner">
         <svg viewBox="0 0 1180 300" role="img" aria-labelledby="diagTitle diagDesc">
           <title id="diagTitle">Diagrama del pipeline de la Torre de Control</title>
-          <desc id="diagDesc">Flujo de cinco capas: Generador de tráfico, Motor determinístico (detector y localizador), Agente RAG, Playbook y templates, y Entrega. El motor entrega un output estructurado a la capa de IA. El Playbook realimenta el generador con un botón de aplicar simulado. Un panel de inyección alimenta al generador durante el trial by fire.</desc>
+          <desc id="diagDesc">Flujo de cinco capas: Generador de tráfico, Motor determinístico (detector, localizador y clasificador), Capa de explicación, Playbook y templates, y Entrega. El motor entrega un output estructurado a la capa de explicación; Pydantic AI sin tools sólo redacta. El Playbook realimenta el generador con un botón de aplicar simulado.</desc>
 
           <defs>
             <marker id="ah" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
@@ -384,15 +384,15 @@
           <rect class="node-rect node-rect--engine" x="264" y="100" width="216" height="96" rx="9"></rect>
           <text class="node-num" x="280" y="122">1</text>
           <text class="node-name" x="280" y="146">Motor determinístico</text>
-          <text class="node-sub" x="280" y="166">detector → localizador</text>
+          <text class="node-sub" x="280" y="166">detector·localizador·clasif.</text>
           <text class="node-sub" x="280" y="181">sin LLM · auditable</text>
 
           <!-- node 2 -->
           <rect class="node-rect" x="524" y="100" width="200" height="96" rx="9"></rect>
           <text class="node-num" x="540" y="122">2</text>
-          <text class="node-name" x="540" y="146">Agente RAG</text>
+          <text class="node-name" x="540" y="146">Capa de explicación</text>
           <text class="node-sub" x="540" y="166">reglas de negocio .md</text>
-          <text class="node-sub" x="540" y="181">interpreta · no busca</text>
+          <text class="node-sub" x="540" y="181">redacta · no decide</text>
 
           <!-- node 3 -->
           <rect class="node-rect" x="768" y="100" width="200" height="96" rx="9"></rect>
@@ -458,7 +458,8 @@
         <dl class="layer__body">
           <div><dt>Detector</dt><dd>Modela la conversión <span class="k">esperada por hora</span> y corre CUSUM sobre el residuo; dispara cuando el desvío acumulado cruza el umbral. Filtra el ruido diurno, el fin de semana y la varianza estadística.</dd></div>
           <div><dt>Localizador</dt><dd>Por cada slice candidato simula el <span class="k">efecto ripple</span> (“si esta fuera la causa, ¿cómo se vería el resto del cubo?”), lo compara con lo observado y se queda con la explicación que mejor cubre lo observado siendo la más chica. Puede devolver 2 causas.</dd></div>
-          <div><dt>No hace</dt><dd class="no">No usa LLM. No ejecuta acciones. No inventa: si la muestra es chica (intervalo de Wilson ancho) lo dice explícitamente.</dd></div>
+          <div><dt>Clasificador</dt><dd>Módulo determinístico aparte: combina slice + <span class="mono">decline_shift</span> + evidencia de issuer + confianza → <span class="mono">diagnosis_category</span> (`provider_degradation`, `issuer_unavailable`, …). El LLM río abajo no lo puede cambiar.</dd></div>
+          <div><dt>No hace</dt><dd class="no">No usa LLM. No ejecuta acciones. No inventa: si la muestra es chica (intervalo de Wilson ancho) marca <span class="mono">diagnosis_status ≠ supported</span>.</dd></div>
           <div><dt>Stack</dt><dd><span class="mono">Python puro · pandas/numpy</span> · ~200–400 líneas · determinístico y reproducible. Base conceptual: <span class="mono">Squeeze / HotSpot</span>.</dd></div>
           <div><dt>Salida</dt><dd>Objeto estructurado (JSON): qué cayó, dónde (slice/s), desde cuándo, magnitud, a quién afecta, volumen, intervalo de confianza. → es el “output para LLM”.</dd></div>
           <div><dt>Dueño</dt><dd>Luca (+ Samo). <span class="k">Spike de riesgo #1</span>: probarlo contra combinaciones no usadas en desarrollo antes de la demo.</dd></div>
@@ -468,14 +469,14 @@
       <article class="layer">
         <div class="layer__head">
           <span class="layer__num">2</span>
-          <div><h3>Agente RAG — Interpretación</h3><span class="mono">reglas de negocio en .md · estáticas</span></div>
+          <div><h3>Capa de explicación — Comunicación</h3><span class="mono">reglas de negocio en .md · estáticas</span></div>
           <span class="chip chip--warn">Riesgo medio</span>
         </div>
         <dl class="layer__body">
-          <div><dt>Hace</dt><dd>Recibe el output estructurado del motor. Recupera de una base de conocimiento en <span class="mono">.md</span> (qué significa cada código, taxonomía soft/hard, patrones, umbrales) los documentos relevantes al incidente. Infiere: qué pasa en lenguaje de negocio, severidad, y qué <span class="k">categoría de acción</span> corresponde.</dd></div>
-          <div><dt>No hace</dt><dd class="no">No busca la causa raíz — ya vino resuelta y auditada del motor. No calcula. La base <span class="mono">.md</span> es estática: la escribimos nosotros y <span class="k">no se toca en la demo</span>. Lo que varía en el trial by fire es el incidente, no las reglas.</dd></div>
-          <div><dt>Stack</dt><dd>LLM (OpenAI) + retrieval simple sobre archivos <span class="mono">.md</span> · salida estructurada · temperatura baja.</dd></div>
-          <div><dt>Dueño</dt><dd>Luca / Samo. Mitigación de riesgo: salida validada contra un esquema, no prosa libre.</dd></div>
+          <div><dt>Hace</dt><dd>Recibe el output estructurado del motor, la acción ya seleccionada desde catálogo, la evidencia y el costo. Carga reglas de negocio <span class="mono">.md</span> y usa Pydantic AI sin tools sólo para redactar en dos audiencias.</dd></div>
+          <div><dt>No hace</dt><dd class="no">No busca la causa raíz, no calcula ni elige la acción: todo eso ya vino resuelto y auditable del motor y del playbook. La base <span class="mono">.md</span> es estática y no se toca en la demo.</dd></div>
+          <div><dt>Stack</dt><dd>Pydantic AI (OpenAI, sin tools) + archivos <span class="mono">.md</span> · salida estructurada · temperatura 0.</dd></div>
+          <div><dt>Dueño</dt><dd>Samo. Mitigación de riesgo: salida validada contra un esquema y templates determinísticos si OpenAI falla.</dd></div>
         </dl>
       </article>
 
@@ -486,12 +487,12 @@
           <span class="chip chip--ok">Riesgo bajo</span>
         </div>
         <dl class="layer__body">
-          <div><dt>Explicación</dt><dd>Lenguaje natural en <span class="k">dos formatos</span>: ops (detalle: qué, dónde, desde cuándo, evidencia) y ejecutivo (una línea con la plata).</dd></div>
-          <div><dt>Costo</dt><dd>Número determinístico — <span class="mono">intentos afectados × (tasa normal − tasa actual) × ticket promedio</span> — que el template redacta. El número sale de los datos, el relato del LLM.</dd></div>
-          <div><dt>Acción</dt><dd>Elegida de un <span class="k">catálogo que escribimos nosotros</span> (una por tipo de causa: reroutear proveedor, subir umbral de retry, flexibilizar 3DS para un banco, pausar un método…), con los parámetros concretos que cambiaría y el impacto estimado.</dd></div>
-          <div><dt>No hace</dt><dd class="no">No ejecuta la acción. En la demo hay un botón <span class="k">“aplicar (simulado)”</span> claramente marcado que muestra el efecto sobre el stream. Es demo, no producto.</dd></div>
-          <div><dt>Stack</dt><dd>Catálogo en <span class="mono">YAML/JSON</span> + templates + LLM para la redacción final.</dd></div>
-          <div><dt>Dueño</dt><dd>Samo / Juani. <span class="k">Invertir acá</span>: los mentores dicen que la acción recomendada de calidad es lo que da valor al producto.</dd></div>
+          <div><dt>Acción</dt><dd>Se elige del <span class="k">catálogo YAML propio</span> por <span class="mono">diagnosis_category</span> (una entrada por categoría + <span class="mono">monitor</span> para evidencia insuficiente). Trae `owner`, `params_to_change`, `expected_impact`, `reevaluate_after`. Todo determinístico.</dd></div>
+          <div><dt>Evidencia + headline</dt><dd>Bullets legibles armados desde <span class="mono">decline_shift</span> / <span class="mono">issuer_evidence</span> / <span class="mono">reason_codes</span>. El <span class="k">headline</span> es un template con la plata + el slice — no lo escribe el LLM.</dd></div>
+          <div><dt>Costo</dt><dd>Viene de <span class="mono">money_lost(slice, window)</span> de la capa de datos (ticket promedio por celda + extrapolación horaria). Fallback con ticket fijo si esa capa no está. Assumptions explícitas.</dd></div>
+          <div><dt>No hace</dt><dd class="no">No ejecuta la acción (<span class="mono">simulation_only: true</span>). El botón “aplicar (simulado)” es de la capa de datos.</dd></div>
+          <div><dt>Stack</dt><dd>Catálogo en <span class="mono">YAML</span> + Jinja para el fallback. Sin LLM en esta capa.</dd></div>
+          <div><dt>Dueño</dt><dd>Samo. <span class="k">Invertir acá</span>: los mentores dicen que la acción recomendada de calidad es lo que da valor al producto.</dd></div>
         </dl>
       </article>
 

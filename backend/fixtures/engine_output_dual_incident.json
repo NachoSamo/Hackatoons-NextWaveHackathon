@@ -1,0 +1,20 @@
+{
+  "incidents": [
+    {
+      "incident_id": "INC-0001", "detected_at": "2026-08-30T14:03:12Z", "estimated_start": "2026-08-30T13:58:40Z",
+      "slice": {"merchant_id": null, "provider_id": "adyen", "payment_method": null, "country": "BR"},
+      "diagnosis_category": "provider_degradation", "diagnosis_status": "supported", "confidence_score": 0.94, "confidence_level": "high",
+      "baseline_rate": 0.90, "observed_rate": 0.49, "sample_size": 430, "wilson_ci": [0.44, 0.54],
+      "estimated_lost_approvals": {"value": 176, "window_seconds": 60}, "decline_shift": [{"code": "96", "label": "System Malfunction", "kind": "soft", "count_before": 18, "count_after": 155, "share_before": 0.08, "share_after": 0.63}],
+      "issuer_evidence": [], "reason_codes": ["ALTERNATIVE_PROVIDERS_HEALTHY"], "alternatives": [{"category": "issuer_unavailable", "score": 0.22}]
+    },
+    {
+      "incident_id": "INC-0002", "detected_at": "2026-08-30T14:04:00Z", "estimated_start": "2026-08-30T13:59:10Z",
+      "slice": {"merchant_id": "rappido", "provider_id": null, "payment_method": "card", "country": "MX"},
+      "diagnosis_category": "issuer_unavailable", "diagnosis_status": "supported", "confidence_score": 0.88, "confidence_level": "high",
+      "baseline_rate": 0.84, "observed_rate": 0.37, "sample_size": 210, "wilson_ci": [0.31, 0.44],
+      "estimated_lost_approvals": {"value": 99, "window_seconds": 60}, "decline_shift": [{"code": "91", "label": "Issuer Unavailable", "kind": "soft", "count_before": 8, "count_after": 101, "share_before": 0.05, "share_after": 0.69}],
+      "issuer_evidence": [{"issuer_bank": "banorte", "attempts": 130, "approval_rate": 0.31, "delta_points": -53}], "reason_codes": ["ISSUER_CONCENTRATION"], "alternatives": [{"category": "provider_degradation", "score": 0.18}]
+    }
+  ]
+}

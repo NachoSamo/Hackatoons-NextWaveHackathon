@@ -19,8 +19,9 @@ empezar, leé este archivo primero.
 | `docs/06-dominio-pagos.md` | Dominio de pagos en profundidad: circuito, actores, decline codes, dimensiones. Vocabulario + defensa técnica | Antes de codear C2 |
 | `docs/07-decisiones-core.md` | Disparador de las decisiones técnicas core de C2 + resumen del research | Reunión de arranque |
 | `docs/08-product-ux-gtm.md` | Cliente, problema, propuesta de valor, UX, venta, guía para mentores y storyboard C2 | Juani + definición de producto |
-| `docs/09-user-stories-requirements.md` | Historias de usuario, requerimientos, estados y trazabilidad del MVP de Centinel | Antes de tocar frontend/backend |
-| `docs/10-agent-governance.md` | Cómo se versionan políticas, diagnósticos, recomendaciones y feedback humano | Producto + agente + frontend |
+| `docs/09-plan-datos.md` | Plan de datos, generador, cubo y endpoints de la demo | Pena + integración |
+| `docs/10-user-stories-requirements.md` | Historias de usuario, requerimientos, estados y trazabilidad del MVP de Centinel | Antes de tocar frontend/backend |
+| `docs/11-agent-governance.md` | Cómo se versionan políticas, diagnósticos, recomendaciones y feedback humano | Producto + agente + frontend |
 | `docs/01-kickoff.md` | Dinámica exacta de las primeras 2 horas | Sábado 12:30 |
 | `docs/02-timeline.md` | Presupuesto de horas, checkpoints, reglas de recorte | Todo el evento (Samo lo gestiona) |
 | `docs/03-reglas-equipo.md` | Roles, feedback de mentores, git, hardware | Antes del kickoff |
@@ -30,7 +31,7 @@ empezar, leé este archivo primero.
 | `docs/arquitectura.md` | Diagrama + descripción técnica (ENTREGABLE, inglés) | Se llena el sábado |
 | `docs/arquitectura.html` | Borrador de la arquitectura de C2, capa por capa, con decisiones abiertas | Ahora — alinear al equipo |
 | `pitch/demo-path.md` | Los N pasos exactos que se muestran en el pitch | Se congela antes de codear |
-| `pitch/script-demo.md` | Guión del pitch de 3 minutos | Juani, sábado post-cena |
+| `pitch/script-demo.md` | Guión del pitch de 7 minutos: 2 de producto + 5 de demo | Juani, sábado post-cena |
 | `../README.md` | Entregable público en la raíz de GitHub — **EN INGLÉS** | Se arma desde el día 1 |
 
 ---
