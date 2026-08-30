@@ -57,6 +57,7 @@ No se muestran selectores de fechas arbitrarias: el backend actual acepta `windo
 | Dos incidentes simultáneos separados | core residualization + US-08 | ✅ | La cola soporta múltiples resultados y scroll propio. |
 | Evidencia insuficiente | `streamplus × cash_oxxo × MX`, US-09 | ✅ demo | Se reproduce desde el mismo panel dimensional con señal 55% y código 51; no requiere menú Prepared. |
 | Operations / Executive | `Diagnosis.operations/executive` | ✅ | Cambia lenguaje, no hechos. |
+| Toggle EN/ES completo | UI + `Diagnosis` estructurado | ✅ | Traduce navegación, filtros, comparación, estados y copia derivada de categoría/evidencia/acción; IDs, marcas, códigos y nombres propios se conservan. |
 | Fallback sin OpenAI | templates + `llm_used` | 🟡 | Funciona en backend; la UI no etiqueta si el wording vino de LLM o template. |
 | Trial by fire sólo con combinaciones válidas | `/api/inject/options`, US-11 | ✅ | País limita método y banco emisor; el panel usa opciones del backend y nunca JSON crudo. |
 | Métricas sincronizadas con el pipeline vivo | `/api/stream` + `/api/overview` | ✅ | KPIs y timeline leen snapshots reales; diagnosis y revenue llegan por polling separado. |
@@ -96,3 +97,7 @@ No se muestran selectores de fechas arbitrarias: el backend actual acepta `windo
 La comparación P0 vive en una ventana secundaria accesible desde Command Center y desde el
 incidente. No reemplaza Live Monitoring, no modifica el detector y no activa alertas. La UI agrega
 cubos del backend para presentar métricas; el Copilot sólo explica el evidence bundle.
+
+La localización tampoco altera el contrato backend. En español, el frontend reconstruye la copia de
+diagnóstico desde categoría, scope, evidencia, costo y acción estructurados; no traduce IDs, códigos,
+marcas ni nombres propios y nunca modifica los hechos recibidos.

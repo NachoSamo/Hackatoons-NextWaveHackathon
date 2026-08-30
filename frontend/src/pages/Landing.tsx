@@ -48,7 +48,7 @@ export function Landing() {
         </div>
       </section>
 
-      <section className="mechanism-section" aria-label="How Centinel works">
+      <section className="mechanism-section" aria-label={text("How Centinel works", "Cómo funciona Centinel")}>
         <div className="mechanism-word">{text("Compare", "Comparar")}</div><ArrowRight aria-hidden="true" />
         <div className="mechanism-word">{text("Detect", "Detectar")}</div><ArrowRight aria-hidden="true" />
         <div className="mechanism-word">{text("Diagnose", "Diagnosticar")}</div><ArrowRight aria-hidden="true" />
@@ -79,7 +79,7 @@ export function Landing() {
         <button className="button button--light" type="button" onClick={() => setLaunching(true)}>{text("Start the simulation", "Iniciar la simulación")} <ArrowRight size={16} /></button>
       </section>
 
-      <footer><Brand compact /><span>NextWave Hackathon 2026 · Yuno × Nauta · Supported by OpenAI</span></footer>
+      <footer><Brand compact /><span>{text("NextWave Hackathon 2026 · Yuno × Nauta · Supported by OpenAI", "NextWave Hackathon 2026 · Yuno × Nauta · Con el apoyo de OpenAI")}</span></footer>
     </main>
   );
 }

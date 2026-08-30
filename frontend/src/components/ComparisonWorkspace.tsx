@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { ArrowRight, CalendarRange, Database, Search, X } from "lucide-react";
 import { api, type CubeLeaf, type PaymentSlice } from "../api";
 import { useLanguage } from "../i18n";
+import { localizeToken } from "../localization";
 import { LanguageToggle } from "./LanguageToggle";
 
 type Scope = {
@@ -14,8 +15,8 @@ type Scope = {
 type ComparisonResult = {
   id: number;
   scope: Scope;
-  observedLabel: string;
-  referenceLabel: string;
+  observedWindow: number;
+  reference: "baseline" | number;
   observedRate: number;
   referenceRate: number;
   attempts: number;
@@ -44,12 +45,12 @@ function aggregate(leaves: CubeLeaf[], forecast = false) {
   return { attempts, rate: attempts ? approved / attempts : 0, avgTicket: attempts ? amount / attempts : 35 };
 }
 
-function scopeLabel(scope: Scope) {
-  return Object.values(scope).filter(Boolean).join(" · ") || "All payment traffic";
+function scopeLabel(scope: Scope, emptyLabel: string, language: "en" | "es") {
+  return Object.values(scope).filter(Boolean).map((value) => localizeToken(value, language)).join(" · ") || emptyLabel;
 }
 
 export function ComparisonWorkspace({ initialScope, onClose }: { initialScope?: PaymentSlice; onClose: () => void }) {
-  const { text } = useLanguage();
+  const { language, text } = useLanguage();
   const [scope, setScope] = useState<Scope>({
     ...emptyScope,
     merchant_id: initialScope?.merchant_id ?? "",
@@ -59,7 +60,7 @@ export function ComparisonWorkspace({ initialScope, onClose }: { initialScope?: 
   });
   const [observedWindow, setObservedWindow] = useState(60);
   const [reference, setReference] = useState<"baseline" | number>("baseline");
-  const [query, setQuery] = useState("Compare Adyen in Brazil over the last 60 seconds against its contextual baseline.");
+  const [query, setQuery] = useState("");
   const [results, setResults] = useState<ComparisonResult[]>([]);
   const [activeId, setActiveId] = useState<number | null>(null);
   const [busy, setBusy] = useState(false);
@@ -72,11 +73,11 @@ export function ComparisonWorkspace({ initialScope, onClose }: { initialScope?: 
   const active = results.find((item) => item.id === activeId) ?? results.at(-1);
 
   const chips = useMemo(() => [
-    scopeLabel(scope),
+    scopeLabel(scope, text("All payment traffic", "Todo el tráfico de pagos"), language),
     observedLabel,
     `${text("versus", "contra")} ${referenceLabel}`,
     "UTC",
-  ], [scope, observedLabel, referenceLabel, text]);
+  ], [scope, observedLabel, referenceLabel, language, text]);
 
   const interpret = () => {
     const value = query.toLowerCase();
@@ -121,7 +122,7 @@ export function ComparisonWorkspace({ initialScope, onClose }: { initialScope?: 
     const attemptsPerHour = observed.attempts * (3600 / observedWindow);
     const revenueRisk = Math.max(0, compared.rate - observed.rate) * attemptsPerHour * (observed.avgTicket || 35);
     const result: ComparisonResult = {
-      id: Date.now(), scope: { ...scope }, observedLabel, referenceLabel,
+      id: Date.now(), scope: { ...scope }, observedWindow, reference,
       observedRate: observed.rate, referenceRate: compared.rate,
       attempts: Math.round(observed.attempts), delta, revenueRisk,
     };
@@ -140,14 +141,14 @@ export function ComparisonWorkspace({ initialScope, onClose }: { initialScope?: 
 
         <div className="comparison-layout">
           <aside className="comparison-builder">
-            <form onSubmit={(event) => { event.preventDefault(); interpret(); }}><Search size={15} /><input value={query} onChange={(event) => setQuery(event.target.value)} aria-label={text("Describe a comparison", "Describir una comparación")} /><button type="submit">{text("Interpret", "Interpretar")}</button></form>
+            <form onSubmit={(event) => { event.preventDefault(); interpret(); }}><Search size={15} /><input value={query} onChange={(event) => setQuery(event.target.value)} aria-label={text("Describe a comparison", "Describir una comparación")} placeholder={text("Compare Adyen in Brazil against its baseline…", "Compará Adyen en Brasil contra su baseline…")} /><button type="submit">{text("Interpret", "Interpretar")}</button></form>
             <div className="comparison-fields">
               <label><span>{text("Observed window", "Ventana observada")}</span><select value={observedWindow} onChange={(event) => setObservedWindow(Number(event.target.value))}>{WINDOWS.map((item) => <option key={item.value} value={item.value}>{text(item.en, item.es)}</option>)}</select></label>
               <label><span>{text("Compare against", "Comparar contra")}</span><select value={reference} onChange={(event) => setReference(event.target.value === "baseline" ? "baseline" : Number(event.target.value))}><option value="baseline">{text("Contextual 14-day baseline", "Baseline contextual de 14 días")}</option>{WINDOWS.filter((item) => item.value !== observedWindow).map((item) => <option key={item.value} value={item.value}>{text(item.en, item.es)}</option>)}</select></label>
-              <label><span>Merchant</span><select value={scope.merchant_id} onChange={(event) => setScope({ ...scope, merchant_id: event.target.value })}><option value="">All</option><option value="rappido">Rappido</option><option value="tiendita">Tiendita</option><option value="streamplus">Streamplus</option></select></label>
-              <label><span>Provider</span><select value={scope.provider_id} onChange={(event) => setScope({ ...scope, provider_id: event.target.value })}><option value="">All</option><option value="adyen">Adyen</option><option value="dlocal">dLocal</option><option value="mercadopago">MercadoPago</option></select></label>
-              <label><span>{text("Method", "Método")}</span><select value={scope.payment_method} onChange={(event) => setScope({ ...scope, payment_method: event.target.value })}><option value="">All</option><option value="card">Card</option><option value="pix">PIX</option><option value="pse">PSE</option></select></label>
-              <label><span>{text("Country", "País")}</span><select value={scope.country} onChange={(event) => setScope({ ...scope, country: event.target.value })}><option value="">All</option><option value="BR">Brazil</option><option value="MX">Mexico</option><option value="CO">Colombia</option></select></label>
+              <label><span>{text("Merchant", "Comercio")}</span><select value={scope.merchant_id} onChange={(event) => setScope({ ...scope, merchant_id: event.target.value })}><option value="">{text("All", "Todos")}</option><option value="rappido">Rappido</option><option value="tiendita">Tiendita</option><option value="streamplus">Streamplus</option></select></label>
+              <label><span>{text("Provider", "Proveedor")}</span><select value={scope.provider_id} onChange={(event) => setScope({ ...scope, provider_id: event.target.value })}><option value="">{text("All", "Todos")}</option><option value="adyen">Adyen</option><option value="dlocal">dLocal</option><option value="mercadopago">MercadoPago</option></select></label>
+              <label><span>{text("Method", "Método")}</span><select value={scope.payment_method} onChange={(event) => setScope({ ...scope, payment_method: event.target.value })}><option value="">{text("All", "Todos")}</option><option value="card">{text("Card", "Tarjeta")}</option><option value="pix">PIX</option><option value="pse">PSE</option></select></label>
+              <label><span>{text("Country", "País")}</span><select value={scope.country} onChange={(event) => setScope({ ...scope, country: event.target.value })}><option value="">{text("All", "Todos")}</option><option value="BR">{text("Brazil", "Brasil")}</option><option value="MX">{text("Mexico", "México")}</option><option value="CO">Colombia</option></select></label>
             </div>
             <div className="comparison-chips">{chips.map((chip) => <span key={chip}>{chip}</span>)}</div>
             <button className="run-comparison" onClick={run} disabled={busy}>{busy ? text("Comparing…", "Comparando…") : text("Run comparison", "Ejecutar comparación")}<ArrowRight size={14} /></button>
@@ -157,12 +158,16 @@ export function ComparisonWorkspace({ initialScope, onClose }: { initialScope?: 
           <main className="comparison-results">
             <nav aria-label={text("Comparison history", "Historial de comparaciones")}>
               <span>{text("Session queries", "Consultas de la sesión")} ({results.length})</span>
-              {results.map((result, index) => <button className={result.id === active?.id ? "is-active" : ""} key={result.id} onClick={() => setActiveId(result.id)}><i>{String(index + 1).padStart(2, "0")}</i><span>{scopeLabel(result.scope)}<small>{result.observedLabel} vs {result.referenceLabel}</small></span></button>)}
+              {results.map((result, index) => {
+                const resultObserved = text(WINDOWS.find((item) => item.value === result.observedWindow)?.en ?? "Observed window", WINDOWS.find((item) => item.value === result.observedWindow)?.es ?? "Ventana observada");
+                const resultReference = result.reference === "baseline" ? text("Contextual 14-day baseline", "Baseline contextual de 14 días") : text(WINDOWS.find((item) => item.value === result.reference)?.en ?? "Reference window", WINDOWS.find((item) => item.value === result.reference)?.es ?? "Ventana de referencia");
+                return <button className={result.id === active?.id ? "is-active" : ""} key={result.id} onClick={() => setActiveId(result.id)}><i>{String(index + 1).padStart(2, "0")}</i><span>{scopeLabel(result.scope, text("All payment traffic", "Todo el tráfico de pagos"), language)}<small>{resultObserved} {text("vs", "contra")} {resultReference}</small></span></button>;
+              })}
             </nav>
             <section className="comparison-output">
               {error && <p className="comparison-error">{error}</p>}
               {!active ? <div className="comparison-empty"><CalendarRange size={26} /><strong>{text("No comparison has run yet", "Todavía no ejecutaste una comparación")}</strong><p>{text("Structure a query on the left. Results accumulate here so you can contrast several hypotheses without losing context.", "Estructurá una consulta a la izquierda. Los resultados se acumulan acá para contrastar varias hipótesis sin perder contexto.")}</p></div> : <>
-                <header><span>{scopeLabel(active.scope)}</span><h3>{active.delta < -1 ? text("A meaningful approval gap is visible.", "Hay una brecha significativa de aprobación.") : text("The selected windows remain broadly aligned.", "Las ventanas seleccionadas permanecen mayormente alineadas.")}</h3><p>{active.observedLabel} vs {active.referenceLabel} · UTC</p></header>
+                <header><span>{scopeLabel(active.scope, text("All payment traffic", "Todo el tráfico de pagos"), language)}</span><h3>{active.delta < -1 ? text("A meaningful approval gap is visible.", "Hay una brecha significativa de aprobación.") : text("The selected windows remain broadly aligned.", "Las ventanas seleccionadas permanecen mayormente alineadas.")}</h3><p>{text(WINDOWS.find((item) => item.value === active.observedWindow)?.en ?? "Observed window", WINDOWS.find((item) => item.value === active.observedWindow)?.es ?? "Ventana observada")} {text("vs", "contra")} {active.reference === "baseline" ? text("Contextual 14-day baseline", "Baseline contextual de 14 días") : text(WINDOWS.find((item) => item.value === active.reference)?.en ?? "Reference window", WINDOWS.find((item) => item.value === active.reference)?.es ?? "Ventana de referencia")} · UTC</p></header>
                 <div className="comparison-metrics"><div><span>{text("Observed", "Observado")}</span><strong>{(active.observedRate * 100).toFixed(1)}%</strong></div><div><span>{text("Reference", "Referencia")}</span><strong>{(active.referenceRate * 100).toFixed(1)}%</strong></div><div><span>Delta</span><strong className={active.delta < -1 ? "is-negative" : ""}>{active.delta >= 0 ? "+" : ""}{active.delta.toFixed(1)} pp</strong></div></div>
                 <div className="comparison-bars"><div><span>{text("Observed approval", "Aprobación observada")}</span><i><b style={{ width: `${Math.max(2, active.observedRate * 100)}%` }} /></i></div><div><span>{text("Reference approval", "Aprobación de referencia")}</span><i><b style={{ width: `${Math.max(2, active.referenceRate * 100)}%` }} /></i></div></div>
                 <footer><div><span>{text("Sample", "Muestra")}</span><strong>{active.attempts.toLocaleString()} {text("attempts", "intentos")}</strong></div><div><span>{text("Estimated revenue at risk", "Ingreso estimado en riesgo")}</span><strong>${Math.round(active.revenueRisk).toLocaleString()}/h</strong></div><p>{text("Estimate based on approval gap, observed throughput and average ticket. It is not reconciled revenue.", "Estimación basada en brecha de aprobación, throughput observado y ticket promedio. No es ingreso conciliado.")}</p></footer>

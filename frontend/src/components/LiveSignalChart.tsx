@@ -24,6 +24,7 @@ function pathFor(points: SignalPoint[], key: "observed" | "expected") {
 }
 
 export function LiveSignalChart({ points }: { points: SignalPoint[] }) {
+  const { text } = useLanguage();
   const observed = pathFor(points, "observed");
   const expected = pathFor(points, "expected");
   const labels = points.length > 2
@@ -33,8 +34,8 @@ export function LiveSignalChart({ points }: { points: SignalPoint[] }) {
   return (
     <div className={`signal-chart live-signal-chart ${points.length ? "is-running" : "is-empty"}`}>
       <div className="chart-grid" aria-hidden="true" />
-      {!points.length && <div className="live-chart-empty">Start the stream to build the timeline</div>}
-      <svg viewBox="0 0 920 170" role="img" aria-label="Approval rate timeline built from incoming processing windows">
+      {!points.length && <div className="live-chart-empty">{text("Start the stream to build the timeline", "Iniciá el stream para construir la línea de tiempo")}</div>}
+      <svg viewBox="0 0 920 170" role="img" aria-label={text("Approval rate timeline built from incoming processing windows", "Línea de tiempo de aprobación construida con las ventanas de procesamiento entrantes")}>
         {expected && <path className="chart-reference" d={expected} />}
         {observed && <path className="chart-observed" d={observed} />}
       </svg>
@@ -44,3 +45,4 @@ export function LiveSignalChart({ points }: { points: SignalPoint[] }) {
     </div>
   );
 }
+import { useLanguage } from "../i18n";

@@ -8,6 +8,7 @@ import { LanguageToggle } from "../components/LanguageToggle";
 import { LiveSignalChart, type SignalPoint } from "../components/LiveSignalChart";
 import { SignalChart } from "../components/SignalChart";
 import { useLanguage } from "../i18n";
+import { diagnosisHeadline, diagnosisNarrative, localizeToken } from "../localization";
 import { useLive } from "../useLive";
 
 type TowerState = "READY" | "HEALTHY" | "VALIDATING" | "DIAGNOSED" | "PAUSED" | "ERROR";
@@ -70,12 +71,12 @@ function logsFromSnapshot(snapshot: DiagnosisSnapshot): PipelineLog[] {
   }).filter((log) => log.message.trim()).reverse();
 }
 
-function options(values: string[], allLabel = "All") {
-  return [["", allLabel], ...values.map((value) => [value, value.replaceAll("_", " ")])];
+function options(values: string[], allLabel: string, language: "en" | "es") {
+  return [["", allLabel], ...values.map((value) => [value, localizeToken(value, language)])];
 }
 
 export function CommandCenter({ preview = false }: { preview?: boolean }) {
-  const { text } = useLanguage();
+  const { language, text } = useLanguage();
   const [streamActive, setStreamActive] = useState(false);
   const live = useLive(streamActive && !preview);
   const [towerState, setTowerState] = useState<TowerState>(preview ? "DIAGNOSED" : "READY");
@@ -147,7 +148,7 @@ export function CommandCenter({ preview = false }: { preview?: boolean }) {
   const expectedRate = latestPoint?.expected ?? (live.overview?.expected_rate ?? 0.861) * 100;
   const delta = observedRate - expectedRate;
   const revenueRisk = prioritized.reduce((sum, item) => sum + (item.diagnosis.cost?.usd_per_hour ?? 0), 0);
-  const scopeParts = Object.entries(appliedScope).filter(([key, value]) => !["magnitude", "decline_code"].includes(key) && value).map(([, value]) => value);
+  const scopeParts = Object.entries(appliedScope).filter(([key, value]) => !["magnitude", "decline_code"].includes(key) && value).map(([, value]) => localizeToken(value, language));
   const scopeLabel = `${scopeParts.join(" × ") || text("All payment traffic", "Todo el tráfico de pagos")} · ${text("code", "código")} ${appliedScope.decline_code}`;
   const stateMessage = useMemo(() => {
     if (towerState === "READY") return text("Ready to watch payment traffic", "Listo para observar el tráfico de pagos");
@@ -167,7 +168,7 @@ export function CommandCenter({ preview = false }: { preview?: boolean }) {
     <section className="tower" aria-label={text("Centinel payment control tower", "Torre de control de pagos Centinel")}>
       <header className="tower-header">
         <Brand compact />
-        <div className="tower-header__context"><span className="simulation-badge"><ShieldCheck size={13} /> SIMULATION MODE</span><span className={`backend-state ${connected ? "is-connected" : ""}`}>{connected ? <Wifi size={13} /> : <WifiOff size={13} />}{connected === null ? text("Checking backend", "Conectando al backend") : connected ? text("Backend connected", "Backend conectado") : text("Backend offline", "Backend sin conexión")}</span></div>
+        <div className="tower-header__context"><span className="simulation-badge"><ShieldCheck size={13} />{text("SIMULATION MODE", "MODO SIMULACIÓN")}</span><span className={`backend-state ${connected ? "is-connected" : ""}`}>{connected ? <Wifi size={13} /> : <WifiOff size={13} />}{connected === null ? text("Checking backend", "Conectando al backend") : connected ? text("Backend connected", "Backend conectado") : text("Backend offline", "Backend sin conexión")}</span></div>
         <LanguageToggle />
       </header>
 
@@ -180,7 +181,7 @@ export function CommandCenter({ preview = false }: { preview?: boolean }) {
       </div>
 
       <div className="tower-toolbar">
-        <div className="comparison-context"><span>{text("Observed", "Observado")} <strong>{text("Last 60 seconds", "Últimos 60 segundos")}</strong></span><i>vs</i><span>{text("Expected", "Esperado")} <strong>{text("Contextual 14-day baseline", "Baseline contextual de 14 días")}</strong></span><small>UTC · {live.snapshot ? text(`window ${live.snapshot.window}`, `ventana ${live.snapshot.window}`) : text("waiting", "esperando")}</small></div>
+        <div className="comparison-context"><span>{text("Observed", "Observado")} <strong>{text("Last 60 seconds", "Últimos 60 segundos")}</strong></span><i>{text("vs", "contra")}</i><span>{text("Expected", "Esperado")} <strong>{text("Contextual 14-day baseline", "Baseline contextual de 14 días")}</strong></span><small>UTC · {live.snapshot ? text(`window ${live.snapshot.window}`, `ventana ${live.snapshot.window}`) : text("waiting", "esperando")}</small></div>
         <div className="tower-actions">
           <button className="compare-trigger" onClick={() => setComparisonOpen(true)}><ArrowLeftRight size={15} />{text("Compare periods", "Comparar períodos")}</button>
           {towerState === "READY" && <button className="button button--signal" onClick={start} disabled={busy}><Play size={15} fill="currentColor" />{text("Start live stream", "Iniciar stream")}</button>}
@@ -199,13 +200,13 @@ export function CommandCenter({ preview = false }: { preview?: boolean }) {
             {filtersOpen && <div className="demo-menu__panel detection-panel">
               <header><SlidersHorizontal size={14} /><div><strong>{text("Detection scope", "Alcance de detección")}</strong><span>{text("Choose the dimensional intersection to inspect", "Elegí el cruce dimensional a inspeccionar")}</span></div></header>
               <div className="judge-fields">
-                <ScopeField label="Merchant" value={scope.merchant_id} onChange={(merchant_id) => setScope({ ...scope, merchant_id })} options={options(injectOptions.merchants)} />
-                <ScopeField label="Provider" value={scope.provider_id} onChange={(provider_id) => setScope({ ...scope, provider_id })} options={options(injectOptions.providers)} />
-                <ScopeField label={text("Country", "País")} value={scope.country} onChange={(country) => setScope({ ...scope, country, payment_method: "", issuer_bank: "" })} options={options(injectOptions.countries)} />
-                <ScopeField label={text("Method", "Método")} value={scope.payment_method} onChange={(payment_method) => setScope({ ...scope, payment_method })} options={options(methodValues)} />
-                <ScopeField label={text("Issuing bank", "Banco emisor")} value={scope.issuer_bank} onChange={(issuer_bank) => setScope({ ...scope, issuer_bank })} options={options(issuerValues)} />
-                <ScopeField label={text("Decline code", "Código de rechazo")} value={scope.decline_code} onChange={(decline_code) => setScope({ ...scope, decline_code })} options={injectOptions.decline_codes.map((item) => [item.code, `${item.code} · ${String(item.name ?? "Decline")} · ${String(item.type ?? "")}`])} />
-                <ScopeField label={text("Simulation strength", "Intensidad de simulación")} value={scope.magnitude} onChange={(magnitude) => setScope({ ...scope, magnitude })} options={[["0.70", "Mild · 70%"], ["0.55", "Weak-signal · 55%"], ["0.45", "Strong · 45%"], ["0.38", "Critical · 38%"], ["0.25", "Severe · 25%"]]} />
+                <ScopeField label={text("Merchant", "Comercio")} value={scope.merchant_id} onChange={(merchant_id) => setScope({ ...scope, merchant_id })} options={options(injectOptions.merchants, text("All", "Todos"), language)} />
+                <ScopeField label={text("Provider", "Proveedor")} value={scope.provider_id} onChange={(provider_id) => setScope({ ...scope, provider_id })} options={options(injectOptions.providers, text("All", "Todos"), language)} />
+                <ScopeField label={text("Country", "País")} value={scope.country} onChange={(country) => setScope({ ...scope, country, payment_method: "", issuer_bank: "" })} options={options(injectOptions.countries, text("All", "Todos"), language)} />
+                <ScopeField label={text("Method", "Método")} value={scope.payment_method} onChange={(payment_method) => setScope({ ...scope, payment_method })} options={options(methodValues, text("All", "Todos"), language)} />
+                <ScopeField label={text("Issuing bank", "Banco emisor")} value={scope.issuer_bank} onChange={(issuer_bank) => setScope({ ...scope, issuer_bank })} options={options(issuerValues, text("All", "Todos"), language)} />
+                <ScopeField label={text("Decline code", "Código de rechazo")} value={scope.decline_code} onChange={(decline_code) => setScope({ ...scope, decline_code })} options={injectOptions.decline_codes.map((item) => [item.code, `${item.code} · ${localizeToken(String(item.name ?? text("Decline", "Rechazo")), language)} · ${localizeToken(String(item.type ?? ""), language)}`])} />
+                <ScopeField label={text("Simulation strength", "Intensidad de simulación")} value={scope.magnitude} onChange={(magnitude) => setScope({ ...scope, magnitude })} options={[["0.70", text("Mild · 70%", "Leve · 70%")], ["0.55", text("Weak signal · 55%", "Señal débil · 55%")], ["0.45", text("Strong · 45%", "Fuerte · 45%")], ["0.38", text("Critical · 38%", "Crítica · 38%")], ["0.25", text("Severe · 25%", "Severa · 25%")]]} />
               </div>
               <footer><button onClick={applyScope}>{text("Apply view", "Aplicar vista")}</button><button className="simulate-scope" disabled={busy || towerState === "READY"} onClick={simulateScope}>{text("Simulate signal in scope", "Simular señal en el alcance")}</button></footer>
               <small>{text("Options come from the backend contract. Filtering and demo simulation remain separate actions.", "Las opciones vienen del contrato backend. Filtrar y simular siguen siendo acciones separadas.")}</small>
@@ -236,7 +237,7 @@ function ScopeField({ label, value, onChange, options: fieldOptions }: { label: 
 }
 
 function LiveWorkspace({ points, logs }: { points: SignalPoint[]; logs: PipelineLog[] }) {
-  const { text } = useLanguage();
+  const { language, text } = useLanguage();
   return <section className="signal-surface live-workspace">
     <div className="tower-chart-heading"><div><strong>{text("Approval by incoming stream snapshot", "Aprobación por snapshot entrante")}</strong><span><i className="legend-observed" />{text("Observed", "Observado")} <i className="legend-reference" />{text("Expected", "Esperado")}</span></div><small>{points.length}/30 {text("snapshots", "snapshots")}</small></div>
     <LiveSignalChart points={points} />
@@ -244,21 +245,21 @@ function LiveWorkspace({ points, logs }: { points: SignalPoint[]; logs: Pipeline
       <header><div><strong>{text("Live diagnosis trace", "Traza viva del diagnóstico")}</strong><span>{text("Ring buffer → detector → localizer → explanation", "Ring buffer → detector → localizador → explicación")}</span></div><b>{logs.length} {text("events", "eventos")}</b></header>
       <div className="pipeline-table-wrap"><table><thead><tr><th>{text("Time", "Hora")}</th><th>{text("Window", "Ventana")}</th><th>{text("Stage", "Etapa")}</th><th>{text("Evidence / parameters", "Evidencia / parámetros")}</th></tr></thead><tbody>
         {!logs.length && <tr className="pipeline-empty"><td colSpan={4}>{text("No diagnosis windows yet. Start the stream to see the real pipeline trace.", "Todavía no hay ventanas de diagnóstico. Iniciá el stream para ver la traza real.")}</td></tr>}
-        {logs.map((log) => <tr key={log.id}><td>{log.at}</td><td>#{log.window}</td><td><span className={`log-stage log-stage--${log.stage.toLowerCase()}`}>{log.stage}</span></td><td>{log.message}</td></tr>)}
+        {logs.map((log) => <tr key={log.id}><td>{log.at}</td><td>#{log.window}</td><td><span className={`log-stage log-stage--${log.stage.toLowerCase()}`}>{localizeToken(log.stage.toLowerCase(), language).toUpperCase()}</span></td><td>{log.message}</td></tr>)}
       </tbody></table></div>
     </section>
   </section>;
 }
 
 function IncidentWorkspace({ state, prioritized, onSelect }: { state: TowerState; prioritized: ScoredIncident[]; onSelect: (diagnosis: Diagnosis) => void }) {
-  const { text } = useLanguage();
+  const { language, text } = useLanguage();
   return <aside className={`tower-incidents ${state === "VALIDATING" ? "is-validating" : ""}`} aria-label={text("Prioritized incident queue", "Cola priorizada de incidentes")}>
     <header><span>{text("Incident queue", "Cola de incidentes")}</span><strong>{prioritized.length}</strong></header>
     {state === "VALIDATING" && <div className="tower-empty"><span className="signal-loader" /><strong>{text("Validating the signal", "Validando la señal")}</strong><p>{text("Waiting for persistence, sufficient sample and healthy controls before alerting.", "Esperando persistencia, muestra suficiente y controles sanos antes de alertar.")}</p></div>}
     {state !== "VALIDATING" && !prioritized.length && <div className="tower-empty is-healthy"><Check size={20} /><strong>{text("Trustworthy silence", "Silencio confiable")}</strong><p>{text("Traffic is inside its expected range. Centinel does not alert on noise.", "El tráfico está dentro de su rango esperado. Centinel no alerta por ruido.")}</p></div>}
     <div className="incident-grid">{prioritized.map((item, index) => <button className="tower-incident" key={item.diagnosis.incident_id} onClick={() => onSelect(item.diagnosis)}>
-      <div><span>P{index + 1}</span><small>{Math.round(item.score * 100)} {text("priority score", "score de prioridad")}</small></div><h3>{item.diagnosis.headline}</h3><p>{item.diagnosis.executive}</p>
-      <div className="priority-breakdown">{Object.entries(item.components).map(([name, value]) => <span key={name}><i>{name.replace("merchant_criticality", "merchant").replace("_", " ")}</i><b>{Math.round(value * 100)}</b></span>)}</div>
+      <div><span>P{index + 1}</span><small>{Math.round(item.score * 100)} {text("priority score", "puntaje de prioridad")}</small></div><h3>{diagnosisHeadline(item.diagnosis, language)}</h3><p>{diagnosisNarrative(item.diagnosis, "executive", language)}</p>
+      <div className="priority-breakdown">{Object.entries(item.components).map(([name, value]) => <span key={name}><i>{localizeToken(name, language)}</i><b>{Math.round(value * 100)}</b></span>)}</div>
       <footer><strong>{item.diagnosis.cost ? `$${Math.round(item.diagnosis.cost.usd_per_hour).toLocaleString()}/h` : text("Impact unknown", "Impacto desconocido")}</strong><span>{text("Open playbook", "Abrir playbook")} →</span></footer>
     </button>)}</div>
   </aside>;
@@ -266,5 +267,5 @@ function IncidentWorkspace({ state, prioritized, onSelect }: { state: TowerState
 
 function PreviewTower() {
   const { text } = useLanguage();
-  return <section className="tower tower--preview"><div className="tower-flow"><div className="is-active"><i>1</i><span>{text("Watch", "Observar")}</span></div><div className="is-active"><i>2</i><span>{text("Validate", "Validar")}</span></div><div className="is-active"><i>3</i><span>{text("Diagnose", "Diagnosticar")}</span></div></div><div className="tower-metrics"><div><span>{text("Approval observed", "Aprobación observada")}</span><strong>72.4%</strong></div><div><span>{text("Delta vs expected", "Delta vs esperado")}</span><strong className="is-negative">−13.7 pp</strong></div><div><span>{text("Revenue at risk", "Ingresos en riesgo")}</span><strong>$16.5k/h</strong></div></div><SignalChart incidentActive /><div className="preview-diagnosis"><span>P1 · Adyen × Brazil</span><strong>{text("Provider degradation isolated", "Degradación del provider aislada")}</strong><p>{text("Evidence, ownership and next human action — before the merchant has to ask.", "Evidencia, responsable y próxima acción humana — antes de que el merchant tenga que preguntar.")}</p></div></section>;
+  return <section className="tower tower--preview"><div className="tower-flow"><div className="is-active"><i>1</i><span>{text("Watch", "Observar")}</span></div><div className="is-active"><i>2</i><span>{text("Validate", "Validar")}</span></div><div className="is-active"><i>3</i><span>{text("Diagnose", "Diagnosticar")}</span></div></div><div className="tower-metrics"><div><span>{text("Approval observed", "Aprobación observada")}</span><strong>72.4%</strong></div><div><span>{text("Delta vs expected", "Delta vs esperado")}</span><strong className="is-negative">−13.7 pp</strong></div><div><span>{text("Revenue at risk", "Ingresos en riesgo")}</span><strong>$16.5k/h</strong></div></div><SignalChart incidentActive /><div className="preview-diagnosis"><span>{text("P1 · Adyen × Brazil", "P1 · Adyen × Brasil")}</span><strong>{text("Provider degradation isolated", "Degradación del proveedor aislada")}</strong><p>{text("Evidence, ownership and next human action — before the merchant has to ask.", "Evidencia, responsable y próxima acción humana — antes de que el comercio tenga que preguntar.")}</p></div></section>;
 }
