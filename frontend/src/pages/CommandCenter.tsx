@@ -51,6 +51,17 @@ const FALLBACK_OPTIONS: InjectOptions = {
   simulation_only: true,
 };
 
+function compareIncidentPriority(left: ScoredIncident, right: ScoredIncident) {
+  const leftHasInsufficientEvidence = left.diagnosis.diagnosis_status === "insufficient_evidence";
+  const rightHasInsufficientEvidence = right.diagnosis.diagnosis_status === "insufficient_evidence";
+
+  if (leftHasInsufficientEvidence !== rightHasInsufficientEvidence) {
+    return leftHasInsufficientEvidence ? 1 : -1;
+  }
+
+  return right.score - left.score;
+}
+
 function options(values: string[], allLabel: string, language: "en" | "es") {
   return [["", allLabel], ...values.map((value) => [value, localizeToken(value, language)])];
 }
@@ -122,7 +133,7 @@ export function CommandCenter({ preview = false }: { preview?: boolean }) {
       setIncidentQueue((current) => {
         const accumulated = new Map(current.map((item) => [item.diagnosis.incident_id, item]));
         snapshot.prioritized.forEach((item) => accumulated.set(item.diagnosis.incident_id, item));
-        return [...accumulated.values()].sort((left, right) => right.score - left.score);
+        return [...accumulated.values()].sort(compareIncidentPriority);
       });
     }
     if (snapshot.error) setTowerState("ERROR");
@@ -187,15 +198,17 @@ export function CommandCenter({ preview = false }: { preview?: boolean }) {
   };
 
   const activeViewFilters = Object.entries(viewFilters).filter(([, value]) => value);
-  const prioritized = activeViewFilters.length
-    ? incidentQueue.filter((item) =>
+  const prioritized = (
+    activeViewFilters.length
+      ? incidentQueue.filter((item) =>
         activeViewFilters.every(([key, value]) => {
           const sliceValue = (item.diagnosis.slice as Record<string, string | null>)[key];
           // Un slice más amplio (dimensión en null) contiene al filtro: se conserva.
           return sliceValue === null || sliceValue === value;
         })
       )
-    : incidentQueue;
+      : [...incidentQueue]
+  ).sort(compareIncidentPriority);
   const currentIncidentIds = useMemo(() => new Set((live.snapshot?.prioritized ?? []).map((item) => item.diagnosis.incident_id)), [live.snapshot?.prioritized]);
   const latestPoint = signalPoints.at(-1);
   const observedRate = latestPoint?.observedRate ?? (live.overview?.observed_rate ?? 0.854) * 100;
