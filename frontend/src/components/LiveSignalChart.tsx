@@ -32,7 +32,7 @@ export function LiveSignalChart({ points }: { points: SignalPoint[] }) {
   const chartLeft = 54;
   const chartWidth = 846;
   const slot = chartWidth / Math.max(points.length, 1);
-  const barWidth = Math.max(4, Math.min(20, slot * 0.58));
+  const barWidth = Math.max(3, Math.min(14, slot * 0.42));
   const ticks = [maxVolume, maxVolume / 2, 0];
   const labels = points.length > 2
     ? [points[0], points[Math.floor((points.length - 1) / 2)], points.at(-1)!]

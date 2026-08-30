@@ -57,7 +57,7 @@ function logsFromSnapshot(snapshot: DiagnosisSnapshot): PipelineLog[] {
   });
   const lines = snapshot.log_tail.slice(Math.max(resetIndex, 0));
   let currentWindow = 0;
-  return lines.map((line, index) => {
+  const parsed = lines.map((line, index) => {
     const match = line.match(/^(\d{2}:\d{2}:\d{2})\s+(.*)$/);
     const windowMatch = line.match(/VENTANA (\d+)/);
     if (windowMatch) currentWindow = Number(windowMatch[1]);
@@ -68,7 +68,25 @@ function logsFromSnapshot(snapshot: DiagnosisSnapshot): PipelineLog[] {
       stage: stageFromLine(line),
       message: match?.[2] ?? line,
     };
-  }).filter((log) => log.message.trim()).reverse();
+  }).filter((log) => log.message.trim());
+
+  const hasIncidentActivity = Boolean(
+    snapshot.active_injections.length
+    || snapshot.engine_incidents.length
+    || snapshot.diagnoses.length
+  );
+  if (!hasIncidentActivity) return [];
+
+  return parsed.filter((log) => {
+    if (log.message.includes("[INYECTOR]")) return true;
+    if (log.message.includes("[MOTOR]")) {
+      return log.message.includes(" · INC-")
+        || log.message.includes("localizador:")
+        || log.message.includes("clasificador:")
+        || log.message.includes("estado:");
+    }
+    return false;
+  }).reverse().slice(0, 8);
 }
 
 function options(values: string[], allLabel: string, language: "en" | "es") {
@@ -281,15 +299,15 @@ function ScopeField({ label, value, onChange, options: fieldOptions }: { label: 
 function LiveWorkspace({ points, logs }: { points: SignalPoint[]; logs: PipelineLog[] }) {
   const { language, text } = useLanguage();
   return <section className="signal-surface live-workspace">
-    <div className="tower-chart-heading"><div><strong>{text("Transaction volume by incoming snapshot", "Volumen de transacciones por snapshot entrante")}</strong><span><i className="legend-approved" />{text("Approved", "Aprobadas")} <i className="legend-declined" />{text("Declined", "Rechazadas")} <i className="legend-reference" />{text("Expected approvals", "Aprobaciones esperadas")}</span></div><small>{points.length}/30 {text("snapshots · rolling 60-second mix", "snapshots · mezcla móvil de 60 segundos")}</small></div>
-    <LiveSignalChart points={points} />
     <section className="pipeline-log">
-      <header><div><strong>{text("Live diagnosis trace", "Traza viva del diagnóstico")}</strong><span>{text("Ring buffer → detector → localizer → explanation · newest first", "Ring buffer → detector → localizador → explicación · más recientes primero")}</span></div><b>{logs.length} {text("events", "eventos")}</b></header>
+      <header><div><strong>{text("Incident evidence", "Evidencia del incidente")}</strong><span>{text("Affected scope, volume, localization and classification · newest first", "Alcance afectado, volumen, localización y clasificación · más recientes primero")}</span></div><b>{logs.length} {text("relevant events", "eventos relevantes")}</b></header>
       <div className="pipeline-table-wrap"><table><thead><tr><th>{text("Time", "Hora")}</th><th>{text("Window", "Ventana")}</th><th>{text("Stage", "Etapa")}</th><th>{text("Evidence / parameters", "Evidencia / parámetros")}</th></tr></thead><tbody>
-        {!logs.length && <tr className="pipeline-empty"><td colSpan={4}>{text("No diagnosis windows yet. Start the stream to see the real pipeline trace.", "Todavía no hay ventanas de diagnóstico. Iniciá el stream para ver la traza real.")}</td></tr>}
+        {!logs.length && <tr className="pipeline-empty"><td colSpan={4}>{text("No incident-producing activity. Healthy traffic stays out of this trace.", "No hay actividad que produzca incidentes. El tráfico saludable queda fuera de esta traza.")}</td></tr>}
         {logs.map((log) => <tr key={log.id}><td>{log.at}</td><td>#{log.window}</td><td><span className={`log-stage log-stage--${log.stage.toLowerCase()}`}>{localizeToken(log.stage.toLowerCase(), language).toUpperCase()}</span></td><td>{log.message}</td></tr>)}
       </tbody></table></div>
     </section>
+    <div className="tower-chart-heading"><div><strong>{text("Transaction volume by incoming snapshot", "Volumen de transacciones por snapshot entrante")}</strong><span><i className="legend-approved" />{text("Approved", "Aprobadas")} <i className="legend-declined" />{text("Declined", "Rechazadas")} <i className="legend-reference" />{text("Expected approvals", "Aprobaciones esperadas")}</span></div><small>{points.length}/30 {text("snapshots · rolling 60-second mix", "snapshots · mezcla móvil de 60 segundos")}</small></div>
+    <LiveSignalChart points={points} />
   </section>;
 }
 

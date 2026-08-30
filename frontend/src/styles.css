@@ -538,13 +538,13 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .live-chart-empty { position: absolute; z-index: 2; inset: 0; display: grid; place-items: center; color: #66666c; font: 10px var(--mono); }
 .live-signal-chart.is-empty svg { opacity: .2; }
 
-.pipeline-log { min-height: 300px; background: #09090a; }
+.pipeline-log { min-height: 0; border-bottom: 1px solid var(--line); background: #09090a; }
 .pipeline-log > header { min-height: 64px; padding: 0 clamp(18px, 2.2vw, 34px); display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--line); }
 .pipeline-log > header div { display: grid; gap: 4px; }
 .pipeline-log > header strong { font-size: 13px; }
 .pipeline-log > header span { color: var(--muted); font-size: 9px; }
 .pipeline-log > header b { color: #77777d; font: 9px var(--mono); }
-.pipeline-table-wrap { max-height: 330px; overflow: auto; scrollbar-gutter: stable; }
+.pipeline-table-wrap { max-height: 230px; overflow: auto; scrollbar-gutter: stable; }
 .pipeline-table-wrap thead { position: sticky; z-index: 2; top: 0; background: #09090a; }
 .pipeline-log table { width: 100%; border-collapse: collapse; table-layout: fixed; }
 .pipeline-log th { position: sticky; z-index: 1; top: 0; padding: 10px 14px; border-bottom: 1px solid var(--line); color: #717177; background: rgba(9,9,10,.96); text-align: left; font: 8px var(--mono); text-transform: uppercase; backdrop-filter: blur(8px); }
