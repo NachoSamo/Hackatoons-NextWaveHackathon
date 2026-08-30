@@ -23,6 +23,7 @@ empezar, leé este archivo primero.
 | `docs/10-user-stories-requirements.md` | Historias de usuario, requerimientos, estados y trazabilidad del MVP de Centinel | Antes de tocar frontend/backend |
 | `docs/11-agent-governance.md` | Cómo se versionan políticas, diagnósticos, recomendaciones y feedback humano | Producto + agente + frontend |
 | `docs/12-frontend-business-rules-audit.md` | Cobertura regla por regla entre harness, backend y frontend; gaps P0/P1 | Antes del ensayo final y de tocar UX |
+| `docs/13-ux-functional-audit.md` | Auditoría de verdad funcional, usabilidad, accesibilidad y consistencia del frontend | Antes de pulir UI o ensayar el pitch |
 | `docs/01-kickoff.md` | Dinámica exacta de las primeras 2 horas | Sábado 12:30 |
 | `docs/02-timeline.md` | Presupuesto de horas, checkpoints, reglas de recorte | Todo el evento (Samo lo gestiona) |
 | `docs/03-reglas-equipo.md` | Roles, feedback de mentores, git, hardware | Antes del kickoff |
