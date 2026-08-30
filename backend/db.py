@@ -54,8 +54,8 @@ def database_url() -> str:
     return os.getenv("DATABASE_URL", DEFAULT_DATABASE_URL)
 
 
-def connect(dsn: str | None = None) -> psycopg.Connection[Any]:
-    return psycopg.connect(dsn or database_url())
+def connect(dsn: str | None = None, **kwargs: Any) -> psycopg.Connection[Any]:
+    return psycopg.connect(dsn or database_url(), **kwargs)
 
 
 def initialize_schema(connection: psycopg.Connection[Any]) -> None:

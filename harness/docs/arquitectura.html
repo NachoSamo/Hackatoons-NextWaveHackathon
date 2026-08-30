@@ -444,7 +444,7 @@
         <dl class="layer__body">
           <div><dt>Hace</dt><dd>Produce transacciones sintéticas creíbles (merchant, proveedor, método, país, aprobada s/n, código de rechazo, monto). Se pre-genera una historia “normal” determinística con perfil diurno; en la demo se reproduce como un replay. Un módulo aparte superpone incidentes.</dd></div>
           <div><dt>No hace</dt><dd class="no">No se genera en vivo — se pre-genera para poder calibrar el detector contra <span class="k">los mismos datos que se muestran</span>. No decide nada.</dd></div>
-          <div><dt>Stack</dt><dd><span class="mono">Python · numpy/pandas</span> · llegadas Poisson + aprobación Bernoulli por segmento · salida a buffer en memoria.</dd></div>
+          <div><dt>Stack</dt><dd><span class="mono">Python · pandas</span> · replay determinístico a 65 tx/s · ring buffer de 30 min · <span class="mono">COPY</span> batcheado cada segundo.</dd></div>
           <div><dt>Dueño</dt><dd>Pena — camino crítico, arranca primero. Sin esto no hay demo.</dd></div>
         </dl>
       </article>

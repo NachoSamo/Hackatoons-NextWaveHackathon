@@ -9,10 +9,12 @@ from __future__ import annotations
 
 import math
 import sys
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any, TypedDict
+
+import pandas as pd
 
 # Permite ejecutar el módulo directo durante una verificación manual.
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
@@ -46,6 +48,19 @@ DIMENSION_COLUMNS = (
     "country",
 )
 FILTER_COLUMNS = frozenset((*DIMENSION_COLUMNS, "issuer_bank"))
+BASELINE_PATH = PROJECT_ROOT / "backend" / "data" / "out" / "baseline_profile.parquet"
+
+CellKey = tuple[str, str, str, str]
+ObservedCell = tuple[int, int, float]
+ObservedSource = Callable[[int], tuple[datetime, dict[CellKey, ObservedCell]] | None]
+_observed_source: ObservedSource | None = None
+_local_baseline: pd.DataFrame | None = None
+
+
+def set_observed_source(source: ObservedSource | None) -> None:
+    """Registra el ring buffer de T6 sin cambiar la firma pública del cubo."""
+    global _observed_source
+    _observed_source = source
 
 
 def _window_seconds(window_s: int) -> int:
@@ -138,7 +153,7 @@ def _read_observed_cube(
     connection: Any,
     start: datetime,
     end: datetime,
-) -> dict[tuple[str, str, str, str], tuple[int, int, float]]:
+) -> dict[CellKey, ObservedCell]:
     """Fuente observable intercambiable por el ring buffer en T6."""
     where, values = _transaction_where(start, end, {})
     with connection.cursor() as cursor:
@@ -167,12 +182,48 @@ def _read_observed_cube(
 
 
 def _cube_observed_source(
-    connection: Any,
     window_s: int,
-) -> tuple[datetime, dict[tuple[str, str, str, str], tuple[int, int, float]]]:
-    """Costura de la fuente observable; T6 podrá sustituirla por ring buffer."""
-    start, end = _window_bounds(connection, window_s)
-    return end, _read_observed_cube(connection, start, end)
+) -> tuple[datetime, dict[CellKey, ObservedCell]]:
+    """Lee el ring buffer activo; sin replay conserva la fuente PostgreSQL de T5."""
+    if _observed_source is not None:
+        snapshot = _observed_source(window_s)
+        if snapshot is not None:
+            return snapshot
+
+    with connect() as connection:
+        start, end = _window_bounds(connection, window_s)
+        return end, _read_observed_cube(connection, start, end)
+
+
+def _local_baseline_profiles(anchor: datetime) -> list[tuple[Any, ...]]:
+    """Fallback del checkpoint: ring buffer + parquet si PostgreSQL no responde."""
+    global _local_baseline
+    if _local_baseline is None:
+        _local_baseline = pd.read_parquet(BASELINE_PATH)
+
+    profiles = _local_baseline.loc[
+        (_local_baseline["hour_utc"] == anchor.hour)
+        & (_local_baseline["day_type"] == _day_type(anchor)),
+        [
+            "merchant_id",
+            "provider_id",
+            "payment_method",
+            "country",
+            "attempts",
+            "approved",
+        ],
+    ].sort_values(["merchant_id", "provider_id", "payment_method", "country"])
+    return list(profiles.itertuples(index=False, name=None))
+
+
+def _forecast_profiles(anchor: datetime) -> list[tuple[Any, ...]]:
+    if _observed_source is not None:
+        return _local_baseline_profiles(anchor)
+    try:
+        with connect() as connection:
+            return _read_baseline_profiles(connection, anchor)
+    except Exception:
+        return _local_baseline_profiles(anchor)
 
 
 def _forecast_factor(profiles: list[tuple[Any, ...]], day_type: str) -> float:
@@ -195,9 +246,8 @@ def _forecast_factor(profiles: list[tuple[Any, ...]], day_type: str) -> float:
 def get_cube(window_s: int = 60) -> list[Leaf]:
     """Devuelve observado y forecast aditivo para las 81 hojas del cubo."""
     seconds = _window_seconds(window_s)
-    with connect() as connection:
-        end, observed = _cube_observed_source(connection, seconds)
-        profiles = _read_baseline_profiles(connection, end)
+    end, observed = _cube_observed_source(seconds)
+    profiles = _forecast_profiles(end)
 
     volume_factor = _forecast_factor(profiles, _day_type(end))
     time_factor = seconds / SECONDS_PER_HOUR
