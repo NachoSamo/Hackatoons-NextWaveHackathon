@@ -546,7 +546,7 @@ button:focus-visible, a:focus-visible { outline: 2px solid var(--signal-soft); o
 .judge-fields select { min-width: 0; height: 34px; padding: 0 8px; border: 1px solid var(--line); border-radius: 5px; outline: 0; color: white; background: #09090a; font-size: 10px; }
 .judge-fields label:nth-last-of-type(1), .judge-inject { grid-column: 1 / -1; }
 .judge-inject { min-height: 38px; border-color: rgba(255,107,96,.45) !important; color: #ffd0cc; }
-.tower-main { min-height: calc(100vh - 229px); display: grid; grid-template-columns: minmax(0, 1fr) minmax(320px, 29vw); }
+.tower-main { height: calc(100vh - 229px); min-height: 500px; display: grid; grid-template-columns: minmax(0, 1fr) minmax(320px, 29vw); }
 .signal-surface { min-width: 0; border-right: 1px solid var(--line); }
 .tower-metrics { display: grid; grid-template-columns: repeat(3, 1fr); border-bottom: 1px solid var(--line); }
 .tower-metrics > div { min-height: 132px; padding: 22px clamp(18px, 2.2vw, 34px); display: flex; flex-direction: column; border-right: 1px solid var(--line); }
@@ -560,8 +560,11 @@ button:focus-visible, a:focus-visible { outline: 2px solid var(--signal-soft); o
 .tower-chart-heading strong { font-size: 13px; }
 .tower-chart-heading span { display: inline-flex; align-items: center; gap: 7px; color: var(--muted); font-size: 10px; }
 .tower .signal-chart { height: clamp(270px, 39vh, 440px); min-height: 270px; }
-.tower-incidents { min-width: 0; background: #09090a; }
-.tower-incidents > header { min-height: 62px; padding: 0 22px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--line); color: var(--muted); font-size: 12px; }
+.tower-incidents { min-width: 0; overflow-y: auto; overscroll-behavior: contain; scrollbar-gutter: stable; background: #09090a; }
+.tower-incidents::-webkit-scrollbar { width: 8px; }
+.tower-incidents::-webkit-scrollbar-track { background: #09090a; }
+.tower-incidents::-webkit-scrollbar-thumb { border: 2px solid #09090a; border-radius: 8px; background: #45454b; }
+.tower-incidents > header { position: sticky; z-index: 2; top: 0; min-height: 62px; padding: 0 22px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--line); color: var(--muted); font-size: 12px; background: rgba(9,9,10,.96); backdrop-filter: blur(8px); }
 .tower-incidents > header strong { min-width: 24px; height: 24px; display: grid; place-items: center; border-radius: 50%; color: var(--text); background: #252529; font: 10px var(--mono); }
 .tower-empty { min-height: 310px; padding: 70px 34px; display: flex; flex-direction: column; align-items: center; text-align: center; animation: content-in 280ms ease-out both; }
 .tower-empty strong { margin-top: 18px; font-size: 16px; }
@@ -586,7 +589,8 @@ button:focus-visible, a:focus-visible { outline: 2px solid var(--signal-soft); o
 .diagnosis-header h2 { max-width: 900px; margin: 8px 0 4px; font-size: clamp(1.6rem, 2.5vw, 2.7rem); line-height: 1.05; letter-spacing: -.03em; font-weight: 540; }
 .diagnosis-header p { margin: 0; color: var(--muted); font: 10px var(--mono); }
 .diagnosis-header__actions { display: flex; align-items: flex-start; gap: 8px; }
-.diagnosis-header__actions > button { width: 36px; height: 36px; display: grid; place-items: center; }
+.diagnosis-header__actions > button:not(.language-toggle) { width: 36px; height: 36px; display: grid; place-items: center; }
+.diagnosis-header__actions .language-toggle { width: auto; min-width: 78px; height: 36px; flex: 0 0 auto; }
 .diagnosis-header__actions svg { width: 16px; }
 .diagnosis-summary { display: grid; grid-template-columns: repeat(4, 1fr); border-bottom: 1px solid var(--line); }
 .diagnosis-summary div { min-height: 86px; padding: 18px 22px; display: flex; flex-direction: column; border-right: 1px solid var(--line); }
@@ -653,6 +657,7 @@ button:focus-visible, a:focus-visible { outline: 2px solid var(--signal-soft); o
   .comparison-context { flex-wrap: wrap; }
   .tower-actions { width: 100%; flex-wrap: wrap; }
   .tower-main { grid-template-columns: 1fr; }
+  .tower-main { height: auto; min-height: 0; }
   .signal-surface { border-right: 0; }
   .tower-metrics > div { min-height: 110px; padding: 18px 14px; }
   .tower-metrics strong { font-size: 1.8rem; }
@@ -662,4 +667,5 @@ button:focus-visible, a:focus-visible { outline: 2px solid var(--signal-soft); o
   .diagnosis-summary div { border-bottom: 1px solid var(--line); }
   .diagnosis-grid { grid-template-columns: 1fr; }
   .diagnosis-copilot { min-height: 420px; border-left: 0; border-top: 1px solid var(--line); }
+  .tower-incidents { max-height: 440px; border-top: 1px solid var(--line); }
 }
