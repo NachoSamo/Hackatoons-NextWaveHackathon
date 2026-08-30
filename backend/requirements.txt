@@ -5,6 +5,7 @@ pandas
 pyarrow
 numpy
 pydantic-ai-slim[openai]
+httpx
 jinja2
 pyyaml
 python-frontmatter

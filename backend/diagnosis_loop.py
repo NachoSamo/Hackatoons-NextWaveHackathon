@@ -22,6 +22,7 @@ from backend.data.injector import active as active_injections
 from backend.explain.build import diagnose
 from backend.explain.prioritize import score_incidents
 from backend.logging_setup import log
+from backend import notify_slack
 
 DIAGNOSIS_INTERVAL_S = 5.0
 WINDOW_SECONDS = 60
@@ -37,6 +38,7 @@ _state: dict[str, Any] = {
     "diagnoses": [],
     "prioritized": [],
     "active_injections": [],
+    "slack_alerts": [],
     "error": None,
 }
 
@@ -49,8 +51,9 @@ def reset() -> None:
         _window = 0
         _state.update(
             window=0, ts=None, engine_incidents=[], diagnoses=[],
-            prioritized=[], active_injections=[], error=None,
+            prioritized=[], active_injections=[], slack_alerts=[], error=None,
         )
+    notify_slack.reset()  # los incident_id vuelven a INC-0001; sin esto quedarían "ya notificados"
     log.info("[LOOP]     reset — motor de diagnóstico nuevo")
 
 
@@ -135,6 +138,8 @@ def _tick() -> None:
     contract = ContractEngineOutput.model_validate({"incidents": emitted})
 
     diagnoses = diagnose(contract)  # emite las líneas [EXPLAIN]
+    for d in diagnoses:
+        notify_slack.notify(d)  # no-op sin SLACK_WEBHOOK_URL; dedup por incident_id
     scored = score_incidents(diagnoses)
 
     with _lock:
@@ -162,6 +167,7 @@ def _tick() -> None:
             diagnoses=[d.model_dump(mode="json") for d in diagnoses],
             prioritized=[s.model_dump(mode="json") for s in scored],
             active_injections=[inj.to_dict(now) for inj in injections],
+            slack_alerts=notify_slack.recent(),
             error=None,
         )
 

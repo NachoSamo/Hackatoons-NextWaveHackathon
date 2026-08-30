@@ -143,8 +143,17 @@ export type DiagnosisSnapshot = {
   diagnoses: Diagnosis[];
   prioritized: ScoredIncident[];
   active_injections: Record<string, unknown>[];
+  slack_alerts: SlackAlert[];
   error: string | null;
   log_tail: string[];
+};
+
+// Alerta efectivamente entregada al canal de devs (backend/notify_slack.py).
+export type SlackAlert = {
+  incident_id: string;
+  headline: string;
+  action: string;
+  at: string;
 };
 
 export type Overview = {

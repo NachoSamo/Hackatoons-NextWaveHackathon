@@ -881,3 +881,121 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
   .comparison-evidence { grid-template-columns: 1fr; }
   .comparison-evidence p { border-right: 0; border-bottom: 1px solid var(--line); }
 }
+
+/* ---- Slack delivery toast ------------------------------------------------ */
+/* Se muestra sólo cuando el backend confirmó la entrega real al canal.        */
+
+.slack-toast {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  z-index: 90;
+  display: grid;
+  grid-template-columns: 3px auto 1fr auto;
+  align-items: center;
+  gap: 0 12px;
+  width: min(430px, calc(100vw - 48px));
+  padding: 0 16px 0 0;
+  background: var(--panel-raised);
+  border: 1px solid var(--line-strong);
+  box-shadow: 0 18px 44px -18px rgba(0, 0, 0, 0.85);
+  animation: slack-toast-in 0.42s cubic-bezier(0.16, 0.9, 0.3, 1) both;
+}
+
+.slack-toast.is-leaving {
+  animation: slack-toast-out 0.45s ease forwards;
+}
+
+.slack-toast__bar {
+  align-self: stretch;
+  background: var(--signal);
+  animation: slack-toast-pulse 1.8s ease-in-out 0.4s 3;
+}
+
+.slack-toast__icon {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  margin-left: 13px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--line);
+}
+
+.slack-toast__body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 13px 0;
+  min-width: 0;
+}
+
+.slack-toast__meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.slack-toast__meta b { color: var(--signal-soft); font-weight: 500; }
+.slack-toast__meta i {
+  font-style: normal;
+  padding-left: 6px;
+  border-left: 1px solid var(--line);
+  color: var(--muted);
+}
+
+.slack-toast__body strong {
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.35;
+  color: var(--text);
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.slack-toast__body small {
+  font-size: 11.5px;
+  color: var(--muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.slack-toast__id {
+  align-self: start;
+  margin-top: 13px;
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+@keyframes slack-toast-in {
+  from { opacity: 0; transform: translate3d(28px, 10px, 0) scale(0.97); }
+  to   { opacity: 1; transform: translate3d(0, 0, 0) scale(1); }
+}
+
+@keyframes slack-toast-out {
+  to { opacity: 0; transform: translate3d(0, 12px, 0); }
+}
+
+@keyframes slack-toast-pulse {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.25; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .slack-toast,
+  .slack-toast.is-leaving,
+  .slack-toast__bar { animation: none; }
+}
+
+@media (max-width: 720px) {
+  .slack-toast { right: 12px; left: 12px; bottom: 12px; width: auto; }
+}

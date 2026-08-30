@@ -505,8 +505,9 @@
         </div>
         <dl class="layer__body">
           <div><dt>Dashboard</dt><dd>La torre de control: stream en vivo, incidentes activos, panel de diagnóstico con evidencia, y el <span class="k">panel de inyección para el juez</span>. Es lo que se opera en el trial by fire.</dd></div>
-          <div><dt>Canal</dt><dd>El resumen ejecutivo se “envía” a un canal tipo Slack/WhatsApp — guiño al Payments Concierge que Yuno ya tiene.</dd></div>
-          <div><dt>Stack</dt><dd><span class="mono">React + Tailwind</span> · SSE/WebSocket desde FastAPI para el stream · REST para la inyección. El canal puede ser un panel que emula el chat.</dd></div>
+          <div><dt>Canal</dt><dd>Webhook real de Slack (workspace ficticio, sin depender de credenciales de un equipo real): por cada incidente <span class="mono">supported</span> con acción real del catálogo (no <span class="mono">monitor</span>) llega un mensaje al canal de devs — headline + evidencia operativa + <span class="mono">incident_id</span>, marcado <span class="k">simulation only</span>. Guiño al Payments Concierge que Yuno ya tiene.</dd></div>
+          <div><dt>Stack</dt><dd><span class="mono">React + Tailwind</span> · SSE/WebSocket desde FastAPI para el stream · REST para la inyección. El canal es <span class="mono">backend/notify_slack.py</span>, llamado sólo desde el loop de diagnóstico vivo — un <span class="mono">set</span> en memoria hace dedup por <span class="mono">incident_id</span> (una alerta por incidente, sin importar cuántos ticks siga abierto) y se limpia junto con <span class="mono">/api/diagnosis/reset</span>.</dd></div>
+          <div><dt>Feedback visual</dt><dd>La entrega se ve en la torre: <span class="mono">SlackAlertToast</span> anima la alerta <span class="k">después</span> de que Slack devolvió 2xx — el backend publica sólo lo confirmado en <span class="mono">slack_alerts</span> (<span class="mono">GET /api/diagnosis</span>). Medido en vivo: <span class="mono">12–25 s</span> desde la inyección, porque el incidente recorre <span class="mono">validating → diagnosing → detected</span> antes de ser <span class="mono">supported</span>.</dd></div>
           <div><dt>Dueño</dt><dd>Juani (+ Samo wiring). El panel de inyección tiene que ser a prueba de balas: si falla, falla el challenge.</dd></div>
         </dl>
       </article>

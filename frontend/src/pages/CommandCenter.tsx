@@ -8,6 +8,7 @@ import { ExpectedBandChart } from "../components/ExpectedBandChart";
 import { LanguageToggle } from "../components/LanguageToggle";
 import { LiveSignalChart, type SignalPoint } from "../components/LiveSignalChart";
 import { SignalChart } from "../components/SignalChart";
+import { SlackAlertToast } from "../components/SlackAlertToast";
 import { useLanguage } from "../i18n";
 import { diagnosisHeadline, diagnosisNarrative, localizeToken } from "../localization";
 import { useLive } from "../useLive";
@@ -253,6 +254,7 @@ export function CommandCenter({ preview = false }: { preview?: boolean }) {
 
       {selected && <DiagnosisWorkspace diagnosis={selected} onClose={() => setSelected(null)} />}
       {comparisonOpen && <ComparisonWorkspace onClose={() => setComparisonOpen(false)} />}
+      {!preview && <SlackAlertToast alerts={live.snapshot?.slack_alerts ?? []} />}
     </section>
   );
 }
