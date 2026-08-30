@@ -129,6 +129,14 @@ def seed_database(dsn: str | None = None) -> dict[str, float | int]:
         return load_artifacts(connection)
 
 
+def delete_live_transactions(dsn: str | None = None) -> int:
+    """Borra sólo el replay live para que el reset de demo no toque el seed."""
+    with connect(dsn, connect_timeout=1) as connection:
+        with connection.cursor() as cursor:
+            cursor.execute("DELETE FROM transactions WHERE source = %s", ("live",))
+            return int(cursor.rowcount)
+
+
 def main() -> None:
     try:
         result = seed_database()

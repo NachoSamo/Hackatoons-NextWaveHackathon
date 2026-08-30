@@ -21,8 +21,10 @@ if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
 from backend.contracts import EngineOutput
-from backend.data.cube import set_observed_source
+from backend.data.cube import set_live_rows_source, set_observed_source
+from backend.data.injector import active as active_injections
 from backend.data.replayer import Replayer, TICK_SECONDS
+from backend.data.routes import router as data_router
 from backend.explain.build import diagnose
 from backend.explain.prioritize import score_incidents
 
@@ -42,16 +44,20 @@ async def _ensure_replayer(app: FastAPI) -> None:
 
     try:
         replayer = Replayer()
+        replayer.set_incident_source(active_injections)
         set_observed_source(replayer.ring.observed_cube)
+        set_live_rows_source(replayer.ring.recent_rows)
         await replayer.start()
     except Exception as exc:
         LOGGER.exception("Replay startup failed; the supervisor will retry")
         if current is not None:
             # Conserva el último ring sano mientras el supervisor reintenta.
             set_observed_source(current.ring.observed_cube)
+            set_live_rows_source(current.ring.recent_rows)
             app.state.replayer = current
         else:
             set_observed_source(None)
+            set_live_rows_source(None)
             app.state.replayer = None
         app.state.replay_error = str(exc)
     else:
@@ -90,6 +96,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         except asyncio.CancelledError:
             pass
         set_observed_source(None)
+        set_live_rows_source(None)
         replayer = getattr(app.state, "replayer", None)
         if replayer is not None:
             await replayer.stop()
@@ -103,6 +110,7 @@ app.add_middleware(
     allow_methods=["GET", "POST", "OPTIONS"],
     allow_headers=["*"],
 )
+app.include_router(data_router)
 
 
 def _unavailable_snapshot() -> dict[str, object]:
