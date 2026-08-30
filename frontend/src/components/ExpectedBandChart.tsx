@@ -14,8 +14,11 @@ import type { SignalPoint } from "./LiveSignalChart";
 // se grafica es la móvil de 60 segundos, así que usar el n del punto daría una banda de ±9 pts
 // alrededor de una serie suavizada que nunca se mueve.
 const Z_95 = 1.96;
-const MIN_RANGE_PTS = 10;
-const PAD_PTS = 2;
+// El eje se acerca todo lo posible para que la banda sea legible: el dominio mínimo es apenas más
+// ancho que la banda misma (±1,04 pts con n≈3.900). No se ensancha el intervalo — eso mentiría —
+// se acerca el zoom. Cuando entra un incidente el dominio se expande solo para contener la caída.
+const MIN_RANGE_PTS = 4;
+const PAD_PTS = 0.8;
 
 const LEFT = 54;
 const WIDTH = 846;
