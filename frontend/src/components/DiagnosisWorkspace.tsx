@@ -1,8 +1,9 @@
 import { useMemo, useState } from "react";
-import { ArrowRight, Bot, Check, X } from "lucide-react";
+import { ArrowRight, Bot, CalendarRange, Check, X } from "lucide-react";
 import type { Diagnosis } from "../api";
 import { useLanguage } from "../i18n";
 import { LanguageToggle } from "./LanguageToggle";
+import { ComparisonWorkspace } from "./ComparisonWorkspace";
 
 type Props = { diagnosis: Diagnosis; onClose: () => void };
 
@@ -11,6 +12,7 @@ export function DiagnosisWorkspace({ diagnosis, onClose }: Props) {
   const [audience, setAudience] = useState<"operations" | "executive">("operations");
   const [question, setQuestion] = useState("");
   const [answer, setAnswer] = useState<string | null>(null);
+  const [comparisonOpen, setComparisonOpen] = useState(false);
   const action = diagnosis.recommended_action;
   const scope = Object.entries(diagnosis.slice)
     .filter(([, value]) => value)
@@ -65,20 +67,26 @@ export function DiagnosisWorkspace({ diagnosis, onClose }: Props) {
             <section className="evidence-list">
               <div className="section-kicker">{text("Evidence behind the diagnosis", "Evidencia detrás del diagnóstico")}</div>
               {diagnosis.evidence.map((item) => <p key={item}><Check size={15} />{item}</p>)}
-              {diagnosis.missing_data.map((item) => <p className="is-missing" key={item}>— {item}</p>)}
             </section>
+
+            {(diagnosis.alternatives.length > 0 || diagnosis.missing_data.length > 0) && <section className="diagnosis-limits">
+              {diagnosis.alternatives.length > 0 && <div><span>{text("Alternative hypotheses", "Hipótesis alternativas")}</span>{diagnosis.alternatives.map((item) => <p key={item}>{item}</p>)}</div>}
+              {diagnosis.missing_data.length > 0 && <div><span>{text("Missing evidence", "Evidencia faltante")}</span>{diagnosis.missing_data.map((item) => <p key={item}>{item}</p>)}</div>}
+            </section>}
 
             {action && <section className="human-action">
               <span>{text("Recommended human action", "Acción humana recomendada")}</span>
               <h3>{action.title}</h3>
               <p>{action.rationale}</p>
-              <footer><strong>{text("Owner", "Responsable")}: {action.owner}</strong><span>{text("Re-evaluate", "Reevaluar")}: {action.reevaluate_after}</span><em>{text("Recommendation only — no money is moved", "Sólo recomendación — no mueve dinero")}</em></footer>
+              {action.params_to_change.length > 0 && <div className="action-params">{action.params_to_change.map((param) => <span key={param.name}><i>{param.name.replaceAll("_", " ")}</i><b>{String(param.current ?? "—")} → {String(param.proposed ?? "—")}</b></span>)}</div>}
+              <footer><strong>{text("Owner", "Responsable")}: {action.owner}</strong><span>{text("Expected", "Esperado")}: {action.expected_impact}</span><span>{text("Re-evaluate", "Reevaluar")}: {action.reevaluate_after}</span><em>{text("Recommendation only — no money is moved", "Sólo recomendación — no mueve dinero")}</em></footer>
             </section>}
           </main>
 
           <aside className="diagnosis-copilot">
             <div><Bot size={18} /><span><strong>Centinel Copilot</strong><small>{text("Grounded in this evidence bundle", "Basado en este paquete de evidencia")}</small></span></div>
             <div className="copilot-suggestions">{suggested.map((item) => <button key={item} onClick={() => ask(item)}>{item}<ArrowRight size={13} /></button>)}</div>
+            <button className="copilot-compare" type="button" onClick={() => setComparisonOpen(true)}><CalendarRange size={14} />{text("Compare windows", "Comparar ventanas")}<ArrowRight size={13} /></button>
             {answer && <div className="copilot-answer"><span>{question}</span><p>{answer}</p><small>{text("Sources: deterministic diagnosis + evidence bundle", "Fuentes: diagnóstico determinístico + paquete de evidencia")}</small></div>}
             <form onSubmit={(event) => { event.preventDefault(); if (question.trim()) ask(question); }}>
               <input value={question} onChange={(event) => setQuestion(event.target.value)} placeholder={text("Ask about this diagnosis…", "Consultá sobre este diagnóstico…")} />
@@ -87,6 +95,7 @@ export function DiagnosisWorkspace({ diagnosis, onClose }: Props) {
           </aside>
         </div>
       </section>
+      {comparisonOpen && <ComparisonWorkspace initialScope={diagnosis.slice} onClose={() => setComparisonOpen(false)} />}
     </div>
   );
 }

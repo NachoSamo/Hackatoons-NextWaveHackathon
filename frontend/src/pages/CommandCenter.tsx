@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { AlertTriangle, Check, ChevronDown, Pause, Play, RotateCcw, ShieldCheck, Wifi, WifiOff } from "lucide-react";
+import { AlertTriangle, ArrowLeftRight, Check, ChevronDown, Pause, Play, RotateCcw, ShieldCheck, Wifi, WifiOff } from "lucide-react";
 import { api, type Diagnosis, type TickResult } from "../api";
 import { Brand } from "../components/Brand";
+import { ComparisonWorkspace } from "../components/ComparisonWorkspace";
 import { DiagnosisWorkspace } from "../components/DiagnosisWorkspace";
 import { LanguageToggle } from "../components/LanguageToggle";
 import { SignalChart } from "../components/SignalChart";
@@ -13,6 +14,7 @@ const PRESETS = [
   { id: "provider_br", en: "Adyen degrades in Brazil", es: "Adyen se degrada en Brasil" },
   { id: "issuer_mx", en: "Mexican issuer fails", es: "Falla un emisor mexicano" },
   { id: "pix_outage", en: "PIX outage in Brazil", es: "Caída de PIX en Brasil" },
+  { id: "weak_signal", en: "Weak signal · insufficient evidence", es: "Señal débil · evidencia insuficiente" },
 ];
 
 export function CommandCenter({ preview = false }: { preview?: boolean }) {
@@ -21,6 +23,7 @@ export function CommandCenter({ preview = false }: { preview?: boolean }) {
   const [tick, setTick] = useState<TickResult | null>(null);
   const [connected, setConnected] = useState<boolean | null>(preview ? true : null);
   const [selected, setSelected] = useState<Diagnosis | null>(null);
+  const [comparisonOpen, setComparisonOpen] = useState(false);
   const [demoControlsOpen, setDemoControlsOpen] = useState(false);
   const [judgeMode, setJudgeMode] = useState(false);
   const [judgeFilters, setJudgeFilters] = useState({ merchant_id: "", provider_id: "dlocal", payment_method: "card", country: "CO", magnitude: "0.45" });
@@ -77,6 +80,28 @@ export function CommandCenter({ preview = false }: { preview?: boolean }) {
   };
   const inject = async (preset: string) => {
     setBusy(true);
+    if (preset === "weak_signal") {
+      stopTimer();
+      const { data, call } = await api.explain({ fixture: "weak_signal" });
+      setConnected(call.status !== "ERR" && Number(call.status) < 500);
+      if (data && !data.error) {
+        setTick((current) => ({
+          ok: true,
+          window: current?.window ?? 0,
+          t: current?.t ?? new Date().toISOString(),
+          engine_incidents: data.diagnoses.map((diagnosis) => ({ id: diagnosis.incident_id, status: "insufficient_evidence", category: diagnosis.diagnosis_category, slice: Object.values(diagnosis.slice).filter(Boolean).join("/") })),
+          diagnoses: data.diagnoses,
+          prioritized: data.prioritized,
+          steps: [],
+        }));
+        setTowerState("DIAGNOSED");
+      } else {
+        setTowerState("ERROR");
+      }
+      setDemoControlsOpen(false);
+      setBusy(false);
+      return;
+    }
     await api.debugInject(preset);
     setTowerState("VALIDATING");
     setDemoControlsOpen(false);
@@ -134,6 +159,7 @@ export function CommandCenter({ preview = false }: { preview?: boolean }) {
       <div className="tower-toolbar">
         <div className="comparison-context"><span>{text("Observed", "Observado")} <strong>{text("Last 60 seconds", "Últimos 60 segundos")}</strong></span><i>vs</i><span>{text("Expected", "Esperado")} <strong>{text("Contextual 14-day baseline", "Baseline contextual de 14 días")}</strong></span><small>UTC · {tick ? "3,900" : "0"} {text("attempts", "intentos")}</small></div>
         <div className="tower-actions">
+          <button className="compare-trigger" onClick={() => setComparisonOpen(true)}><ArrowLeftRight size={15} />{text("Compare periods", "Comparar períodos")}</button>
           {towerState === "READY" && <button className="button button--signal" onClick={start} disabled={busy}><Play size={15} fill="currentColor" />{text("Start live stream", "Iniciar stream")}</button>}
           {towerState !== "READY" && towerState !== "PAUSED" && <button onClick={pause}><Pause size={15} />{text("Pause", "Pausar")}</button>}
           {towerState === "PAUSED" && <button className="button button--signal" onClick={resume}><Play size={15} />{text("Resume", "Reanudar")}</button>}
@@ -161,12 +187,14 @@ export function CommandCenter({ preview = false }: { preview?: boolean }) {
             <div><span>P{index + 1}</span><small>{Math.round(item.score * 100)} {text("priority score", "score de prioridad")}</small></div>
             <h3>{item.diagnosis.headline}</h3>
             <p>{item.diagnosis.executive}</p>
+            <div className="priority-breakdown" aria-label={text("Priority components", "Componentes de prioridad")}>{Object.entries(item.components).map(([name, value]) => <span key={name}><i>{name.replace("merchant_criticality", "merchant").replace("_", " ")}</i><b>{Math.round(value * 100)}</b></span>)}</div>
             <footer><strong>{item.diagnosis.cost ? `$${Math.round(item.diagnosis.cost.usd_per_hour).toLocaleString()}/h` : text("Impact unknown", "Impacto desconocido")}</strong><span>{text("Investigate", "Investigar")} →</span></footer>
           </button>)}
         </aside>
       </main>
 
       {selected && <DiagnosisWorkspace diagnosis={selected} onClose={() => setSelected(null)} />}
+      {comparisonOpen && <ComparisonWorkspace onClose={() => setComparisonOpen(false)} />}
     </section>
   );
 }

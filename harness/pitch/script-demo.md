@@ -92,7 +92,9 @@ Click `Investigate with Centinel`.
 the evidence behind the conclusion: merchant-side truth, provider responses, latency and healthy
 controls.”
 
-Run the suggested comparison.
+Click `Compare windows`, interpret the suggested Adyen × Brazil query and run `Last 60 seconds`
+against the contextual 14-day baseline. Then run one second prepared query to show the session
+history; do not configure dates manually during the pitch.
 
 “Centinel Copilot is grounded in this immutable evidence bundle. We can ask what changed, since
 when, who is affected, why ownership points to Adyen and what evidence contradicts the diagnosis.”

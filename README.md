@@ -93,6 +93,7 @@ flowchart LR
 | **Command Center** | Is payment performance healthy right now? Which incident matters most? |
 | **Inline investigation** | What changed, since when, where and who is affected? |
 | **Centinel Copilot** | Why does the evidence support this diagnosis? What contradicts it? |
+| **Comparison Workspace** | How does one explicit payment scope behave across two rolling windows or its contextual baseline? |
 | **Executive view** | What is the estimated financial impact and current status in one line? |
 
 The timed demo keeps historical exploration and alert-policy authoring out of the primary surface.
@@ -111,6 +112,7 @@ five minutes of live proof**:
 | Healthy silence | Synthetic traffic stays within its contextual baseline | Normal noise does not become an incident |
 | Provider degradation | Synthetic Adyen traffic starts over-declining PIX only in Brazil | Centinel must detect and localize the scoped drop |
 | Evidence-backed diagnosis | Baseline, sample, codes, latency and healthy controls | The diagnosis is traceable, not guessed |
+| Temporal comparison | Structured scope and multiple session queries over backend aggregate cubes | Operators can test hypotheses without rebuilding filters or sending raw transactions to AI |
 | Two audiences | Operations detail and an executive summary share one evidence bundle | Communication changes; facts do not |
 | Simultaneous incident | A Mexican issuer fails for one merchant | Independent causes stay separated and prioritized |
 | Weak signal | Centinel returns `Insufficient evidence` | Uncertainty is a product state, not a hidden failure |
@@ -235,7 +237,7 @@ This is a hackathon prototype under active integration. The repository currently
 | Area | Status |
 |---|---|
 | Landing and Control Tower product experience | **Implemented** as an interactive React prototype |
-| Guided live monitor and inline investigation | **Implemented** against the existing debug integration contract |
+| Guided live monitor, multi-query comparison and inline investigation | **Implemented** against backend aggregate and debug contracts |
 | Synthetic payment world, baseline and fixture generation | **Implemented** and seeded for reproducibility |
 | Deterministic detection, localization and classification core | **Implemented** with an acceptance runner |
 | Typed diagnosis and explanation API | **Implemented** with OpenAI + deterministic fallback |
