@@ -132,9 +132,14 @@ function where(diagnosis: Diagnosis, language: Language) {
 export function diagnosisHeadline(diagnosis: Diagnosis, language: Language) {
   if (language === "en") return diagnosis.headline;
   const category = localizeToken(diagnosis.diagnosis_category, language);
-  return diagnosis.cost
-    ? `${category[0].toUpperCase()}${category.slice(1)} en ${where(diagnosis, language)} — aproximadamente USD ${Math.round(diagnosis.cost.usd_per_hour).toLocaleString("es-AR")}/h en riesgo`
-    : `${category[0].toUpperCase()}${category.slice(1)} en ${where(diagnosis, language)} — evidencia todavía insuficiente`;
+  if (diagnosis.cost) {
+    return `${category[0].toUpperCase()}${category.slice(1)} en ${where(diagnosis, language)} — aproximadamente USD ${Math.round(diagnosis.cost.usd_per_hour).toLocaleString("es-AR")}/h en riesgo`;
+  }
+  // `unclassified` no es falta de evidencia: es que ninguna regla de dominio la explica.
+  if (diagnosis.diagnosis_status === "unclassified") {
+    return `Caída de aprobación sin explicar en ${where(diagnosis, language)} — ninguna regla de dominio coincidió`;
+  }
+  return `${category[0].toUpperCase()}${category.slice(1)} en ${where(diagnosis, language)} — evidencia todavía insuficiente`;
 }
 
 export function localizeAction(action: RecommendedAction, diagnosis: Diagnosis, language: Language) {

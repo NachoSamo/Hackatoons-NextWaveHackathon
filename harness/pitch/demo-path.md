@@ -38,6 +38,20 @@ Statuses: ⬜ pending · 🟡 in progress · ✅ ready · 🔧 hardcoded · ❌ 
 
 ---
 
+## Timing precondition — press `Start live stream` early
+
+`Start live stream` clears the replay ring buffer, so the 60-second cube refills from zero and
+reaches full volume (3,900 attempts) only after **~60 seconds**. Measured on the live backend:
+0 → 325 → 650 → … → 3,900 attempts across 12 windows.
+
+**Press `Start` when the product half of the pitch begins, not right before injecting.** The two
+product minutes cover the warm-up, so by the time step 2 injects the incident the cube is full and
+the diagnosis lands in ~12 seconds. Injecting during warm-up still works, but the low-volume
+windows add `insufficient_evidence` entries to the session stack, which contradicts the step 1
+line *"Noise is not an incident."*
+
+---
+
 ## Required fallbacks
 
 - [ ] Stream controls are visible and honest: `Start live stream`, `Freeze view`, `Reset`; freezing the browser does not claim to pause backend processing

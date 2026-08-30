@@ -3,13 +3,16 @@ import { Activity, ArrowDown, ArrowRight } from "lucide-react";
 import { Brand } from "../components/Brand";
 import { ControlTowerTransition } from "../components/ControlTowerTransition";
 import { LanguageToggle } from "../components/LanguageToggle";
-import { SignalChart } from "../components/SignalChart";
+import { ExpectedBandChart } from "../components/ExpectedBandChart";
+import { HERO_SERIES } from "../demo/heroSeries";
+import { useReveal } from "../useReveal";
 import { useLanguage } from "../i18n";
 import { CommandCenter } from "./CommandCenter";
 
 export function Landing() {
   const [launching, setLaunching] = useState(false);
   const { text } = useLanguage();
+  useReveal();
 
   useEffect(() => {
     if (!launching) return;
@@ -18,7 +21,7 @@ export function Landing() {
   }, [launching]);
 
   return (
-    <main className="landing">
+    <main className="landing" data-reveal-root>
       {launching && <ControlTowerTransition />}
       <nav className="landing-nav">
         <Brand />
@@ -27,8 +30,8 @@ export function Landing() {
       </nav>
 
       <section className="hero">
-        <div className="hero-signal" aria-hidden="true"><SignalChart incidentActive compact /></div>
-        <div className="hero-copy">
+        <div className="hero-signal" aria-hidden="true"><ExpectedBandChart points={HERO_SERIES} /></div>
+        <div className="hero-copy" data-reveal>
           <h1>{text("Know what’s breaking", "Sabé qué se está rompiendo")}<br />{text("before revenue disappears.", "antes de que desaparezcan los ingresos.")}</h1>
           <p>{text("Centinel monitors payment performance in real time, isolates the smallest affected path and turns evidence into the next best human action.", "Centinel monitorea el rendimiento de pagos en tiempo real, aísla el camino afectado más pequeño y convierte la evidencia en la próxima mejor acción humana.")}</p>
           <div className="hero-actions">
@@ -37,10 +40,10 @@ export function Landing() {
           </div>
           <span className="hero-note">{text("Built for Yuno’s cross-provider view. Synthetic demo data.", "Creado para la visión multi-provider de Yuno. Datos sintéticos de demo.")}</span>
         </div>
-        <div className="hero-preview"><CommandCenter preview /></div>
+        <div className="hero-preview" data-reveal><CommandCenter preview /></div>
       </section>
 
-      <section className="problem-section" id="how">
+      <section className="problem-section" data-reveal id="how">
         <h2>{text("Payment problems don’t announce themselves.", "Los problemas de pagos no avisan.")}</h2>
         <div className="problem-copy">
           <p>{text("Dashboards show the symptom. Operations still has to cross providers, methods, countries and merchant logs while revenue remains exposed.", "Los dashboards muestran el síntoma. Operaciones todavía debe cruzar providers, métodos, países y logs del merchant mientras los ingresos siguen expuestos.")}</p>
@@ -48,14 +51,14 @@ export function Landing() {
         </div>
       </section>
 
-      <section className="mechanism-section" aria-label={text("How Centinel works", "Cómo funciona Centinel")}>
+      <section className="mechanism-section" data-reveal aria-label={text("How Centinel works", "Cómo funciona Centinel")}>
         <div className="mechanism-word">{text("Compare", "Comparar")}</div><ArrowRight aria-hidden="true" />
         <div className="mechanism-word">{text("Detect", "Detectar")}</div><ArrowRight aria-hidden="true" />
         <div className="mechanism-word">{text("Diagnose", "Diagnosticar")}</div><ArrowRight aria-hidden="true" />
         <div className="mechanism-word mechanism-word--signal">{text("Recommend", "Recomendar")}</div>
       </section>
 
-      <section className="truth-section" id="proof">
+      <section className="truth-section" data-reveal id="proof">
         <div className="truth-heading"><h2>{text("One operational truth.", "Una verdad operacional.")}<br />{text("Every claim traceable.", "Cada afirmación es trazable.")}</h2><p>{text("Centinel does not ask an LLM to guess over raw transactions. Deterministic evidence arrives first; AI translates it for the person who has to act.", "Centinel no le pide a un LLM que adivine sobre transacciones crudas. Primero llega la evidencia determinística; la IA la traduce para la persona que debe actuar.")}</p></div>
         <div className="truth-ledger">
           <div><span>{text("Observed", "Observado")}</span><strong>72.4%</strong><small>{text("Last 60 seconds · 3,900 attempts", "Últimos 60 segundos · 3.900 intentos")}</small></div>
@@ -65,7 +68,7 @@ export function Landing() {
         </div>
       </section>
 
-      <section className="contrast-section">
+      <section className="contrast-section" data-reveal>
         <h2>{text("From uncertainty to action.", "De la incertidumbre a la acción.")}</h2>
         <div className="contrast-columns">
           <div><span>{text("The traditional way", "La forma tradicional")}</span><p>{text("You know approval dropped, but not why.", "Sabés que la aprobación cayó, pero no por qué.")}</p><p>{text("Teams investigate fragmented dashboards for hours.", "Los equipos investigan dashboards fragmentados durante horas.")}</p><p>{text("The merchant may discover the incident first.", "El merchant puede descubrir el incidente primero.")}</p></div>
@@ -73,7 +76,7 @@ export function Landing() {
         </div>
       </section>
 
-      <section className="closing-section">
+      <section className="closing-section" data-reveal>
         <Activity size={30} aria-hidden="true" />
         <h2>{text("Every rejected payment is a signal.", "Cada pago rechazado es una señal.")}<br />{text("Centinel tells you which ones matter.", "Centinel te dice cuáles importan.")}</h2>
         <button className="button button--light" type="button" onClick={() => setLaunching(true)}>{text("Start the simulation", "Iniciar la simulación")} <ArrowRight size={16} /></button>

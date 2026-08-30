@@ -70,7 +70,14 @@ def _fallback(incident: IncidentEvidence, action: RecommendedAction, evidence: l
     context = {"incident": incident, "action": action, "evidence": evidence, "cost": cost}
     where = " / ".join(p for p in (incident.slice.provider_id, incident.slice.payment_method, incident.slice.country) if p) or "the affected slice"
     label = incident.diagnosis_category.replace("_", " ").title()
-    headline = f"{label} in {where} — about ${cost.usd_per_hour:,.0f}/hr at risk" if cost else f"{label} in {where} — evidence still insufficient"
+    if cost:
+        headline = f"{label} in {where} — about ${cost.usd_per_hour:,.0f}/hr at risk"
+    elif incident.diagnosis_status == "unclassified":
+        # No es que falte evidencia: puede haber decenas de puntos. Falta una regla de dominio
+        # que los explique. Decir "insufficient" acá contradice el contador de evidencia en pantalla.
+        headline = f"Unexplained approval drop in {where} — no domain rule matched"
+    else:
+        headline = f"{label} in {where} — evidence still insufficient"
     return {"headline": headline, "executive": TEMPLATES.get_template(f"{template_key}.exec.j2").render(**context).strip(), "operations": TEMPLATES.get_template(f"{template_key}.ops.j2").render(**context).strip()}
 
 

@@ -21,14 +21,22 @@ export function SlackAlertToast({ alerts }: { alerts: SlackAlert[] }) {
   const [shown, setShown] = useState<SlackAlert | null>(null);
   const [leaving, setLeaving] = useState(false);
   const latest = alerts.length ? alerts[alerts.length - 1] : null;
+  // Sólo el id en las deps: con el objeto (o con `shown`) el efecto se re-ejecuta
+  // en cuanto setShown corre, el cleanup mata el timeout y el toast queda fijo.
+  const latestId = latest?.incident_id ?? null;
 
   useEffect(() => {
-    if (!latest || latest.incident_id === shown?.incident_id) return;
+    if (!latestId || !latest) return;
     setShown(latest);
     setLeaving(false);
     const fade = window.setTimeout(() => setLeaving(true), 8000);
-    return () => window.clearTimeout(fade);
-  }, [latest, shown]);
+    const drop = window.setTimeout(() => setShown(null), 8500); // desmonta: si no, tapa clicks invisible
+    return () => {
+      window.clearTimeout(fade);
+      window.clearTimeout(drop);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [latestId]);
 
   if (!shown) return null;
 

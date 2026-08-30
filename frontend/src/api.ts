@@ -158,6 +158,7 @@ export type SlackAlert = {
 
 export type Overview = {
   window_s: number;
+  view_filters?: Record<string, string>;
   stream: { ts: string; observed_rate: number; expected_rate: number; tx_count: number } | null;
   attempts: number;
   approved: number;
@@ -198,7 +199,13 @@ export const api = {
 
   // loop de diagnóstico vivo
   getSnapshot: () => call<DiagnosisSnapshot>("GET", "/api/diagnosis"),
-  getOverview: () => call<Overview>("GET", "/api/overview"),
+  // viewFilters acota SOLO los KPIs (dimensiones del cubo). El `stream` sigue global.
+  getOverview: (viewFilters?: Record<string, string>) => {
+    const query = new URLSearchParams(
+      Object.entries(viewFilters ?? {}).filter(([, value]) => value)
+    ).toString();
+    return call<Overview>("GET", `/api/overview${query ? `?${query}` : ""}`);
+  },
 
   // injector real de Pena
   getInjectOptions: () => call<InjectOptions>("GET", "/api/inject/options"),

@@ -750,7 +750,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .copilot-answer { margin-top: 18px; padding: 15px; border: 1px solid rgba(89,100,242,.28); background: rgba(89,100,242,.05); animation: content-in 220ms ease both; }
 .copilot-answer > span { color: var(--signal-soft); font: 9px var(--mono); }
 .copilot-answer p { color: #d5d5d8; font-size: 12px; line-height: 1.5; }
-.diagnosis-copilot form { margin-top: auto; min-height: 42px; display: grid; grid-template-columns: 1fr 40px; border: 1px solid var(--line-strong); border-radius: 6px; overflow: hidden; }
+.diagnosis-copilot form { margin-top: 14px; min-height: 42px; display: grid; grid-template-columns: 1fr 40px; border: 1px solid var(--line-strong); border-radius: 6px; overflow: hidden; }
 .diagnosis-copilot input { min-width: 0; padding: 0 12px; border: 0; outline: 0; color: white; background: transparent; font-size: 11px; }
 .diagnosis-copilot form button { border: 0; border-left: 1px solid var(--line); border-radius: 0; }
 .diagnosis-copilot form svg { width: 15px; }
@@ -1001,4 +1001,85 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 
 @media (max-width: 720px) {
   .slack-toast { right: 12px; left: 12px; bottom: 12px; width: auto; }
+}
+
+/* ---- Scroll reveal (landing) --------------------------------------------- */
+/* Sólo oculta dentro de .reveal-ready, y esa clase la agrega useReveal.ts.    */
+/* Si el JS no corre, no hay IntersectionObserver o hay reduced motion,        */
+/* la landing se ve completa: nunca una sección invisible en vivo.             */
+
+.reveal-ready [data-reveal] {
+  opacity: 0;
+  transform: translate3d(0, 22px, 0);
+  transition: opacity 0.72s cubic-bezier(0.16, 0.85, 0.3, 1),
+              transform 0.72s cubic-bezier(0.16, 0.85, 0.3, 1);
+  will-change: opacity, transform;
+}
+
+.reveal-ready [data-reveal].is-visible {
+  opacity: 1;
+  transform: none;
+}
+
+/* Escalonado de los hijos directos: el bloque entra, sus partes lo siguen. */
+.reveal-ready [data-reveal] > * {
+  opacity: 0;
+  transform: translate3d(0, 12px, 0);
+  transition: opacity 0.6s ease, transform 0.6s cubic-bezier(0.16, 0.85, 0.3, 1);
+}
+.reveal-ready [data-reveal].is-visible > * { opacity: 1; transform: none; }
+.reveal-ready [data-reveal].is-visible > *:nth-child(1) { transition-delay: 0.06s; }
+.reveal-ready [data-reveal].is-visible > *:nth-child(2) { transition-delay: 0.14s; }
+.reveal-ready [data-reveal].is-visible > *:nth-child(3) { transition-delay: 0.22s; }
+.reveal-ready [data-reveal].is-visible > *:nth-child(4) { transition-delay: 0.3s; }
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal-ready [data-reveal],
+  .reveal-ready [data-reveal] > * {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+}
+
+/* El preview de la landing usa el mismo ExpectedBandChart que la torre, que trae
+   height: clamp(350px, 50vh, 540px). Dentro del preview hay que acotarlo o desborda
+   el aspect-ratio de la tarjeta. Va al final para ganar por orden a igual especificidad. */
+.tower--preview .signal-chart.band-chart {
+  height: 210px;
+  min-height: 0;
+  background: none;
+  box-shadow: none;
+}
+
+/* El input del Copilot va arriba del rail (se ve apenas abrís el incidente), no al fondo:
+   la respuesta y las sugerencias crecen debajo. */
+.diagnosis-copilot .copilot-answer { margin-top: 14px; }
+
+/* ---- Simulador de señal en la columna derecha ---------------------------- */
+/* El rojo (--incident) queda RESERVADO para el simulador: es lo único que
+   altera el mundo. El filtro de vista sólo mira, así que va neutro. */
+
+.tower-simulator {
+  position: relative;
+  /* Por encima del header sticky de la cola y del bloque de estado vacío,
+     o el panel desplegable queda detrás del texto "Trustworthy silence". */
+  z-index: 30;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--line);
+  background: #09090a;
+}
+.tower-simulator .demo-menu { width: 100%; }
+.tower-simulator .demo-menu__trigger { width: 100%; justify-content: space-between; }
+.tower-simulator .detection-trigger__copy { min-width: 0; flex: 1; }
+.tower-simulator .demo-menu__panel { z-index: 40; right: 0; left: auto; background: #111113; }
+
+/* El filtro de vista deja de usar el rojo de alerta. */
+.demo-menu__trigger.view-filter-trigger {
+  color: #d7d7db;
+  border-color: var(--line-strong) !important;
+}
+.demo-menu__trigger.view-filter-trigger:hover {
+  color: white;
+  border-color: var(--signal-soft) !important;
 }

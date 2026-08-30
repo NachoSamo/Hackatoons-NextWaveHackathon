@@ -9,17 +9,18 @@ import {
 } from "./api";
 import { buildIncidents, type LiveIncident } from "./live";
 
-export function useLive(active: boolean) {
+export function useLive(active: boolean, viewFilters: Record<string, string> = {}) {
   const [snapshot, setSnapshot] = useState<DiagnosisSnapshot | null>(null);
   const [overview, setOverview] = useState<Overview | null>(null);
   const [ticker, setTicker] = useState<StreamSnapshot | null>(null);
   const poll = useRef<number | null>(null);
+  const filterKey = JSON.stringify(viewFilters);
 
   useEffect(() => {
     if (!active) return;
     let alive = true;
     const tick = async () => {
-      const [s, o] = await Promise.all([api.getSnapshot(), api.getOverview()]);
+      const [s, o] = await Promise.all([api.getSnapshot(), api.getOverview(viewFilters)]);
       if (!alive) return;
       if (s.data) setSnapshot(s.data);
       if (o.data) setOverview(o.data);
@@ -30,7 +31,9 @@ export function useLive(active: boolean) {
       alive = false;
       if (poll.current) window.clearInterval(poll.current);
     };
-  }, [active]);
+    // filterKey: string estable, así cambiar un filtro re-pollea de inmediato
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [active, filterKey]);
 
   useEffect(() => {
     if (!active) return;

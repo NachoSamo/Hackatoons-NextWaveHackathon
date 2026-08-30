@@ -26,6 +26,11 @@ from backend.db import delete_live_transactions
 
 router = APIRouter(prefix="/api")
 
+# Las 4 dimensiones del cubo. `FILTER_FIELDS` (inyección) incluye además `issuer_bank`, que
+# NO es eje del cubo por decisión de mentores (decision-log 29/08): el emisor entra como
+# evidencia del slice ganador, no como dimensión de búsqueda. Por eso no se puede filtrar por él.
+CUBE_DIMENSIONS = ("merchant_id", "provider_id", "payment_method", "country")
+
 
 def _error(message: str, status_code: int = 400) -> JSONResponse:
     return JSONResponse(status_code=status_code, content={"error": message})
@@ -56,7 +61,18 @@ def overview(request: Request, window_s: int = 60) -> Any:
         seconds = _window_seconds(window_s)
         replayer = getattr(request.app.state, "replayer", None)
         snapshot = replayer.stream_snapshot() if replayer is not None else None
-        leaves = get_cube(seconds)
+        # Filtros de VISTA: acotan los KPIs a un cruce dimensional. `stream` sigue siendo
+        # global — el cubo tiene 4 dimensiones y el ticker del replayer no está segmentado.
+        view_filters = {
+            key: value
+            for key, value in _query_filters(request).items()
+            if key in CUBE_DIMENSIONS
+        }
+        leaves = [
+            leaf
+            for leaf in get_cube(seconds)
+            if all(leaf.get(key) == value for key, value in view_filters.items())
+        ]
         attempts = sum(int(leaf["attempts"]) for leaf in leaves)
         approved = sum(int(leaf["approved"]) for leaf in leaves)
         fc_attempts = sum(float(leaf["fc_attempts"]) for leaf in leaves)
@@ -64,6 +80,7 @@ def overview(request: Request, window_s: int = 60) -> Any:
         return {
             "window_s": seconds,
             "stream": snapshot,
+            "view_filters": view_filters,
             "attempts": attempts,
             "approved": approved,
             "observed_rate": round(approved / attempts, 6) if attempts else 0.0,

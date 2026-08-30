@@ -118,14 +118,14 @@ export function DiagnosisWorkspace({ diagnosis, onClose }: Props) {
           <aside className="diagnosis-copilot">
             <div><Bot size={18} /><span><strong>Centinel Copilot</strong><small>{text("Grounded in this evidence bundle", "Basado en este paquete de evidencia")}</small></span></div>
             <p className="copilot-capability">{text("Ask about supported facts in this incident. Copilot explains evidence; it does not recalculate the diagnosis.", "Consultá hechos respaldados por este incidente. Copilot explica evidencia; no recalcula el diagnóstico.")}</p>
-            <div className="copilot-suggestions">{suggested.map((item) => <button key={item} onClick={() => ask(item)}>{item}<ArrowRight size={13} /></button>)}</div>
-            <button className="copilot-compare" type="button" onClick={() => setComparisonOpen(true)}><CalendarRange size={14} />{text("Compare windows", "Comparar ventanas")}<ArrowRight size={13} /></button>
-            {answer && <div className="copilot-answer"><span>{question}</span><p>{answer}</p><small>{text("Sources: deterministic diagnosis + evidence bundle", "Fuentes: diagnóstico determinístico + paquete de evidencia")}</small></div>}
             <form onSubmit={(event) => { event.preventDefault(); if (question.trim()) ask(question); }}>
               <label className="sr-only" htmlFor="diagnosis-question">{text("Question about this diagnosis", "Pregunta sobre este diagnóstico")}</label>
               <input id="diagnosis-question" aria-label={text("Question about this diagnosis", "Pregunta sobre este diagnóstico")} value={question} onChange={(event) => setQuestion(event.target.value)} placeholder={text("Ask about this diagnosis…", "Consultá sobre este diagnóstico…")} />
               <button type="submit" aria-label={text("Ask", "Consultar")}><ArrowRight /></button>
             </form>
+            <div className="copilot-suggestions">{suggested.map((item) => <button key={item} onClick={() => ask(item)}>{item}<ArrowRight size={13} /></button>)}</div>
+            <button className="copilot-compare" type="button" onClick={() => setComparisonOpen(true)}><CalendarRange size={14} />{text("Compare windows", "Comparar ventanas")}<ArrowRight size={13} /></button>
+            {answer && <div className="copilot-answer"><span>{question}</span><p>{answer}</p><small>{text("Sources: deterministic diagnosis + evidence bundle", "Fuentes: diagnóstico determinístico + paquete de evidencia")}</small></div>}
           </aside>
         </div>
       </section>
