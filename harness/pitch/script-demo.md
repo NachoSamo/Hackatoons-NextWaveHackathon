@@ -65,9 +65,12 @@ Click `Start live stream`.
 “Payments are entering in real time. Observed approval moves around its contextual fourteen-day
 baseline, but Centinel stays silent. Variation is normal. Noise is not an incident.”
 
+Point to the stacked candles: green is approved volume, red is declined volume and the dashed line
+is the expected number of approvals for the same incoming volume.
+
 ### 2:20 — Detection scope
 
-Open `Detection filters`, select `Adyen × Brazil`, then click `Simulate signal in scope`.
+Open `Detection filters`, select `Adyen × Brazil`, then click `Inject test signal`.
 
 “A provider now starts over-declining only in Brazil. Nobody refreshes a dashboard and nobody
 changes a filter.”

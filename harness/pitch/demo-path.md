@@ -23,8 +23,8 @@ It ends with an unrehearsed incident created by the judge.
 | # | What appears on screen | Presenter action | Status | Owner |
 |---|---|---|---|---|
 | 0 | Public landing page with the promise, a real product preview and `Watch the live incident` CTA | Opens the pitch on the landing, then clicks the CTA when the live demo begins | ⬜ | Juani |
-| 1 | Command Center in `SIMULATION MODE`, state `READY`, with `Start live stream`, an empty timeline and processing activity visible | Starts the stream. Each 60 s aggregate window adds a point and a trace row while approval remains inside the expected range: “Variation is normal. Noise is not an incident.” | ✅ | Juani |
-| 2 | `Detection filters` exposes merchant × provider × method × country; simulation is a separate, explicitly demo-only action | Selects `Adyen × Brazil`, applies the scope and simulates a degradation | ✅ demo | Samo + Juani |
+| 1 | Command Center in `SIMULATION MODE`, state `READY`, with `Start live stream`, an empty volume chart and processing activity visible | Starts the stream. Every incoming snapshot adds a stacked candle: approved volume in green, declined volume in red and expected approvals as a reference line. Approval remains inside the expected range: “Variation is normal. Noise is not an incident.” | ✅ | Juani |
+| 2 | `Detection filters` exposes merchant × provider × method × country as the scope of a test signal; Centinel continues monitoring all traffic | Selects `Adyen × Brazil` and explicitly injects a simulation-only degradation | ✅ demo | Samo + Juani |
 | 3 | The signal enters `validating` before triggering. An incident appears with start time, severity and estimated impact | Does nothing and lets the detector react | ⬜ | Luca + Pena |
 | 4 | Incident Detail converges from the global drop to `Provider X × Brazil`; the investigation stage changes to `Diagnose` and shows baseline, sample, codes, healthy controls and confidence | Opens `Investigate with Centinel` | ⬜ | Luca + Juani |
 | 5 | A contextual Copilot rail opens a structured Comparison Workspace: current 60 s against the contextual baseline, explicit scope/sample/UTC and session query history. Its answer states confidence and limitations, assigns likely ownership and proposes the next human action | Runs the suggested comparison, shows a second query in the same session, then switches `Operations / Executive` over the same evidence bundle | 🟡 | Luca + Juani |
@@ -40,7 +40,7 @@ Statuses: ⬜ pending · 🟡 in progress · ✅ ready · 🔧 hardcoded · ❌ 
 
 ## Required fallbacks
 
-- [ ] Stream controls are visible and deterministic: `Start live stream`, `Pause`, `Reset`
+- [ ] Stream controls are visible and honest: `Start live stream`, `Freeze view`, `Reset`; freezing the browser does not claim to pause backend processing
 - [ ] Persistent `SIMULATION MODE` badge; synthetic data is never presented as customer production data
 - [ ] The stream resets to a known state with one button
 - [ ] Every prepared scenario can replay from deterministic fixtures

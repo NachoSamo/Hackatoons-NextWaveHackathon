@@ -25,9 +25,9 @@ type PipelineLog = { id: string; at: string; window: number; stage: string; mess
 
 const DEFAULT_SCOPE: DetectionScope = {
   merchant_id: "",
-  provider_id: "adyen",
+  provider_id: "",
   payment_method: "",
-  country: "BR",
+  country: "",
   issuer_bank: "",
   magnitude: "0.38",
   decline_code: "91",
@@ -85,7 +85,6 @@ export function CommandCenter({ preview = false }: { preview?: boolean }) {
   const [comparisonOpen, setComparisonOpen] = useState(false);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [scope, setScope] = useState<DetectionScope>(DEFAULT_SCOPE);
-  const [appliedScope, setAppliedScope] = useState<DetectionScope>(DEFAULT_SCOPE);
   const [injectOptions, setInjectOptions] = useState<InjectOptions>(FALLBACK_OPTIONS);
   const [signalPoints, setSignalPoints] = useState<SignalPoint[]>([]);
   const [pipelineLogs, setPipelineLogs] = useState<PipelineLog[]>([]);
@@ -93,18 +92,41 @@ export function CommandCenter({ preview = false }: { preview?: boolean }) {
 
   useEffect(() => {
     if (preview) return;
-    api.health().then(({ data }) => setConnected(data?.status === "ok"));
+    const checkHealth = () => api.health().then(({ data }) => setConnected(data?.status === "ok"));
+    void checkHealth();
+    const healthPoll = window.setInterval(checkHealth, 5000);
     api.getInjectOptions().then(({ data }) => { if (data) setInjectOptions(data); });
+    return () => window.clearInterval(healthPoll);
   }, [preview]);
 
   useEffect(() => {
-    if (!live.ticker) return;
-    const point: SignalPoint = {
-      at: live.ticker.ts.slice(11, 19),
-      observed: live.ticker.observed_rate * 100,
-      expected: live.ticker.expected_rate * 100,
+    if (!filtersOpen) return;
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setFiltersOpen(false);
     };
-    setSignalPoints((current) => current.at(-1)?.at === point.at ? current : [...current, point].slice(-30));
+    document.addEventListener("keydown", closeOnEscape);
+    return () => document.removeEventListener("keydown", closeOnEscape);
+  }, [filtersOpen]);
+
+  useEffect(() => {
+    if (!live.ticker) return;
+    setSignalPoints((current) => {
+      const previousTotal = current.at(-1)?.cumulativeAttempts ?? 0;
+      const attempts = Math.max(0, live.ticker!.tx_count - previousTotal);
+      if (!attempts) return current;
+      const approved = Math.round(attempts * live.ticker!.observed_rate);
+      const point: SignalPoint = {
+        at: live.ticker!.ts.slice(11, 19),
+        attempts,
+        approved,
+        declined: Math.max(0, attempts - approved),
+        expectedApproved: attempts * live.ticker!.expected_rate,
+        observedRate: live.ticker!.observed_rate * 100,
+        expectedRate: live.ticker!.expected_rate * 100,
+        cumulativeAttempts: live.ticker!.tx_count,
+      };
+      return current.at(-1)?.at === point.at ? current : [...current, point].slice(-30);
+    });
   }, [live.ticker]);
 
   useEffect(() => {
@@ -120,42 +142,62 @@ export function CommandCenter({ preview = false }: { preview?: boolean }) {
   const start = async () => {
     if (preview || busy) return;
     setBusy(true);
-    await live.reset();
-    setSignalPoints([]); setPipelineLogs([]); setSelected(null);
-    setTowerState("HEALTHY"); setStreamActive(true); setBusy(false);
+    try {
+      const resetOk = await live.reset();
+      if (!resetOk) {
+        setConnected(false); setTowerState("ERROR");
+        return;
+      }
+      setSignalPoints([]); setPipelineLogs([]); setSelected(null);
+      setConnected(true); setTowerState("HEALTHY"); setStreamActive(true);
+    } finally {
+      setBusy(false);
+    }
   };
   const pause = () => { setStreamActive(false); setTowerState("PAUSED"); };
   const resume = () => { setStreamActive(true); setTowerState("HEALTHY"); };
   const reset = async () => {
-    setStreamActive(false); setBusy(true); await live.reset();
-    setSignalPoints([]); setPipelineLogs([]); setSelected(null);
-    setTowerState("READY"); setFiltersOpen(false); setBusy(false);
+    setStreamActive(false); setBusy(true);
+    try {
+      const resetOk = await live.reset();
+      if (!resetOk) {
+        setConnected(false); setTowerState("ERROR");
+        return;
+      }
+      setSignalPoints([]); setPipelineLogs([]); setSelected(null);
+      setConnected(true); setTowerState("READY"); setFiltersOpen(false);
+    } finally {
+      setBusy(false);
+    }
   };
-  const applyScope = () => { setAppliedScope(scope); setFiltersOpen(false); };
   const simulateScope = async () => {
     setBusy(true);
-    const { magnitude, decline_code, ...values } = scope;
-    const filters = Object.fromEntries(Object.entries(values).filter(([, value]) => value));
-    const response = await api.inject({ filters, magnitude: Number(magnitude), decline_code, label: "Control Tower trial" });
-    if (response.data?.error || response.call.status === "ERR" || Number(response.call.status) >= 400) setTowerState("ERROR");
-    else { setAppliedScope(scope); setTowerState("VALIDATING"); }
-    setFiltersOpen(false); setBusy(false);
+    try {
+      const { magnitude, decline_code, ...values } = scope;
+      const filters = Object.fromEntries(Object.entries(values).filter(([, value]) => value));
+      const response = await api.inject({ filters, magnitude: Number(magnitude), decline_code, label: "Control Tower trial" });
+      if (response.data?.error || response.call.status === "ERR" || Number(response.call.status) >= 400) setTowerState("ERROR");
+      else setTowerState("VALIDATING");
+      setFiltersOpen(false);
+    } finally {
+      setBusy(false);
+    }
   };
 
   const prioritized = live.snapshot?.prioritized ?? [];
   const latestPoint = signalPoints.at(-1);
-  const observedRate = latestPoint?.observed ?? (live.overview?.observed_rate ?? 0.854) * 100;
-  const expectedRate = latestPoint?.expected ?? (live.overview?.expected_rate ?? 0.861) * 100;
+  const observedRate = latestPoint?.observedRate ?? (live.overview?.observed_rate ?? 0.854) * 100;
+  const expectedRate = latestPoint?.expectedRate ?? (live.overview?.expected_rate ?? 0.861) * 100;
   const delta = observedRate - expectedRate;
   const revenueRisk = prioritized.reduce((sum, item) => sum + (item.diagnosis.cost?.usd_per_hour ?? 0), 0);
-  const scopeParts = Object.entries(appliedScope).filter(([key, value]) => !["magnitude", "decline_code"].includes(key) && value).map(([, value]) => localizeToken(value, language));
-  const scopeLabel = `${scopeParts.join(" × ") || text("All payment traffic", "Todo el tráfico de pagos")} · ${text("code", "código")} ${appliedScope.decline_code}`;
+  const scopeParts = Object.entries(scope).filter(([key, value]) => !["magnitude", "decline_code"].includes(key) && value).map(([, value]) => localizeToken(value, language));
+  const scopeLabel = `${scopeParts.join(" × ") || text("Choose a dimensional scope", "Elegí un alcance dimensional")} · ${text("code", "código")} ${scope.decline_code}`;
   const stateMessage = useMemo(() => {
     if (towerState === "READY") return text("Ready to watch payment traffic", "Listo para observar el tráfico de pagos");
     if (towerState === "HEALTHY") return text("Normal variance. No action required.", "Variación normal. No requiere acción.");
     if (towerState === "VALIDATING") return text("Signal found. Checking persistence and controls…", "Señal encontrada. Validando persistencia y controles…");
     if (towerState === "DIAGNOSED") return text(`${prioritized.length} separate incident${prioritized.length === 1 ? "" : "s"} diagnosed`, `${prioritized.length} incidente${prioritized.length === 1 ? "" : "s"} diagnosticado${prioritized.length === 1 ? "" : "s"}`);
-    if (towerState === "PAUSED") return text("Stream paused", "Stream pausado");
+    if (towerState === "PAUSED") return text("View frozen. Backend processing continues.", "Vista congelada. El backend sigue procesando.");
     return text("Backend unavailable or injection rejected", "Backend no disponible o inyección rechazada");
   }, [towerState, prioritized.length, text]);
 
@@ -174,7 +216,7 @@ export function CommandCenter({ preview = false }: { preview?: boolean }) {
 
       <div className="tower-flow" aria-label={text("Detection flow", "Flujo de detección")}>
         {[["HEALTHY", text("Watch", "Observar")], ["VALIDATING", text("Validate", "Validar")], ["DIAGNOSED", text("Diagnose", "Diagnosticar")]].map(([key, label], index) => {
-          const rank = towerState === "READY" ? -1 : towerState === "HEALTHY" || towerState === "PAUSED" ? 0 : towerState === "VALIDATING" ? 1 : 2;
+          const rank = towerState === "READY" || towerState === "ERROR" ? -1 : towerState === "HEALTHY" || towerState === "PAUSED" ? 0 : towerState === "VALIDATING" ? 1 : 2;
           return <div className={rank >= index ? "is-active" : ""} key={key}><i>{index + 1}</i><span>{label}</span></div>;
         })}
         <p className={`tower-state tower-state--${towerState.toLowerCase()}`} aria-live="polite">{stateMessage}</p>
@@ -184,21 +226,21 @@ export function CommandCenter({ preview = false }: { preview?: boolean }) {
         <div className="comparison-context"><span>{text("Observed", "Observado")} <strong>{text("Last 60 seconds", "Últimos 60 segundos")}</strong></span><i>{text("vs", "contra")}</i><span>{text("Expected", "Esperado")} <strong>{text("Contextual 14-day baseline", "Baseline contextual de 14 días")}</strong></span><small>UTC · {live.snapshot ? text(`window ${live.snapshot.window}`, `ventana ${live.snapshot.window}`) : text("waiting", "esperando")}</small></div>
         <div className="tower-actions">
           <button className="compare-trigger" onClick={() => setComparisonOpen(true)}><ArrowLeftRight size={15} />{text("Compare periods", "Comparar períodos")}</button>
-          {towerState === "READY" && <button className="button button--signal" onClick={start} disabled={busy}><Play size={15} fill="currentColor" />{text("Start live stream", "Iniciar stream")}</button>}
-          {towerState !== "READY" && towerState !== "PAUSED" && <button onClick={pause}><Pause size={15} />{text("Pause", "Pausar")}</button>}
-          {towerState === "PAUSED" && <button className="button button--signal" onClick={resume}><Play size={15} />{text("Resume", "Reanudar")}</button>}
+          {(towerState === "READY" || towerState === "ERROR") && <button className="button button--signal" onClick={start} disabled={busy}><Play size={15} fill="currentColor" />{towerState === "ERROR" ? text("Retry connection", "Reintentar conexión") : text("Start live stream", "Iniciar stream")}</button>}
+          {["HEALTHY", "VALIDATING", "DIAGNOSED"].includes(towerState) && <button onClick={pause}><Pause size={15} />{text("Freeze view", "Congelar vista")}</button>}
+          {towerState === "PAUSED" && <button className="button button--signal" onClick={resume}><Play size={15} />{text("Resume live view", "Retomar vista en vivo")}</button>}
           <button onClick={reset} disabled={busy}><RotateCcw size={15} />{text("Reset", "Reiniciar")}</button>
           <div className="demo-menu">
-            <button className="demo-menu__trigger detection-trigger" onClick={() => setFiltersOpen((open) => !open)}>
+            <button className="demo-menu__trigger detection-trigger" aria-expanded={filtersOpen} aria-controls="detection-scope-panel" onClick={() => setFiltersOpen((open) => !open)}>
               <Filter size={15} />
               <span className="detection-trigger__copy">
                 <strong>{text("Detection filters", "Filtros de detección")}</strong>
-                <small>{text("Applied", "Aplicados")} · {scopeLabel}</small>
+                <small>{text("Test scope", "Alcance de prueba")} · {scopeLabel}</small>
               </span>
               <ChevronDown size={14} />
             </button>
-            {filtersOpen && <div className="demo-menu__panel detection-panel">
-              <header><SlidersHorizontal size={14} /><div><strong>{text("Detection scope", "Alcance de detección")}</strong><span>{text("Choose the dimensional intersection to inspect", "Elegí el cruce dimensional a inspeccionar")}</span></div></header>
+            {filtersOpen && <div className="demo-menu__panel detection-panel" id="detection-scope-panel" role="group" aria-label={text("Test incident scope", "Alcance del incidente de prueba")}>
+              <header><SlidersHorizontal size={14} /><div><strong>{text("Test incident scope", "Alcance del incidente de prueba")}</strong><span>{text("Choose the dimensional intersection the simulator will affect", "Elegí el cruce dimensional que afectará el simulador")}</span></div></header>
               <div className="judge-fields">
                 <ScopeField label={text("Merchant", "Comercio")} value={scope.merchant_id} onChange={(merchant_id) => setScope({ ...scope, merchant_id })} options={options(injectOptions.merchants, text("All", "Todos"), language)} />
                 <ScopeField label={text("Provider", "Proveedor")} value={scope.provider_id} onChange={(provider_id) => setScope({ ...scope, provider_id })} options={options(injectOptions.providers, text("All", "Todos"), language)} />
@@ -208,8 +250,8 @@ export function CommandCenter({ preview = false }: { preview?: boolean }) {
                 <ScopeField label={text("Decline code", "Código de rechazo")} value={scope.decline_code} onChange={(decline_code) => setScope({ ...scope, decline_code })} options={injectOptions.decline_codes.map((item) => [item.code, `${item.code} · ${localizeToken(String(item.name ?? text("Decline", "Rechazo")), language)} · ${localizeToken(String(item.type ?? ""), language)}`])} />
                 <ScopeField label={text("Simulation strength", "Intensidad de simulación")} value={scope.magnitude} onChange={(magnitude) => setScope({ ...scope, magnitude })} options={[["0.70", text("Mild · 70%", "Leve · 70%")], ["0.55", text("Weak signal · 55%", "Señal débil · 55%")], ["0.45", text("Strong · 45%", "Fuerte · 45%")], ["0.38", text("Critical · 38%", "Crítica · 38%")], ["0.25", text("Severe · 25%", "Severa · 25%")]]} />
               </div>
-              <footer><button onClick={applyScope}>{text("Apply view", "Aplicar vista")}</button><button className="simulate-scope" disabled={busy || towerState === "READY"} onClick={simulateScope}>{text("Simulate signal in scope", "Simular señal en el alcance")}</button></footer>
-              <small>{text("Options come from the backend contract. Filtering and demo simulation remain separate actions.", "Las opciones vienen del contrato backend. Filtrar y simular siguen siendo acciones separadas.")}</small>
+              <footer><button className="simulate-scope" disabled={busy || towerState === "READY" || towerState === "ERROR" || !scopeParts.length} onClick={simulateScope}>{text("Inject test signal", "Inyectar señal de prueba")}</button></footer>
+              <small>{text("Simulation only. Centinel keeps monitoring all traffic; these dimensions define the injected test signal.", "Sólo simulación. Centinel sigue monitoreando todo el tráfico; estas dimensiones definen la señal de prueba.")}</small>
             </div>}
           </div>
         </div>
@@ -239,10 +281,10 @@ function ScopeField({ label, value, onChange, options: fieldOptions }: { label: 
 function LiveWorkspace({ points, logs }: { points: SignalPoint[]; logs: PipelineLog[] }) {
   const { language, text } = useLanguage();
   return <section className="signal-surface live-workspace">
-    <div className="tower-chart-heading"><div><strong>{text("Approval by incoming stream snapshot", "Aprobación por snapshot entrante")}</strong><span><i className="legend-observed" />{text("Observed", "Observado")} <i className="legend-reference" />{text("Expected", "Esperado")}</span></div><small>{points.length}/30 {text("snapshots", "snapshots")}</small></div>
+    <div className="tower-chart-heading"><div><strong>{text("Transaction volume by incoming snapshot", "Volumen de transacciones por snapshot entrante")}</strong><span><i className="legend-approved" />{text("Approved", "Aprobadas")} <i className="legend-declined" />{text("Declined", "Rechazadas")} <i className="legend-reference" />{text("Expected approvals", "Aprobaciones esperadas")}</span></div><small>{points.length}/30 {text("snapshots · rolling 60-second mix", "snapshots · mezcla móvil de 60 segundos")}</small></div>
     <LiveSignalChart points={points} />
     <section className="pipeline-log">
-      <header><div><strong>{text("Live diagnosis trace", "Traza viva del diagnóstico")}</strong><span>{text("Ring buffer → detector → localizer → explanation", "Ring buffer → detector → localizador → explicación")}</span></div><b>{logs.length} {text("events", "eventos")}</b></header>
+      <header><div><strong>{text("Live diagnosis trace", "Traza viva del diagnóstico")}</strong><span>{text("Ring buffer → detector → localizer → explanation · newest first", "Ring buffer → detector → localizador → explicación · más recientes primero")}</span></div><b>{logs.length} {text("events", "eventos")}</b></header>
       <div className="pipeline-table-wrap"><table><thead><tr><th>{text("Time", "Hora")}</th><th>{text("Window", "Ventana")}</th><th>{text("Stage", "Etapa")}</th><th>{text("Evidence / parameters", "Evidencia / parámetros")}</th></tr></thead><tbody>
         {!logs.length && <tr className="pipeline-empty"><td colSpan={4}>{text("No diagnosis windows yet. Start the stream to see the real pipeline trace.", "Todavía no hay ventanas de diagnóstico. Iniciá el stream para ver la traza real.")}</td></tr>}
         {logs.map((log) => <tr key={log.id}><td>{log.at}</td><td>#{log.window}</td><td><span className={`log-stage log-stage--${log.stage.toLowerCase()}`}>{localizeToken(log.stage.toLowerCase(), language).toUpperCase()}</span></td><td>{log.message}</td></tr>)}

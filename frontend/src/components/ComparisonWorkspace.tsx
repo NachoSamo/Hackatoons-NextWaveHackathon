@@ -4,6 +4,7 @@ import { api, type CubeLeaf, type PaymentSlice } from "../api";
 import { useLanguage } from "../i18n";
 import { localizeToken } from "../localization";
 import { LanguageToggle } from "./LanguageToggle";
+import { useDialogFocus } from "../useDialogFocus";
 
 type Scope = {
   merchant_id: string;
@@ -65,6 +66,8 @@ export function ComparisonWorkspace({ initialScope, onClose }: { initialScope?: 
   const [activeId, setActiveId] = useState<number | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [interpretation, setInterpretation] = useState<string | null>(null);
+  const dialogRef = useDialogFocus(onClose);
 
   const observedLabel = text(WINDOWS.find((item) => item.value === observedWindow)?.en ?? "Observed window", WINDOWS.find((item) => item.value === observedWindow)?.es ?? "Ventana observada");
   const referenceLabel = reference === "baseline"
@@ -81,22 +84,26 @@ export function ComparisonWorkspace({ initialScope, onClose }: { initialScope?: 
 
   const interpret = () => {
     const value = query.toLowerCase();
-    const next = { ...scope };
-    if (value.includes("adyen")) next.provider_id = "adyen";
-    if (value.includes("dlocal")) next.provider_id = "dlocal";
-    if (value.includes("mercadopago")) next.provider_id = "mercadopago";
-    if (value.includes("brazil") || value.includes("brasil")) next.country = "BR";
-    if (value.includes("mexico") || value.includes("méxico")) next.country = "MX";
-    if (value.includes("colombia")) next.country = "CO";
-    if (value.includes("pix")) next.payment_method = "pix";
-    if (value.includes("pse")) next.payment_method = "pse";
-    if (value.includes("card") || value.includes("tarjeta")) next.payment_method = "card";
-    if (value.includes("2 hour") || value.includes("2 hora")) setObservedWindow(7200);
-    else if (value.includes("15 min")) setObservedWindow(900);
-    else if (value.includes("5 min")) setObservedWindow(300);
-    else if (value.includes("60 second") || value.includes("60 segundo")) setObservedWindow(60);
-    if (value.includes("baseline")) setReference("baseline");
+    const next = { ...emptyScope };
+    const recognized: string[] = [];
+    if (value.includes("adyen")) { next.provider_id = "adyen"; recognized.push("Adyen"); }
+    if (value.includes("dlocal")) { next.provider_id = "dlocal"; recognized.push("dLocal"); }
+    if (value.includes("mercadopago")) { next.provider_id = "mercadopago"; recognized.push("MercadoPago"); }
+    if (value.includes("brazil") || value.includes("brasil")) { next.country = "BR"; recognized.push(text("Brazil", "Brasil")); }
+    if (value.includes("mexico") || value.includes("méxico")) { next.country = "MX"; recognized.push(text("Mexico", "México")); }
+    if (value.includes("colombia")) { next.country = "CO"; recognized.push("Colombia"); }
+    if (value.includes("pix")) { next.payment_method = "pix"; recognized.push("PIX"); }
+    if (value.includes("pse")) { next.payment_method = "pse"; recognized.push("PSE"); }
+    if (value.includes("card") || value.includes("tarjeta")) { next.payment_method = "card"; recognized.push(text("Card", "Tarjeta")); }
+    if (value.includes("2 hour") || value.includes("2 hora")) { setObservedWindow(7200); recognized.push(text("last 2 hours", "últimas 2 horas")); }
+    else if (value.includes("15 min")) { setObservedWindow(900); recognized.push(text("last 15 minutes", "últimos 15 minutos")); }
+    else if (value.includes("5 min")) { setObservedWindow(300); recognized.push(text("last 5 minutes", "últimos 5 minutos")); }
+    else if (value.includes("60 second") || value.includes("60 segundo")) { setObservedWindow(60); recognized.push(text("last 60 seconds", "últimos 60 segundos")); }
+    if (value.includes("baseline")) { setReference("baseline"); recognized.push(text("contextual baseline", "baseline contextual")); }
     setScope(next);
+    setInterpretation(recognized.length
+      ? text(`Understood: ${recognized.join(" · ")}. Review the visible controls, then run the comparison.`, `Entendí: ${recognized.join(" · ")}. Revisá los controles visibles y después ejecutá la comparación.`)
+      : text("I could not identify a supported scope. Use provider, country, method and time-window terms, or configure the controls below.", "No pude identificar un alcance compatible. Usá proveedor, país, método y ventana temporal, o configurá los controles de abajo."));
   };
 
   const run = async () => {
@@ -132,16 +139,17 @@ export function ComparisonWorkspace({ initialScope, onClose }: { initialScope?: 
   };
 
   return (
-    <div className="comparison-overlay" role="dialog" aria-modal="true" aria-label={text("Compare payment windows", "Comparar ventanas de pagos")}>
+    <div className="comparison-overlay" role="dialog" aria-modal="true" aria-label={text("Compare payment windows", "Comparar ventanas de pagos")} ref={dialogRef} onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}>
       <section className="comparison-workspace">
         <header className="comparison-header">
           <div><span><CalendarRange size={14} /> {text("Temporal comparison", "Comparación temporal")}</span><h2>{text("Ask one clear question of the payment stream.", "Hacé una pregunta clara al stream de pagos.")}</h2><p>{text("Every result keeps its scope, windows, sample and data source visible.", "Cada resultado conserva visibles su alcance, ventanas, muestra y fuente de datos.")}</p></div>
-          <div><LanguageToggle /><button type="button" onClick={onClose} aria-label={text("Close comparison", "Cerrar comparación")}><X /></button></div>
+          <div><LanguageToggle /><button type="button" data-autofocus onClick={onClose} aria-label={text("Close comparison", "Cerrar comparación")}><X /></button></div>
         </header>
 
         <div className="comparison-layout">
           <aside className="comparison-builder">
-            <form onSubmit={(event) => { event.preventDefault(); interpret(); }}><Search size={15} /><input value={query} onChange={(event) => setQuery(event.target.value)} aria-label={text("Describe a comparison", "Describir una comparación")} placeholder={text("Compare Adyen in Brazil against its baseline…", "Compará Adyen en Brasil contra su baseline…")} /><button type="submit">{text("Interpret", "Interpretar")}</button></form>
+            <form onSubmit={(event) => { event.preventDefault(); interpret(); }}><Search size={15} /><input value={query} onChange={(event) => { setQuery(event.target.value); setInterpretation(null); }} aria-label={text("Describe a comparison", "Describir una comparación")} placeholder={text("Compare Adyen in Brazil against its baseline…", "Compará Adyen en Brasil contra su baseline…")} /><button type="submit">{text("Interpret", "Interpretar")}</button></form>
+            {interpretation && <p className={`comparison-interpretation ${interpretation.startsWith(text("I could not", "No pude")) ? "is-warning" : ""}`} role="status">{interpretation}</p>}
             <div className="comparison-fields">
               <label><span>{text("Observed window", "Ventana observada")}</span><select value={observedWindow} onChange={(event) => setObservedWindow(Number(event.target.value))}>{WINDOWS.map((item) => <option key={item.value} value={item.value}>{text(item.en, item.es)}</option>)}</select></label>
               <label><span>{text("Compare against", "Comparar contra")}</span><select value={reference} onChange={(event) => setReference(event.target.value === "baseline" ? "baseline" : Number(event.target.value))}><option value="baseline">{text("Contextual 14-day baseline", "Baseline contextual de 14 días")}</option>{WINDOWS.filter((item) => item.value !== observedWindow).map((item) => <option key={item.value} value={item.value}>{text(item.en, item.es)}</option>)}</select></label>

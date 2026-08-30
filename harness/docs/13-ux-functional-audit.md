@@ -164,3 +164,23 @@ La interfaz queda lista para ensayo cuando una persona que no conoce el sistema 
 5. hacer dos consultas y reconocer qué entendió el sistema;
 6. recuperarse de backend offline sin recargar la página;
 7. narrar cada cambio de estado usando solamente evidencia visible.
+
+## Iteración aplicada después de la auditoría
+
+El mismo 30/08 se cerraron los gaps de interfaz que no requieren modificar backend:
+
+- `Aplicar vista` fue eliminado. El panel declara que configura el alcance de una señal de prueba y
+  que Centinel continúa monitoreando todo el tráfico.
+- `Pausar` pasó a `Congelar vista`, con copy explícito de que el backend sigue procesando.
+- Start/Reset validan su respuesta, liberan siempre el estado busy y ofrecen retry ante error.
+- La salud del backend se vuelve a comprobar periódicamente.
+- Copilot declara sus límites, reconoce preguntas soportadas y el input tiene nombre accesible.
+- `Interpretar` parte de un scope vacío y confirma entidades, ventana y referencia reconocidas.
+- Filtros y modales soportan Escape; los modales encierran foco y lo devuelven al trigger.
+- Inputs/selects tienen foco visible; Brand y toggle recuperan blancos interactivos acotados.
+- El gráfico de tasa fue reemplazado por volumen por snapshot entrante: aprobadas, rechazadas y
+  aprobaciones esperadas. `tx_count` acumulado se convierte a delta entre snapshots para no dibujar
+  crecimiento artificial; la mezcla de aprobación sigue la tasa móvil de 60 segundos del SSE.
+
+Quedan para otro corte: validar el flujo completo con dos incidentes reales, revisar el workspace de
+diagnóstico con datos vivos, reducir el detalle de prioridad y limpiar CSS legacy.

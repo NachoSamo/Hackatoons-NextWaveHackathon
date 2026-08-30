@@ -38,10 +38,13 @@ export function useLive(active: boolean) {
   }, [active]);
 
   const reset = useCallback(async () => {
-    await api.resetDemo();
+    const response = await api.resetDemo();
+    const ok = response.ok && response.call.status !== "ERR" && Number(response.call.status) < 400;
+    if (!ok) return false;
     setSnapshot(null);
     setOverview(null);
     setTicker(null);
+    return true;
   }, []);
 
   const injectPreset = useCallback(

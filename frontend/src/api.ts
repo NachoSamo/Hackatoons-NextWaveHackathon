@@ -205,7 +205,12 @@ export const api = {
   resetDemo: async () => {
     const a = await call<Record<string, unknown>>("POST", "/api/demo/reset");
     const b = await call<{ ok: boolean }>("POST", "/api/diagnosis/reset");
-    return { data: { demo: a.data, diagnosis: b.data }, call: a.call };
+    const failed = [a.call, b.call].find((entry) => entry.status === "ERR" || Number(entry.status) >= 400);
+    return {
+      data: { demo: a.data, diagnosis: b.data },
+      call: failed ?? a.call,
+      ok: !failed && a.data !== null && b.data?.ok !== false,
+    };
   },
 
   // SSE del ticker (GET /api/stream). Devuelve una función para desuscribirse.
