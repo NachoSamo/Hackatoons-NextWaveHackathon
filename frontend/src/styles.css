@@ -548,9 +548,11 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .pipeline-table-wrap thead { position: sticky; z-index: 2; top: 0; background: #09090a; }
 .pipeline-log table { width: 100%; border-collapse: collapse; table-layout: fixed; }
 .pipeline-log th { position: sticky; z-index: 1; top: 0; padding: 10px 14px; border-bottom: 1px solid var(--line); color: #717177; background: rgba(9,9,10,.96); text-align: left; font: 8px var(--mono); text-transform: uppercase; backdrop-filter: blur(8px); }
-.pipeline-log th:nth-child(1) { width: 92px; }
-.pipeline-log th:nth-child(2) { width: 72px; }
-.pipeline-log th:nth-child(3) { width: 115px; }
+.pipeline-log th:nth-child(1) { width: 78px; }
+.pipeline-log th:nth-child(2) { width: 92px; }
+.pipeline-log th:nth-child(3), .pipeline-log th:nth-child(4) { width: 82px; }
+.pipeline-log th:nth-child(5), .pipeline-log th:nth-child(6) { width: 80px; }
+.pipeline-log th:nth-child(7) { width: 122px; }
 .pipeline-log td { padding: 11px 14px; border-bottom: 1px solid #19191c; color: #b9b9bd; font: 9px/1.4 var(--mono); vertical-align: top; }
 .pipeline-log td:first-child, .pipeline-log td:nth-child(2) { color: #77777d; }
 .pipeline-log tbody tr { animation: content-in 220ms ease both; }
@@ -560,13 +562,16 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .log-stage--scope { color: var(--warning); border-color: rgba(242,198,109,.3); }
 .log-stage--detector { color: #ffaaa3; border-color: rgba(255,107,96,.32); }
 .log-stage--diagnosis { color: var(--signal-soft); border-color: rgba(133,140,250,.32); }
+.log-stage--healthy { color: var(--healthy); border-color: rgba(90,211,143,.3); }
+.log-stage--sampling { color: #a4a4aa; border-color: rgba(164,164,170,.28); }
+.log-stage--warning { color: var(--warning); border-color: rgba(242,198,109,.32); }
+.log-stage--incident { color: var(--incident); border-color: rgba(255,107,96,.34); }
 
 .incident-grid { display: grid; }
 
 @media (max-width: 900px) {
   .tower .live-signal-chart { height: 220px; min-height: 220px; }
-  .pipeline-log th:nth-child(2), .pipeline-log td:nth-child(2) { display: none; }
-  .pipeline-log th:nth-child(3) { width: 100px; }
+  .pipeline-log table { min-width: 680px; }
   .detection-panel { position: fixed; top: 74px; right: 16px; left: 16px; width: auto; max-height: calc(100vh - 90px); overflow: auto; }
 }
 
@@ -576,8 +581,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
   .detection-trigger { flex: 1; }
   .detection-trigger__copy { min-width: 0; }
   .tower-chart-heading > div { align-items: flex-start; flex-direction: column; gap: 7px; }
-  .pipeline-log th:nth-child(1), .pipeline-log td:nth-child(1) { display: none; }
-  .pipeline-log th:nth-child(3) { width: 92px; }
+  .pipeline-log table { min-width: 640px; }
   .detection-panel .judge-fields { grid-template-columns: 1fr; }
   .detection-panel .judge-fields label, .detection-panel .judge-fields label:nth-last-of-type(1) { grid-column: auto; }
 }

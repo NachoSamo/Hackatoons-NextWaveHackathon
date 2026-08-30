@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { ArrowLeftRight, Check, ChevronDown, Filter, Pause, Play, RotateCcw, ShieldCheck, SlidersHorizontal, Wifi, WifiOff } from "lucide-react";
-import { api, type Diagnosis, type DiagnosisSnapshot, type InjectOptions, type ScoredIncident } from "../api";
+import { api, type Diagnosis, type InjectOptions, type ScoredIncident } from "../api";
 import { Brand } from "../components/Brand";
 import { ComparisonWorkspace } from "../components/ComparisonWorkspace";
 import { DiagnosisWorkspace } from "../components/DiagnosisWorkspace";
@@ -21,7 +21,6 @@ type DetectionScope = {
   magnitude: string;
   decline_code: string;
 };
-type PipelineLog = { id: string; at: string; window: number; stage: string; message: string };
 
 const DEFAULT_SCOPE: DetectionScope = {
   merchant_id: "",
@@ -45,50 +44,6 @@ const FALLBACK_OPTIONS: InjectOptions = {
   simulation_only: true,
 };
 
-function stageFromLine(line: string) {
-  if (line.includes("VENTANA")) return "WINDOW";
-  return line.match(/\[([A-ZÁÉÍÓÚ]+)\]/)?.[1] ?? "SYSTEM";
-}
-
-function logsFromSnapshot(snapshot: DiagnosisSnapshot): PipelineLog[] {
-  let resetIndex = -1;
-  snapshot.log_tail.forEach((line, index) => {
-    if (line.includes("[LOOP]") && line.includes("reset")) resetIndex = index;
-  });
-  const lines = snapshot.log_tail.slice(Math.max(resetIndex, 0));
-  let currentWindow = 0;
-  const parsed = lines.map((line, index) => {
-    const match = line.match(/^(\d{2}:\d{2}:\d{2})\s+(.*)$/);
-    const windowMatch = line.match(/VENTANA (\d+)/);
-    if (windowMatch) currentWindow = Number(windowMatch[1]);
-    return {
-      id: `${currentWindow}-${index}-${line}`,
-      at: match?.[1] ?? snapshot.ts?.slice(11, 19) ?? "—",
-      window: currentWindow,
-      stage: stageFromLine(line),
-      message: match?.[2] ?? line,
-    };
-  }).filter((log) => log.message.trim());
-
-  const hasIncidentActivity = Boolean(
-    snapshot.active_injections.length
-    || snapshot.engine_incidents.length
-    || snapshot.diagnoses.length
-  );
-  if (!hasIncidentActivity) return [];
-
-  return parsed.filter((log) => {
-    if (log.message.includes("[INYECTOR]")) return true;
-    if (log.message.includes("[MOTOR]")) {
-      return log.message.includes(" · INC-")
-        || log.message.includes("localizador:")
-        || log.message.includes("clasificador:")
-        || log.message.includes("estado:");
-    }
-    return false;
-  }).reverse().slice(0, 8);
-}
-
 function options(values: string[], allLabel: string, language: "en" | "es") {
   return [["", allLabel], ...values.map((value) => [value, localizeToken(value, language)])];
 }
@@ -105,7 +60,6 @@ export function CommandCenter({ preview = false }: { preview?: boolean }) {
   const [scope, setScope] = useState<DetectionScope>(DEFAULT_SCOPE);
   const [injectOptions, setInjectOptions] = useState<InjectOptions>(FALLBACK_OPTIONS);
   const [signalPoints, setSignalPoints] = useState<SignalPoint[]>([]);
-  const [pipelineLogs, setPipelineLogs] = useState<PipelineLog[]>([]);
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
@@ -150,7 +104,6 @@ export function CommandCenter({ preview = false }: { preview?: boolean }) {
   useEffect(() => {
     const snapshot = live.snapshot;
     if (!snapshot) return;
-    setPipelineLogs(logsFromSnapshot(snapshot));
     if (snapshot.error) setTowerState("ERROR");
     else if (snapshot.diagnoses.length) setTowerState("DIAGNOSED");
     else if (snapshot.engine_incidents.length || snapshot.active_injections.length) setTowerState("VALIDATING");
@@ -166,7 +119,7 @@ export function CommandCenter({ preview = false }: { preview?: boolean }) {
         setConnected(false); setTowerState("ERROR");
         return;
       }
-      setSignalPoints([]); setPipelineLogs([]); setSelected(null);
+      setSignalPoints([]); setSelected(null);
       setConnected(true); setTowerState("HEALTHY"); setStreamActive(true);
     } finally {
       setBusy(false);
@@ -182,7 +135,7 @@ export function CommandCenter({ preview = false }: { preview?: boolean }) {
         setConnected(false); setTowerState("ERROR");
         return;
       }
-      setSignalPoints([]); setPipelineLogs([]); setSelected(null);
+      setSignalPoints([]); setSelected(null);
       setConnected(true); setTowerState("READY"); setFiltersOpen(false);
     } finally {
       setBusy(false);
@@ -282,7 +235,7 @@ export function CommandCenter({ preview = false }: { preview?: boolean }) {
       </section>
 
       <main className="tower-main">
-        <LiveWorkspace points={signalPoints} logs={pipelineLogs} />
+        <LiveWorkspace points={signalPoints} />
         <IncidentWorkspace state={towerState} prioritized={prioritized} onSelect={setSelected} />
       </main>
 
@@ -296,14 +249,25 @@ function ScopeField({ label, value, onChange, options: fieldOptions }: { label: 
   return <label><span>{label}</span><select value={value} onChange={(event) => onChange(event.target.value)}>{fieldOptions.map(([optionValue, optionLabel]) => <option key={`${label}-${optionValue}`} value={optionValue}>{optionLabel}</option>)}</select></label>;
 }
 
-function LiveWorkspace({ points, logs }: { points: SignalPoint[]; logs: PipelineLog[] }) {
-  const { language, text } = useLanguage();
+function LiveWorkspace({ points }: { points: SignalPoint[] }) {
+  const { text } = useLanguage();
+  const rows = [...points].reverse();
   return <section className="signal-surface live-workspace">
     <section className="pipeline-log">
-      <header><div><strong>{text("Incident evidence", "Evidencia del incidente")}</strong><span>{text("Affected scope, volume, localization and classification · newest first", "Alcance afectado, volumen, localización y clasificación · más recientes primero")}</span></div><b>{logs.length} {text("relevant events", "eventos relevantes")}</b></header>
-      <div className="pipeline-table-wrap"><table><thead><tr><th>{text("Time", "Hora")}</th><th>{text("Window", "Ventana")}</th><th>{text("Stage", "Etapa")}</th><th>{text("Evidence / parameters", "Evidencia / parámetros")}</th></tr></thead><tbody>
-        {!logs.length && <tr className="pipeline-empty"><td colSpan={4}>{text("No incident-producing activity. Healthy traffic stays out of this trace.", "No hay actividad que produzca incidentes. El tráfico saludable queda fuera de esta traza.")}</td></tr>}
-        {logs.map((log) => <tr key={log.id}><td>{log.at}</td><td>#{log.window}</td><td><span className={`log-stage log-stage--${log.stage.toLowerCase()}`}>{localizeToken(log.stage.toLowerCase(), language).toUpperCase()}</span></td><td>{log.message}</td></tr>)}
+      <header><div><strong>{text("Incoming transaction log", "Log de transacciones entrantes")}</strong><span>{text("Every snapshot evaluated by detection · newest first", "Todos los snapshots evaluados por detección · más recientes primero")}</span></div><b>{rows.length}/30 {text("snapshots", "snapshots")}</b></header>
+      <div className="pipeline-table-wrap"><table><thead><tr><th>{text("Time", "Hora")}</th><th>{text("Transactions", "Transacciones")}</th><th>{text("Approved", "Aprobadas")}</th><th>{text("Declined", "Rechazadas")}</th><th>{text("Approval", "Approval")}</th><th>{text("Expected", "Esperado")}</th><th>{text("Signal", "Señal")}</th></tr></thead><tbody>
+        {!rows.length && <tr className="pipeline-empty"><td colSpan={7}>{text("Start the stream to see every incoming snapshot evaluated by Centinel.", "Iniciá el stream para ver cada snapshot entrante evaluado por Centinel.")}</td></tr>}
+        {rows.map((point) => {
+          const gap = point.observedRate - point.expectedRate;
+          const signal = point.attempts < 30
+            ? { key: "sampling", label: text("Building sample", "Armando muestra") }
+            : gap <= -5
+              ? { key: "incident", label: text("Strong deviation", "Desvío fuerte") }
+              : gap <= -1
+                ? { key: "warning", label: text("Watch", "Observar") }
+                : { key: "healthy", label: text("Expected", "Esperado") };
+          return <tr key={`${point.at}-${point.cumulativeAttempts}`}><td>{point.at}</td><td>{point.attempts}</td><td>{point.approved}</td><td>{point.declined}</td><td>{point.observedRate.toFixed(1)}%</td><td>{point.expectedRate.toFixed(1)}%</td><td><span className={`log-stage log-stage--${signal.key}`}>{signal.label}</span></td></tr>;
+        })}
       </tbody></table></div>
     </section>
     <div className="tower-chart-heading"><div><strong>{text("Transaction volume by incoming snapshot", "Volumen de transacciones por snapshot entrante")}</strong><span><i className="legend-approved" />{text("Approved", "Aprobadas")} <i className="legend-declined" />{text("Declined", "Rechazadas")} <i className="legend-reference" />{text("Expected approvals", "Aprobaciones esperadas")}</span></div><small>{points.length}/30 {text("snapshots · rolling 60-second mix", "snapshots · mezcla móvil de 60 segundos")}</small></div>
