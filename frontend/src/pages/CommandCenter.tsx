@@ -28,6 +28,13 @@ type DetectionScope = {
 // "" = indefinida: el injector sólo expira si recibe duration_s.
 const NON_FILTER_FIELDS = ["magnitude", "decline_code", "duration_s"];
 
+const VIEW_FILTER_LABELS: Record<string, [string, string]> = {
+  merchant_id: ["Merchant", "Comercio"],
+  provider_id: ["Provider", "Proveedor"],
+  payment_method: ["Method", "Método"],
+  country: ["Country", "País"],
+};
+
 const DEFAULT_SCOPE: DetectionScope = {
   merchant_id: "",
   provider_id: "",
@@ -198,9 +205,27 @@ export function CommandCenter({ preview = false }: { preview?: boolean }) {
     : incidentQueue;
   const currentIncidentIds = useMemo(() => new Set((live.snapshot?.prioritized ?? []).map((item) => item.diagnosis.incident_id)), [live.snapshot?.prioritized]);
   const latestPoint = signalPoints.at(-1);
-  const observedRate = latestPoint?.observedRate ?? (live.overview?.observed_rate ?? 0.854) * 100;
-  const expectedRate = latestPoint?.expectedRate ?? (live.overview?.expected_rate ?? 0.861) * 100;
-  const delta = observedRate - expectedRate;
+  const overviewFilters = live.overview?.view_filters ?? {};
+  const filteredOverviewReady = activeViewFilters.length > 0
+    && activeViewFilters.every(([key, value]) => overviewFilters[key] === value)
+    && Object.keys(overviewFilters).length === activeViewFilters.length;
+  const filteredMetricPending = activeViewFilters.length > 0 && !filteredOverviewReady;
+  const observedRate = activeViewFilters.length
+    ? filteredOverviewReady && live.overview ? live.overview.observed_rate * 100 : null
+    : latestPoint?.observedRate ?? (live.overview?.observed_rate ?? 0.854) * 100;
+  const expectedRate = activeViewFilters.length
+    ? filteredOverviewReady && live.overview ? live.overview.expected_rate * 100 : null
+    : latestPoint?.expectedRate ?? (live.overview?.expected_rate ?? 0.861) * 100;
+  const delta = observedRate !== null && expectedRate !== null ? observedRate - expectedRate : null;
+  const metricScopeLabel = activeViewFilters.length
+    ? activeViewFilters.map(([key, value]) => {
+        const labels = VIEW_FILTER_LABELS[key] ?? [localizeToken(key, "en"), localizeToken(key, "es")];
+        return `${labels[language === "es" ? 1 : 0]}: ${localizeToken(value, language)}`;
+      }).join(" · ")
+    : text("All payment traffic", "Todo el tráfico de pagos");
+  const metricSample = filteredMetricPending
+    ? text("Updating filtered sample…", "Actualizando muestra filtrada…")
+    : `${metricScopeLabel} · ${text("last 60 seconds", "últimos 60 segundos")} · ${(live.overview?.attempts ?? 0).toLocaleString()} ${text("attempts", "intentos")}`;
   const revenueRisk = prioritized.reduce((sum, item) => sum + (item.diagnosis.cost?.usd_per_hour ?? 0), 0);
   const scopeParts = Object.entries(scope).filter(([key, value]) => !NON_FILTER_FIELDS.includes(key) && value).map(([, value]) => localizeToken(value, language));
   const scopeLabel = `${scopeParts.join(" × ") || text("Choose a dimensional scope", "Elegí un alcance dimensional")} · ${text("code", "código")} ${scope.decline_code}`;
@@ -295,8 +320,8 @@ export function CommandCenter({ preview = false }: { preview?: boolean }) {
       </div>
 
       <section className="tower-metrics">
-        <div><span>{text("Approval observed", "Aprobación observada")}</span><strong>{observedRate.toFixed(1)}%</strong></div>
-        <div><span>{text("Delta vs expected", "Delta vs esperado")}</span><strong className={delta < -1 ? "is-negative" : ""}>{delta >= 0 ? "+" : ""}{delta.toFixed(1)} pp</strong></div>
+        <div><span>{text("Approval observed", "Aprobación observada")}</span><strong>{observedRate === null ? "—" : `${observedRate.toFixed(1)}%`}</strong><small>{metricSample}</small></div>
+        <div><span>{text("Delta vs expected", "Delta vs esperado")}</span><strong className={delta !== null && delta < -1 ? "is-negative" : ""}>{delta === null ? "—" : `${delta >= 0 ? "+" : ""}${delta.toFixed(1)} pp`}</strong><small>{metricScopeLabel} · {text("matching contextual baseline", "baseline contextual correspondiente")}</small></div>
         <div><span>{text("Estimated revenue at risk", "Ingreso estimado en riesgo")}</span><strong>{revenueRisk ? `$${Math.round(revenueRisk).toLocaleString()}/h` : "$0/h"}</strong><small>{text("Estimate · assumptions in diagnosis", "Estimación · supuestos en diagnóstico")}</small></div>
       </section>
 
