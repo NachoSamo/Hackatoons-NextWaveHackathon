@@ -1,7 +1,8 @@
 <title>Centinel Architecture</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<link rel="stylesheet"
+  href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
 
 <style>
   :root {
@@ -69,7 +70,9 @@
     --shadow: 0 1px 2px rgba(0, 0, 0, .3), 0 10px 30px -14px rgba(0, 0, 0, .55);
   }
 
-  * { box-sizing: border-box; }
+  * {
+    box-sizing: border-box;
+  }
 
   body {
     margin: 0;
@@ -87,9 +90,13 @@
     padding: clamp(1.5rem, 4vw, 3.5rem) clamp(1.1rem, 4vw, 2.5rem) 4rem;
   }
 
-  .prose { max-width: 68ch; }
+  .prose {
+    max-width: 68ch;
+  }
 
-  h1, h2, h3 {
+  h1,
+  h2,
+  h3 {
     font-family: "Archivo", "IBM Plex Sans", sans-serif;
     font-weight: 700;
     line-height: 1.18;
@@ -114,8 +121,14 @@
     font-weight: 600;
   }
 
-  p { margin: 0 0 1rem; }
-  a { color: var(--accent-ink); text-underline-offset: 2px; }
+  p {
+    margin: 0 0 1rem;
+  }
+
+  a {
+    color: var(--accent-ink);
+    text-underline-offset: 2px;
+  }
 
   .label {
     font-family: "IBM Plex Mono", ui-monospace, monospace;
@@ -126,7 +139,9 @@
     color: var(--muted);
   }
 
-  .mono { font-family: "IBM Plex Mono", ui-monospace, monospace; }
+  .mono {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+  }
 
   /* ---- header ---- */
   header.top {
@@ -164,12 +179,28 @@
     gap: .5rem 1.4rem;
     margin-top: 1.3rem;
   }
-  .meta div { display: flex; flex-direction: column; gap: .1rem; }
-  .meta .v { font-family: "IBM Plex Mono", monospace; font-size: .9rem; color: var(--ink); }
+
+  .meta div {
+    display: flex;
+    flex-direction: column;
+    gap: .1rem;
+  }
+
+  .meta .v {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: .9rem;
+    color: var(--ink);
+  }
 
   /* ---- section rhythm ---- */
-  section { margin-top: 3rem; }
-  section > .label { display: block; margin-bottom: .4rem; }
+  section {
+    margin-top: 3rem;
+  }
+
+  section>.label {
+    display: block;
+    margin-bottom: .4rem;
+  }
 
   /* ---- pipeline diagram ---- */
   .diagram {
@@ -181,8 +212,18 @@
     overflow-x: auto;
     overflow-y: hidden;
   }
-  .diagram__inner { min-width: 780px; padding: 1.5rem 1.4rem 1.2rem; }
-  .diagram svg { display: block; width: 100%; height: auto; }
+
+  .diagram__inner {
+    min-width: 780px;
+    padding: 1.5rem 1.4rem 1.2rem;
+  }
+
+  .diagram svg {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+
   .diagram figcaption {
     border-top: 1px solid var(--line);
     padding: .75rem 1.4rem;
@@ -191,20 +232,77 @@
     min-width: 780px;
   }
 
-  .node-rect { fill: var(--surface-2); stroke: var(--line-strong); }
-  .node-rect--engine { fill: var(--accent-bg); stroke: color-mix(in srgb, var(--accent) 45%, transparent); }
-  .node-name { fill: var(--ink); font-family: "Archivo", sans-serif; font-weight: 600; font-size: 15px; }
-  .node-sub { fill: var(--muted); font-family: "IBM Plex Mono", monospace; font-size: 10.5px; letter-spacing: .02em; }
-  .node-num { fill: var(--accent-ink); font-family: "IBM Plex Mono", monospace; font-weight: 600; font-size: 12px; }
-  .flow { stroke: var(--line-strong); stroke-width: 1.6; fill: none; }
-  .flow--dash { stroke-dasharray: 5 4; }
-  .flow-label { fill: var(--muted); font-family: "IBM Plex Mono", monospace; font-size: 10px; letter-spacing: .04em; text-transform: uppercase; }
-  .tag-rect { fill: var(--surface); stroke: var(--line-strong); }
-  .tag-text { fill: var(--ink-soft); font-family: "IBM Plex Mono", monospace; font-size: 10.5px; }
-  .arrow-head { fill: var(--line-strong); }
+  .node-rect {
+    fill: var(--surface-2);
+    stroke: var(--line-strong);
+  }
+
+  .node-rect--engine {
+    fill: var(--accent-bg);
+    stroke: color-mix(in srgb, var(--accent) 45%, transparent);
+  }
+
+  .node-name {
+    fill: var(--ink);
+    font-family: "Archivo", sans-serif;
+    font-weight: 600;
+    font-size: 15px;
+  }
+
+  .node-sub {
+    fill: var(--muted);
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 10.5px;
+    letter-spacing: .02em;
+  }
+
+  .node-num {
+    fill: var(--accent-ink);
+    font-family: "IBM Plex Mono", monospace;
+    font-weight: 600;
+    font-size: 12px;
+  }
+
+  .flow {
+    stroke: var(--line-strong);
+    stroke-width: 1.6;
+    fill: none;
+  }
+
+  .flow--dash {
+    stroke-dasharray: 5 4;
+  }
+
+  .flow-label {
+    fill: var(--muted);
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 10px;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+  }
+
+  .tag-rect {
+    fill: var(--surface);
+    stroke: var(--line-strong);
+  }
+
+  .tag-text {
+    fill: var(--ink-soft);
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 10.5px;
+  }
+
+  .arrow-head {
+    fill: var(--line-strong);
+  }
 
   /* ---- layer cards ---- */
-  .layers { display: flex; flex-direction: column; gap: 1rem; margin-top: 1.2rem; }
+  .layers {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    margin-top: 1.2rem;
+  }
 
   .layer {
     background: var(--surface);
@@ -231,12 +329,21 @@
     color: var(--accent-ink);
     background: var(--accent-bg);
     border: 1px solid color-mix(in srgb, var(--accent) 30%, transparent);
-    width: 2.1rem; height: 2.1rem;
-    display: grid; place-items: center;
+    width: 2.1rem;
+    height: 2.1rem;
+    display: grid;
+    place-items: center;
     border-radius: 6px;
   }
-  .layer__head h3 { margin-bottom: .1rem; }
-  .layer__head .mono { font-size: .78rem; color: var(--muted); }
+
+  .layer__head h3 {
+    margin-bottom: .1rem;
+  }
+
+  .layer__head .mono {
+    font-size: .78rem;
+    color: var(--muted);
+  }
 
   .layer__body {
     margin: 0;
@@ -244,14 +351,19 @@
     display: grid;
     gap: 0;
   }
-  .layer__body > div {
+
+  .layer__body>div {
     display: grid;
     grid-template-columns: 92px 1fr;
     gap: .3rem 1rem;
     padding: .7rem 0;
     border-bottom: 1px dashed var(--line);
   }
-  .layer__body > div:last-child { border-bottom: 0; }
+
+  .layer__body>div:last-child {
+    border-bottom: 0;
+  }
+
   .layer__body dt {
     font-family: "IBM Plex Mono", monospace;
     font-size: .7rem;
@@ -260,9 +372,19 @@
     color: var(--muted);
     padding-top: .15rem;
   }
-  .layer__body dd { margin: 0; }
-  .layer__body dd.no { color: var(--ink-soft); }
-  .layer__body dd .k { font-weight: 600; color: var(--ink); }
+
+  .layer__body dd {
+    margin: 0;
+  }
+
+  .layer__body dd.no {
+    color: var(--ink-soft);
+  }
+
+  .layer__body dd .k {
+    font-weight: 600;
+    color: var(--ink);
+  }
 
   /* ---- chips ---- */
   .chip {
@@ -275,13 +397,35 @@
     border-radius: 4px;
     white-space: nowrap;
   }
-  .chip--crit { color: var(--crit); background: var(--crit-bg); }
-  .chip--warn { color: var(--warn); background: var(--warn-bg); }
-  .chip--ok { color: var(--ok); background: var(--ok-bg); }
+
+  .chip--crit {
+    color: var(--crit);
+    background: var(--crit-bg);
+  }
+
+  .chip--warn {
+    color: var(--warn);
+    background: var(--warn-bg);
+  }
+
+  .chip--ok {
+    color: var(--ok);
+    background: var(--ok-bg);
+  }
 
   /* ---- generic callout / note blocks ---- */
-  .grid2 { display: grid; grid-template-columns: 1fr; gap: 1rem; margin-top: 1.2rem; }
-  @media (min-width: 720px) { .grid2 { grid-template-columns: 1fr 1fr; } }
+  .grid2 {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1rem;
+    margin-top: 1.2rem;
+  }
+
+  @media (min-width: 720px) {
+    .grid2 {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
 
   .card {
     background: var(--surface);
@@ -290,10 +434,23 @@
     padding: 1.1rem 1.2rem;
     box-shadow: var(--shadow);
   }
-  .card h3 { margin-bottom: .5rem; }
-  .card p:last-child { margin-bottom: 0; }
-  .card ul { margin: .3rem 0 0; padding-left: 1.1rem; }
-  .card li { margin: .35rem 0; }
+
+  .card h3 {
+    margin-bottom: .5rem;
+  }
+
+  .card p:last-child {
+    margin-bottom: 0;
+  }
+
+  .card ul {
+    margin: .3rem 0 0;
+    padding-left: 1.1rem;
+  }
+
+  .card li {
+    margin: .35rem 0;
+  }
 
   .note {
     border-left: 3px solid var(--accent);
@@ -302,13 +459,36 @@
     padding: 1rem 1.2rem;
     margin-top: 1.2rem;
   }
-  .note p:last-child { margin-bottom: 0; }
-  .note--warn { border-left-color: var(--warn); background: var(--warn-bg); }
 
-  .open dl { margin: 0; display: flex; flex-direction: column; gap: .8rem; }
-  .open dt { font-weight: 600; font-family: "Archivo", sans-serif; }
-  .open dd { margin: .15rem 0 0; color: var(--ink-soft); }
-  .open dd .rec { color: var(--ink); }
+  .note p:last-child {
+    margin-bottom: 0;
+  }
+
+  .note--warn {
+    border-left-color: var(--warn);
+    background: var(--warn-bg);
+  }
+
+  .open dl {
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: .8rem;
+  }
+
+  .open dt {
+    font-weight: 600;
+    font-family: "Archivo", sans-serif;
+  }
+
+  .open dd {
+    margin: .15rem 0 0;
+    color: var(--ink-soft);
+  }
+
+  .open dd .rec {
+    color: var(--ink);
+  }
 
   code {
     font-family: "IBM Plex Mono", monospace;
@@ -325,15 +505,41 @@
     font-size: .9rem;
     color: var(--muted);
   }
-  footer a { color: var(--accent-ink); }
+
+  footer a {
+    color: var(--accent-ink);
+  }
 
   @media (prefers-reduced-motion: no-preference) {
-    .layer, .card, .diagram { animation: rise .5s cubic-bezier(.2, .7, .3, 1) backwards; }
-    .layers .layer:nth-child(2) { animation-delay: .04s; }
-    .layers .layer:nth-child(3) { animation-delay: .08s; }
-    .layers .layer:nth-child(4) { animation-delay: .12s; }
-    .layers .layer:nth-child(5) { animation-delay: .16s; }
-    @keyframes rise { from { opacity: 0; transform: translateY(8px); } }
+
+    .layer,
+    .card,
+    .diagram {
+      animation: rise .5s cubic-bezier(.2, .7, .3, 1) backwards;
+    }
+
+    .layers .layer:nth-child(2) {
+      animation-delay: .04s;
+    }
+
+    .layers .layer:nth-child(3) {
+      animation-delay: .08s;
+    }
+
+    .layers .layer:nth-child(4) {
+      animation-delay: .12s;
+    }
+
+    .layers .layer:nth-child(5) {
+      animation-delay: .16s;
+    }
+
+    @keyframes rise {
+      from {
+        opacity: 0;
+        transform: translateY(8px);
+      }
+    }
   }
 
   /* ---- Export to PDF ---- */
@@ -356,42 +562,100 @@
     letter-spacing: .04em;
     cursor: pointer;
   }
-  .pdf-export:hover { border-color: var(--accent); color: var(--accent-ink); }
+
+  .pdf-export:hover {
+    border-color: var(--accent);
+    color: var(--accent-ink);
+  }
 
   @media print {
+
     /* Impresión en claro: el tema oscuro gasta tinta y se lee peor en papel. */
-    :root, :root[data-theme="dark"], :root:not([data-theme="light"]) {
-      --paper: #fff; --surface: #fff; --surface-2: #f4f6f7;
-      --ink: #000; --ink-soft: #26313a; --muted: #4a555e;
-      --line: #c9d2d6; --line-strong: #9fabb2;
-      --accent: #0f4d55; --accent-ink: #0f4d55; --accent-bg: #eaf2f3;
+    :root,
+    :root[data-theme="dark"],
+    :root:not([data-theme="light"]) {
+      --paper: #fff;
+      --surface: #fff;
+      --surface-2: #f4f6f7;
+      --ink: #000;
+      --ink-soft: #26313a;
+      --muted: #4a555e;
+      --line: #c9d2d6;
+      --line-strong: #9fabb2;
+      --accent: #0f4d55;
+      --accent-ink: #0f4d55;
+      --accent-bg: #eaf2f3;
       --shadow: none;
     }
-    .pdf-export { display: none; }
-    body { background: #fff; }
-    .wrap { max-width: none; padding: 0 0 1rem; }
+
+    .pdf-export {
+      display: none;
+    }
+
+    body {
+      background: #fff;
+    }
+
+    .wrap {
+      max-width: none;
+      padding: 0 0 1rem;
+    }
+
     /* Nada de bloques partidos entre páginas. */
-    .layer, .card, .note, .diagram, section > dl > div { break-inside: avoid; page-break-inside: avoid; }
-    section { break-inside: auto; margin-top: 1.6rem; }
-    h1, h2, h3 { break-after: avoid; page-break-after: avoid; }
-    .diagram { overflow: visible; }
-    .diagram__inner, .diagram figcaption { min-width: 0; }
-    a { text-decoration: none; }
-    @page { margin: 14mm; }
+    .layer,
+    .card,
+    .note,
+    .diagram,
+    section>dl>div {
+      break-inside: avoid;
+      page-break-inside: avoid;
+    }
+
+    section {
+      break-inside: auto;
+      margin-top: 1.6rem;
+    }
+
+    h1,
+    h2,
+    h3 {
+      break-after: avoid;
+      page-break-after: avoid;
+    }
+
+    .diagram {
+      overflow: visible;
+    }
+
+    .diagram__inner,
+    .diagram figcaption {
+      min-width: 0;
+    }
+
+    a {
+      text-decoration: none;
+    }
+
+    @page {
+      margin: 14mm;
+    }
   }
 </style>
 
-<button class="pdf-export" type="button" onclick="window.print()" aria-label="Export this page to PDF">[ EXPORT PDF ]</button>
+<button class="pdf-export" type="button" onclick="window.print()" aria-label="Export this page to PDF">[ EXPORT PDF
+  ]</button>
 
 <div class="wrap">
 
   <header class="top">
     <span class="kicker">&#9679; NextWave 2026 &middot; Challenge 2 &middot; Yuno</span>
     <h1>Centinel &middot; Control Tower</h1>
-    <p class="sub">Detects when payment conversion drops, isolates the root cause with evidence and explains it in human language &mdash; in near real time, before the merchant finds out on Twitter.</p>
+    <p class="sub">Detects when payment conversion drops, isolates the root cause with evidence and explains it in human
+      language &mdash; in near real time, before the merchant finds out on Twitter.</p>
     <div class="meta">
       <div><span class="label">Architecture</span><span class="v">five layers, one direction of flow</span></div>
-      <div><span class="label">Governing rule</span><span class="v">deterministic code decides &middot; AI only communicates</span></div>
+      <div><span class="label">Governing rule</span><span class="v">deterministic code decides &middot; AI only
+          communicates</span></div>
       <div><span class="label">Data</span><span class="v">synthetic, seeded, reproducible</span></div>
     </div>
   </header>
@@ -399,16 +663,24 @@
   <section>
     <span class="label">The pipeline</span>
     <h2>Five layers, one direction of flow</h2>
-    <p class="prose">Data enters on the left and leaves on the right as an actionable diagnosis. The rule that orders everything: <strong>deterministic code computes and decides; the AI only communicates</strong>. Detection, localization, classification and action selection are auditable, reproducible code. The language model phrases the result for two audiences and answers questions about it &mdash; it never produces a number and never changes a verdict.</p>
+    <p class="prose">Data enters on the left and leaves on the right as an actionable diagnosis. The rule that orders
+      everything: <strong>deterministic code computes and decides; the AI only communicates</strong>. Detection,
+      localization, classification and action selection are auditable, reproducible code. The language model phrases the
+      result for two audiences and answers questions about it &mdash; it never produces a number and never changes a
+      verdict.</p>
 
     <figure class="diagram">
       <div class="diagram__inner">
         <svg viewBox="0 0 1180 300" role="img" aria-labelledby="diagTitle diagDesc">
           <title id="diagTitle">Control Tower pipeline diagram</title>
-          <desc id="diagDesc">Five-layer flow: traffic generator, deterministic engine (detector, localizer and classifier), explanation layer, playbook and templates, and delivery. The engine hands a structured output to the explanation layer; the language model only writes prose. The playbook feeds back into the generator through a simulated apply button.</desc>
+          <desc id="diagDesc">Five-layer flow: traffic generator, deterministic engine (detector, localizer and
+            classifier), explanation layer, playbook and templates, and delivery. The engine hands a structured output
+            to the explanation layer; the language model only writes prose. The playbook feeds back into the generator
+            through a simulated apply button.</desc>
 
           <defs>
-            <marker id="ah" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <marker id="ah" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7"
+              orient="auto-start-reverse">
               <path d="M0 0 L10 5 L0 10 z" class="arrow-head"></path>
             </marker>
           </defs>
@@ -458,10 +730,13 @@
           <text class="tag-text" x="372" y="255" text-anchor="middle">structured output &rarr; AI layer</text>
 
           <path class="flow flow--dash" d="M868 196 C868 280, 120 286, 120 200" marker-end="url(#ah)"></path>
-          <text class="flow-label" x="470" y="292" text-anchor="middle">recommended action &middot; &ldquo;apply (simulated)&rdquo;</text>
+          <text class="flow-label" x="470" y="292" text-anchor="middle">recommended action &middot; &ldquo;apply
+            (simulated)&rdquo;</text>
         </svg>
       </div>
-      <figcaption>Solid lines carry data. Dashed lines carry the structured handoff and the simulated remediation loop. Centinel <em>diagnoses, it does not execute</em>: the loop back to the generator exists so the effect of an action can be shown, never to change live routing.</figcaption>
+      <figcaption>Solid lines carry data. Dashed lines carry the structured handoff and the simulated remediation loop.
+        Centinel <em>diagnoses, it does not execute</em>: the loop back to the generator exists so the effect of an
+        action can be shown, never to change live routing.</figcaption>
     </figure>
   </section>
 
@@ -474,78 +749,230 @@
       <article class="layer">
         <div class="layer__head">
           <span class="layer__num">0</span>
-          <div><h3>Traffic generator</h3><span class="mono">synthetic stream &middot; replay + injection</span></div>
+          <div>
+            <h3>Traffic generator</h3><span class="mono">synthetic stream &middot; replay + injection</span>
+          </div>
           <span class="chip chip--ok">Implemented</span>
         </div>
         <dl class="layer__body">
-          <div><dt>Does</dt><dd>Produces credible synthetic transactions (merchant, provider, method, country, approved y/n, decline code, amount). A deterministic history with a diurnal and weekday profile is pre-generated and replayed at 65 tx/s. A separate injector overlays incidents by degrading approval probability for a chosen dimensional slice.</dd></div>
-          <div><dt>Does not</dt><dd class="no">It does not generate live, so the detector can be calibrated against <span class="k">the same data that is displayed</span>. The injector never inserts fabricated declines: it shifts probabilities and lets the world respond.</dd></div>
-          <div><dt>Stack</dt><dd><span class="mono">Python &middot; pandas</span> &middot; seeded replay &middot; parametric injector with scope, magnitude and duration.</dd></div>
-          <div><dt>Storage</dt><dd><span class="k">Ring buffer</span> (in memory, 30 min) is the hot path: 60-second cube, evidence, money. <span class="k">Parquet</span> holds the static artifacts: <span class="mono">baseline_profile</span> (14-day contextual forecast) and the healthy fixture the replayer loops. <span class="k">PostgreSQL</span> is <em>optional</em>, a cold transaction archive for auditability &mdash; nothing on the hot path depends on it.</dd></div>
-          <div><dt>Verification</dt><dd>The world is reproducible from its seed: regenerating the baseline and the fixture yields byte-identical artifacts, so any detection result can be replayed exactly.</dd></div>
+          <div>
+            <dt>Does</dt>
+            <dd>Produces credible synthetic transactions (merchant, provider, method, country, approved y/n, decline
+              code, amount). A deterministic history with a diurnal and weekday profile is pre-generated and replayed at
+              65 tx/s. A separate injector overlays incidents by degrading approval probability for a chosen dimensional
+              slice.</dd>
+          </div>
+          <div>
+            <dt>Does not</dt>
+            <dd class="no">It does not generate live, so the detector can be calibrated against <span class="k">the same
+                data that is displayed</span>. The injector never inserts fabricated declines: it shifts probabilities
+              and lets the world respond.</dd>
+          </div>
+          <div>
+            <dt>Stack</dt>
+            <dd><span class="mono">Python &middot; pandas</span> &middot; seeded replay &middot; parametric injector
+              with scope, magnitude and duration.</dd>
+          </div>
+          <div>
+            <dt>Storage</dt>
+            <dd><span class="k">Ring buffer</span> (in memory, 30 min) is the hot path: 60-second cube, evidence, money.
+              <span class="k">Parquet</span> holds the static artifacts: <span class="mono">baseline_profile</span>
+              (14-day contextual forecast) and the healthy fixture the replayer loops. <span class="k">PostgreSQL</span>
+              is <em>optional</em>, a cold transaction archive for auditability &mdash; nothing on the hot path depends
+              on it.</dd>
+          </div>
+          <div>
+            <dt>Verification</dt>
+            <dd>The world is reproducible from its seed: regenerating the baseline and the fixture yields byte-identical
+              artifacts, so any detection result can be replayed exactly.</dd>
+          </div>
         </dl>
       </article>
 
       <article class="layer">
         <div class="layer__head">
           <span class="layer__num">1</span>
-          <div><h3>Deterministic engine &mdash; Detector &rarr; Localizer</h3><span class="mono">the core &middot; no LLM</span></div>
+          <div>
+            <h3>Deterministic engine &mdash; Detector &rarr; Localizer</h3><span class="mono">the core &middot; no
+              LLM</span>
+          </div>
           <span class="chip chip--ok">Implemented</span>
         </div>
         <dl class="layer__body">
-          <div><dt>Detector</dt><dd>Models the <span class="k">expected hourly</span> conversion and runs a one-sided binomial CUSUM over the residual, per slice. Working from successes and attempts rather than the ratio folds volume into the decision: a drop across 5 attempts and a drop across 500 stop being treated alike. This filters diurnal noise, weekends and ordinary variance.</dd></div>
-          <div><dt>Localizer</dt><dd>For each candidate slice it simulates the <span class="k">ripple effect</span> &mdash; if this were the cause, how would the rest of the cube look? &mdash; compares that against what was observed and keeps the smallest explanation that best covers it.</dd></div>
-          <div><dt>Simultaneous causes</dt><dd>Multiplicative residualization: once a cause wins, its ripple is discounted from both the deficit and the still-available baseline before searching again. This separates two concurrent incidents even when they share a country and cube leaves, without turning issuer or decline code into dimensions.</dd></div>
-          <div><dt>Classifier</dt><dd>A separate deterministic module combines slice + <span class="mono">decline_shift</span> + issuer evidence + confidence into <span class="mono">diagnosis_category</span> (<span class="mono">provider_degradation</span>, <span class="mono">issuer_unavailable</span>, &hellip;). A plain response-code lookup would not be enough: the same code means different causes depending on the shape of the slice and which control segments stay healthy.</dd></div>
-          <div><dt>Does not</dt><dd class="no">No language model. No action execution. No invention: when the sample is small and the Wilson interval wide, it marks <span class="mono">diagnosis_status &ne; supported</span> and the system recommends monitoring instead of an intervention.</dd></div>
-          <div><dt>Stack</dt><dd><span class="mono">Pure Python &middot; pandas/numpy</span>. Conceptual basis: <span class="mono">Squeeze / HotSpot</span>.</dd></div>
-          <div><dt>Verification</dt><dd>An acceptance runner replays 90 healthy windows with no incident and requires additional persistence for weak, low-volume slices. Scenarios cover healthy silence, concurrent incidents, overlap, recovery and a dimensional combination never used during development.</dd></div>
+          <div>
+            <dt>Detector</dt>
+            <dd>Models the <span class="k">expected hourly</span> conversion and runs a one-sided binomial CUSUM over
+              the residual, per slice. Working from successes and attempts rather than the ratio folds volume into the
+              decision: a drop across 5 attempts and a drop across 500 stop being treated alike. This filters diurnal
+              noise, weekends and ordinary variance.</dd>
+          </div>
+          <div>
+            <dt>Localizer</dt>
+            <dd>For each candidate slice it simulates the <span class="k">ripple effect</span> &mdash; if this were the
+              cause, how would the rest of the cube look? &mdash; compares that against what was observed and keeps the
+              smallest explanation that best covers it.</dd>
+          </div>
+          <div>
+            <dt>Simultaneous causes</dt>
+            <dd>Multiplicative residualization: once a cause wins, its ripple is discounted from both the deficit and
+              the still-available baseline before searching again. This separates two concurrent incidents even when
+              they share a country and cube leaves, without turning issuer or decline code into dimensions.</dd>
+          </div>
+          <div>
+            <dt>Classifier</dt>
+            <dd>A separate deterministic module combines slice + <span class="mono">decline_shift</span> + issuer
+              evidence + confidence into <span class="mono">diagnosis_category</span> (<span
+                class="mono">provider_degradation</span>, <span class="mono">issuer_unavailable</span>, &hellip;). A
+              plain response-code lookup would not be enough: the same code means different causes depending on the
+              shape of the slice and which control segments stay healthy.</dd>
+          </div>
+          <div>
+            <dt>Does not</dt>
+            <dd class="no">No language model. No action execution. No invention: when the sample is small and the Wilson
+              interval wide, it marks <span class="mono">diagnosis_status &ne; supported</span> and the system
+              recommends monitoring instead of an intervention.</dd>
+          </div>
+          <div>
+            <dt>Stack</dt>
+            <dd><span class="mono">Pure Python &middot; pandas/numpy</span>. Conceptual basis: <span
+                class="mono">Squeeze / HotSpot</span>.</dd>
+          </div>
+          <div>
+            <dt>Verification</dt>
+            <dd>An acceptance runner replays 90 healthy windows with no incident and requires additional persistence for
+              weak, low-volume slices. Scenarios cover healthy silence, concurrent incidents, overlap, recovery and a
+              dimensional combination never used during development.</dd>
+          </div>
         </dl>
       </article>
 
       <article class="layer">
         <div class="layer__head">
           <span class="layer__num">2</span>
-          <div><h3>Explanation layer &mdash; Communication</h3><span class="mono">business rules in .md &middot; static</span></div>
+          <div>
+            <h3>Explanation layer &mdash; Communication</h3><span class="mono">business rules in .md &middot;
+              static</span>
+          </div>
           <span class="chip chip--ok">Implemented</span>
         </div>
         <dl class="layer__body">
-          <div><dt>Does</dt><dd>Receives the structured output from the engine, the action already selected from the catalog, the evidence and the cost. It loads the payment business rules held as <span class="mono">.md</span> files and uses a language model, without tools, only to write for two audiences: an executive line and an operational readout.</dd></div>
-          <div><dt>Does not</dt><dd class="no">It does not look for the root cause, compute anything or choose the action. All of that arrives already resolved and auditable. The rule base is static at runtime.</dd></div>
-          <div><dt>Copilot</dt><dd>The second surface of the model: it answers operator questions about an already-resolved diagnosis. It shares the same rule base used to write that diagnosis, so it cannot contradict on screen what the same rules already produced. It cannot change the diagnosis or the action, and when a question exceeds the evidence bundle it says so instead of inventing an answer. The interface renders a deterministic answer immediately and replaces it only if the model responds in time.</dd></div>
-          <div><dt>Stack</dt><dd>Pydantic AI (OpenAI, no tools) + <span class="mono">.md</span> rule files &middot; schema-validated output &middot; temperature 0.</dd></div>
-          <div><dt>Verification</dt><dd>Every path runs without an API key: deterministic Jinja templates render the same evidence, the same cost and the same action, so wording quality degrades but operational truth does not. A self-check exercises the three reference incidents offline.</dd></div>
+          <div>
+            <dt>Does</dt>
+            <dd>Receives the structured output from the engine, the action already selected from the catalog, the
+              evidence and the cost. It loads the payment business rules held as <span class="mono">.md</span> files and
+              uses a language model, without tools, only to write for two audiences: an executive line and an
+              operational readout.</dd>
+          </div>
+          <div>
+            <dt>Does not</dt>
+            <dd class="no">It does not look for the root cause, compute anything or choose the action. All of that
+              arrives already resolved and auditable. The rule base is static at runtime.</dd>
+          </div>
+          <div>
+            <dt>Copilot</dt>
+            <dd>The second surface of the model: it answers operator questions about an already-resolved diagnosis. It
+              shares the same rule base used to write that diagnosis, so it cannot contradict on screen what the same
+              rules already produced. It cannot change the diagnosis or the action, and when a question exceeds the
+              evidence bundle it says so instead of inventing an answer. The interface renders a deterministic answer
+              immediately and replaces it only if the model responds in time.</dd>
+          </div>
+          <div>
+            <dt>Stack</dt>
+            <dd>Pydantic AI (OpenAI, no tools) + <span class="mono">.md</span> rule files &middot; schema-validated
+              output &middot; temperature 0.</dd>
+          </div>
+          <div>
+            <dt>Verification</dt>
+            <dd>Every path runs without an API key: deterministic Jinja templates render the same evidence, the same
+              cost and the same action, so wording quality degrades but operational truth does not. A self-check
+              exercises the three reference incidents offline.</dd>
+          </div>
         </dl>
       </article>
 
       <article class="layer">
         <div class="layer__head">
           <span class="layer__num">3</span>
-          <div><h3>Playbook + Templates</h3><span class="mono">from diagnosis to a next action</span></div>
+          <div>
+            <h3>Playbook + Templates</h3><span class="mono">from diagnosis to a next action</span>
+          </div>
           <span class="chip chip--ok">Implemented</span>
         </div>
         <dl class="layer__body">
-          <div><dt>Action</dt><dd>Selected deterministically from a YAML catalog keyed by <span class="mono">diagnosis_category</span>, with one entry per category plus a <span class="mono">monitor</span> entry for insufficient evidence. Each carries the likely owner, the parameters to change, the expected impact and a re-evaluation window.</dd></div>
-          <div><dt>Evidence + headline</dt><dd>Readable bullets built from the decline shift, issuer evidence and reason codes. The <span class="k">headline</span> is a template carrying the situation, the slice and the money at risk &mdash; the model does not write it, so the figure on screen always comes from the cost calculation.</dd></div>
-          <div><dt>Cost</dt><dd>Derived from the data layer: average ticket for the affected cells against the baseline, extrapolated hourly. When that layer is unavailable it falls back to a fixed ticket and states the assumption explicitly in the output.</dd></div>
-          <div><dt>Does not</dt><dd class="no">It does not execute the action. Every recommendation carries <span class="mono">simulation_only: true</span>.</dd></div>
-          <div><dt>Stack</dt><dd><span class="mono">YAML</span> catalog + Jinja templates. No language model in this layer.</dd></div>
-          <div><dt>Verification</dt><dd>Each supported category of the deterministic taxonomy resolves to a distinct catalog action, and an insufficient-evidence incident resolves to monitoring with no cost figure attached.</dd></div>
+          <div>
+            <dt>Action</dt>
+            <dd>Selected deterministically from a YAML catalog keyed by <span class="mono">diagnosis_category</span>,
+              with one entry per category plus a <span class="mono">monitor</span> entry for insufficient evidence. Each
+              carries the likely owner, the parameters to change, the expected impact and a re-evaluation window.</dd>
+          </div>
+          <div>
+            <dt>Evidence + headline</dt>
+            <dd>Readable bullets built from the decline shift, issuer evidence and reason codes. The <span
+                class="k">headline</span> is a template carrying the situation, the slice and the money at risk &mdash;
+              the model does not write it, so the figure on screen always comes from the cost calculation.</dd>
+          </div>
+          <div>
+            <dt>Cost</dt>
+            <dd>Derived from the data layer: average ticket for the affected cells against the baseline, extrapolated
+              hourly. When that layer is unavailable it falls back to a fixed ticket and states the assumption
+              explicitly in the output.</dd>
+          </div>
+          <div>
+            <dt>Does not</dt>
+            <dd class="no">It does not execute the action. Every recommendation carries <span
+                class="mono">simulation_only: true</span>.</dd>
+          </div>
+          <div>
+            <dt>Stack</dt>
+            <dd><span class="mono">YAML</span> catalog + Jinja templates. No language model in this layer.</dd>
+          </div>
+          <div>
+            <dt>Verification</dt>
+            <dd>Each supported category of the deterministic taxonomy resolves to a distinct catalog action, and an
+              insufficient-evidence incident resolves to monitoring with no cost figure attached.</dd>
+          </div>
         </dl>
       </article>
 
       <article class="layer">
         <div class="layer__head">
           <span class="layer__num">4</span>
-          <div><h3>Delivery &mdash; Dashboard + channel</h3><span class="mono">where the operator acts</span></div>
+          <div>
+            <h3>Delivery &mdash; Dashboard + channel</h3><span class="mono">where the operator acts</span>
+          </div>
           <span class="chip chip--ok">Implemented</span>
         </div>
         <dl class="layer__body">
-          <div><dt>Dashboard</dt><dd>The control tower: the live stream evaluated snapshot by snapshot, the approval rate against its expected range, transaction volume behind that rate, a prioritized incident queue and the diagnosis workspace with its full evidence trail.</dd></div>
-          <div><dt>Channel</dt><dd>A real Slack webhook. Every <span class="mono">supported</span> incident carrying a real catalog action &mdash; not the monitoring fallback &mdash; sends one message to the operations channel: headline, operational evidence and the incident id, marked simulation only. An alert that fired on statistical noise would stop being an alert.</dd></div>
-          <div><dt>Prioritization</dt><dd>Incidents are ranked by the product of impact, scope, persistence, confidence and merchant criticality, with impact measured relative to the largest incident in the batch. Every component is exposed alongside the score, so the ranking can be inspected rather than trusted.</dd></div>
-          <div><dt>Stack</dt><dd><span class="mono">React + authored CSS</span> &middot; SSE from FastAPI for the stream &middot; REST for queries and injection.</dd></div>
-          <div><dt>Verification</dt><dd>Delivery is confirmed, not assumed: the interface animates the channel alert only after Slack acknowledges it, and an incident open for minutes sends exactly one message. Measured end to end: <span class="mono">12&ndash;25 s</span> from an injected signal to a delivered alert.</dd></div>
+          <div>
+            <dt>Dashboard</dt>
+            <dd>The control tower: the live stream evaluated snapshot by snapshot, the approval rate against its
+              expected range, transaction volume behind that rate, a prioritized incident queue and the diagnosis
+              workspace with its full evidence trail.</dd>
+          </div>
+          <div>
+            <dt>Channel</dt>
+            <dd>A real Slack webhook. Every <span class="mono">supported</span> incident carrying a real catalog action
+              &mdash; not the monitoring fallback &mdash; sends one message to the operations channel: headline,
+              operational evidence and the incident id, marked simulation only. An alert that fired on statistical noise
+              would stop being an alert.</dd>
+          </div>
+          <div>
+            <dt>Prioritization</dt>
+            <dd>Incidents are ranked by the product of impact, scope, persistence, confidence and merchant criticality,
+              with impact measured relative to the largest incident in the batch. Every component is exposed alongside
+              the score, so the ranking can be inspected rather than trusted.</dd>
+          </div>
+          <div>
+            <dt>Stack</dt>
+            <dd><span class="mono">React + authored CSS</span> &middot; SSE from FastAPI for the stream &middot; REST
+              for queries and injection.</dd>
+          </div>
+          <div>
+            <dt>Verification</dt>
+            <dd>Delivery is confirmed, not assumed: the interface animates the channel alert only after Slack
+              acknowledges it, and an incident open for minutes sends exactly one message. Measured end to end: <span
+                class="mono">12&ndash;25 s</span> from an injected signal to a delivered alert.</dd>
+          </div>
         </dl>
       </article>
 
@@ -559,23 +986,31 @@
     <div class="grid2">
       <div class="card">
         <h3>An unrehearsed incident</h3>
-        <p>An operator picks dimensions, magnitude and duration, and fires. The system detects, localizes and explains with no human intervention.</p>
-        <p>The deterministic localizer is what makes this work on a combination never seen before: it does not guess dimension by dimension, it tests complete hypotheses and keeps the one that explains what was observed.</p>
+        <p>An operator picks dimensions, magnitude and duration, and fires. The system detects, localizes and explains
+          with no human intervention.</p>
+        <p>The deterministic localizer is what makes this work on a combination never seen before: it does not guess
+          dimension by dimension, it tests complete hypotheses and keeps the one that explains what was observed.</p>
       </div>
       <div class="card">
         <h3>Two incidents at once</h3>
-        <p>Residualization lets the localizer return more than one cause. The stopping criterion is explicit: when adding a second cause does not significantly improve the explanation, there is only one.</p>
-        <p>They are shown separated and ranked by money at risk, instead of merged into a single outage that hides one of the two failures.</p>
+        <p>Residualization lets the localizer return more than one cause. The stopping criterion is explicit: when
+          adding a second cause does not significantly improve the explanation, there is only one.</p>
+        <p>They are shown separated and ranked by money at risk, instead of merged into a single outage that hides one
+          of the two failures.</p>
       </div>
       <div class="card">
         <h3>An unavailable dependency</h3>
-        <p>The hot path reads the in-memory ring buffer, never the database, and every external call carries a timeout. The system runs end to end with PostgreSQL down.</p>
-        <p>If the language model is unavailable, deterministic templates render the same diagnosis from the same evidence. Wording degrades; operational truth does not.</p>
+        <p>The hot path reads the in-memory ring buffer, never the database, and every external call carries a timeout.
+          The system runs end to end with PostgreSQL down.</p>
+        <p>If the language model is unavailable, deterministic templates render the same diagnosis from the same
+          evidence. Wording degrades; operational truth does not.</p>
       </div>
       <div class="card">
         <h3>Signal that is only noise</h3>
-        <p>A low-volume slice can swing several points without meaning anything. The binomial detector weighs volume, the Wilson interval bounds the claim, and the classifier withholds a verdict when evidence is thin.</p>
-        <p>In that state the system recommends monitoring, attaches no cost figure and sends nothing to the operations channel.</p>
+        <p>A low-volume slice can swing several points without meaning anything. The binomial detector weighs volume,
+          the Wilson interval bounds the claim, and the classifier withholds a verdict when evidence is thin.</p>
+        <p>In that state the system recommends monitoring, attaches no cost figure and sends nothing to the operations
+          channel.</p>
       </div>
     </div>
   </section>
@@ -583,35 +1018,47 @@
   <section>
     <span class="label">Division of labour</span>
     <h2>Why the intelligence is deterministic</h2>
-    <p class="prose">The two halves of the system answer different questions, and the boundary between them is the design:</p>
+    <p class="prose">The two halves of the system answer different questions, and the boundary between them is the
+      design:</p>
     <div class="grid2">
       <div class="card">
         <h3>Deterministic &mdash; the computation</h3>
-        <p>Detection, localization, classification, cost and action selection. Auditable, reproducible, and it generalizes to slices never seen. This is the part that has to be correct under pressure, which is exactly why it does not depend on a model.</p>
+        <p>Detection, localization, classification, cost and action selection. Auditable, reproducible, and it
+          generalizes to slices never seen. This is the part that has to be correct under pressure, which is exactly why
+          it does not depend on a model.</p>
       </div>
       <div class="card">
         <h3>The model &mdash; the understanding</h3>
-        <p>It interprets the resolved result against the business rules, phrases it for two audiences and answers questions about the evidence. <strong>The model produces the understanding, never the number.</strong></p>
+        <p>It interprets the resolved result against the business rules, phrases it for two audiences and answers
+          questions about the evidence. <strong>The model produces the understanding, never the number.</strong></p>
       </div>
     </div>
     <div class="note note--warn">
       <p style="margin-bottom:.4rem"><strong>Prior art</strong></p>
-      <p style="margin-bottom:0">The problem has a name and a literature: <span class="mono">multi-dimensional root cause localization</span> (Adtributor, HotSpot, Squeeze, RiskLoc). Greedy drill-down is essentially Adtributor, and it <strong>assumes the cause lives in a single dimension</strong> &mdash; it fails on a cross-dimensional combination. Squeeze is the closer basis here because conversion is a <em>derived measure</em>, a ratio rather than a sum, so localization runs over attempts and approvals separately.</p>
+      <p style="margin-bottom:0">The problem has a name and a literature: <span class="mono">multi-dimensional root
+          cause localization</span> (Adtributor, HotSpot, Squeeze, RiskLoc). Greedy drill-down is essentially
+        Adtributor, and it <strong>assumes the cause lives in a single dimension</strong> &mdash; it fails on a
+        cross-dimensional combination. Squeeze is the closer basis here because conversion is a <em>derived
+          measure</em>, a ratio rather than a sum, so localization runs over attempts and approvals separately.</p>
     </div>
   </section>
 
   <section>
     <span class="label">Trust contract</span>
     <h2>What every diagnosis carries</h2>
-    <p class="prose">A diagnosis nobody can audit is worth nothing in payment operations. Each incident is emitted with the evidence needed to challenge it:</p>
+    <p class="prose">A diagnosis nobody can audit is worth nothing in payment operations. Each incident is emitted with
+      the evidence needed to challenge it:</p>
     <div class="grid2">
       <div class="card">
         <h3>Evidence</h3>
-        <p>Observed window and contextual reference. Sample size and approval delta in percentage points. Affected slice and the healthy controls that bound it. Dominant decline code and issuer-level evidence.</p>
+        <p>Observed window and contextual reference. Sample size and approval delta in percentage points. Affected slice
+          and the healthy controls that bound it. Dominant decline code and issuer-level evidence.</p>
       </div>
       <div class="card">
         <h3>Limits</h3>
-        <p>Primary hypothesis, competing alternatives and missing data. Confidence level and estimated financial impact with its assumptions stated. Lifecycle is explicit: <span class="mono">observing &rarr; validating &rarr; diagnosing &rarr; detected / insufficient evidence &rarr; resolved</span>.</p>
+        <p>Primary hypothesis, competing alternatives and missing data. Confidence level and estimated financial impact
+          with its assumptions stated. Lifecycle is explicit: <span class="mono">observing &rarr; validating &rarr;
+            diagnosing &rarr; detected / insufficient evidence &rarr; resolved</span>.</p>
       </div>
     </div>
   </section>
@@ -621,16 +1068,23 @@
     <h2>What we would build next</h2>
     <dl>
       <dt>Historical context per merchant and country</dt>
-      <dd>The engine compares against a seasonal baseline, but it does not yet know that a given merchant has failed three times this month. Feeding recurrence into the priority score would move the product from reporting to anticipating.</dd>
+      <dd>The engine compares against a seasonal baseline, but it does not yet know that a given merchant has failed
+        three times this month. Feeding recurrence into the priority score would move the product from reporting to
+        anticipating.</dd>
 
       <dt>Segmented stream for the view filter</dt>
-      <dd>The view filter narrows KPIs and the incident queue by cube dimension, while the charts stay global because the stream ticker is not segmented. Segmenting it would let an operator watch a single provider in isolation, end to end.</dd>
+      <dd>The view filter narrows KPIs and the incident queue by cube dimension, while the charts stay global because
+        the stream ticker is not segmented. Segmenting it would let an operator watch a single provider in isolation,
+        end to end.</dd>
 
       <dt>Threshold calibration against production traffic</dt>
-      <dd>The detector thresholds are calibrated against the synthetic world and validated over 90 healthy windows. That is calibration evidence for this dataset, not a production false-positive guarantee; real traffic would move them.</dd>
+      <dd>The detector thresholds are calibrated against the synthetic world and validated over 90 healthy windows. That
+        is calibration evidence for this dataset, not a production false-positive guarantee; real traffic would move
+        them.</dd>
 
       <dt>Remediation with governed approval</dt>
-      <dd>Every action is simulation-only today. Executing one would require an approval trail, a rollback path and a policy the merchant signs off on &mdash; deliberately out of scope.</dd>
+      <dd>Every action is simulation-only today. Executing one would require an approval trail, a rollback path and a
+        policy the merchant signs off on &mdash; deliberately out of scope.</dd>
     </dl>
   </section>
 
