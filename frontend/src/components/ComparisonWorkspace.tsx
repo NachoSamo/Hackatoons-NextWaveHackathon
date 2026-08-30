@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { ArrowRight, CalendarRange, Database, Search, X } from "lucide-react";
+import { ArrowRight, CalendarRange, Check, Database, Search, X } from "lucide-react";
 import { api, type CubeLeaf, type PaymentSlice } from "../api";
 import { useLanguage } from "../i18n";
 import { localizeToken } from "../localization";
@@ -21,8 +21,19 @@ type ComparisonResult = {
   observedRate: number;
   referenceRate: number;
   attempts: number;
+  referenceAttempts: number;
   delta: number;
   revenueRisk: number;
+  lostApprovalsPerHour: number;
+  finding: "supported" | "insufficient" | "healthy";
+  confidence: "high" | "medium" | "low";
+  candidate: {
+    scope: Scope;
+    observedRate: number;
+    referenceRate: number;
+    attempts: number;
+    delta: number;
+  } | null;
 };
 
 const WINDOWS = [
@@ -44,6 +55,28 @@ function aggregate(leaves: CubeLeaf[], forecast = false) {
   const approved = leaves.reduce((sum, leaf) => sum + (forecast ? leaf.fc_approved : leaf.approved), 0);
   const amount = leaves.reduce((sum, leaf) => sum + leaf.amount_usd_sum, 0);
   return { attempts, rate: attempts ? approved / attempts : 0, avgTicket: attempts ? amount / attempts : 35 };
+}
+
+function leafKey(leaf: CubeLeaf) {
+  return [leaf.merchant_id, leaf.provider_id, leaf.payment_method, leaf.country].join("|");
+}
+
+function weakestIntersection(observedLeaves: CubeLeaf[], referenceLeaves: CubeLeaf[], baseline: boolean) {
+  const references = new Map(referenceLeaves.map((leaf) => [leafKey(leaf), leaf]));
+  return observedLeaves.map((leaf) => {
+    const referenceLeaf = baseline ? leaf : references.get(leafKey(leaf));
+    const observedRate = leaf.attempts ? leaf.approved / leaf.attempts : 0;
+    const referenceAttempts = baseline ? leaf.fc_attempts : referenceLeaf?.attempts ?? 0;
+    const referenceApproved = baseline ? leaf.fc_approved : referenceLeaf?.approved ?? 0;
+    const referenceRate = referenceAttempts ? referenceApproved / referenceAttempts : 0;
+    return {
+      scope: { merchant_id: leaf.merchant_id, provider_id: leaf.provider_id, payment_method: leaf.payment_method, country: leaf.country },
+      observedRate,
+      referenceRate,
+      attempts: leaf.attempts,
+      delta: (observedRate - referenceRate) * 100,
+    };
+  }).filter((item) => item.attempts > 0 && item.referenceRate > 0).sort((left, right) => left.delta - right.delta)[0] ?? null;
 }
 
 function scopeLabel(scope: Scope, emptyLabel: string, language: "en" | "es") {
@@ -117,9 +150,11 @@ export function ComparisonWorkspace({ initialScope, onClose }: { initialScope?: 
       return;
     }
     const observed = aggregate(scoped(observedResponse.data.leaves, scope));
+    const observedLeaves = scoped(observedResponse.data.leaves, scope);
+    const referenceLeaves = reference === "baseline" ? observedLeaves : scoped(referenceResponse!.data!.leaves, scope);
     const compared = reference === "baseline"
-      ? aggregate(scoped(observedResponse.data.leaves, scope), true)
-      : aggregate(scoped(referenceResponse!.data!.leaves, scope));
+      ? aggregate(observedLeaves, true)
+      : aggregate(referenceLeaves);
     if (!observed.attempts || !compared.attempts) {
       setError(text("No attempts match this scope in one of the selected windows.", "No hay intentos para este alcance en una de las ventanas seleccionadas."));
       setBusy(false);
@@ -128,10 +163,17 @@ export function ComparisonWorkspace({ initialScope, onClose }: { initialScope?: 
     const delta = (observed.rate - compared.rate) * 100;
     const attemptsPerHour = observed.attempts * (3600 / observedWindow);
     const revenueRisk = Math.max(0, compared.rate - observed.rate) * attemptsPerHour * (observed.avgTicket || 35);
+    const lostApprovalsPerHour = Math.max(0, compared.rate - observed.rate) * attemptsPerHour;
+    const candidate = weakestIntersection(observedLeaves, referenceLeaves, reference === "baseline");
+    const insufficient = observed.attempts < 50 || compared.attempts < 50 || !candidate || candidate.attempts < 30;
+    const meaningfulGap = delta <= -1 || Boolean(candidate && candidate.delta <= -5);
+    const finding = insufficient ? "insufficient" : meaningfulGap ? "supported" : "healthy";
+    const confidence = insufficient ? "low" : observed.attempts >= 200 && candidate && candidate.attempts >= 80 ? "high" : "medium";
     const result: ComparisonResult = {
       id: Date.now(), scope: { ...scope }, observedWindow, reference,
       observedRate: observed.rate, referenceRate: compared.rate,
-      attempts: Math.round(observed.attempts), delta, revenueRisk,
+      attempts: Math.round(observed.attempts), referenceAttempts: Math.round(compared.attempts), delta, revenueRisk,
+      lostApprovalsPerHour, finding, confidence, candidate,
     };
     setResults((current) => [...current, result]);
     setActiveId(result.id);
@@ -178,7 +220,8 @@ export function ComparisonWorkspace({ initialScope, onClose }: { initialScope?: 
                 <header><span>{scopeLabel(active.scope, text("All payment traffic", "Todo el tráfico de pagos"), language)}</span><h3>{active.delta < -1 ? text("A meaningful approval gap is visible.", "Hay una brecha significativa de aprobación.") : text("The selected windows remain broadly aligned.", "Las ventanas seleccionadas permanecen mayormente alineadas.")}</h3><p>{text(WINDOWS.find((item) => item.value === active.observedWindow)?.en ?? "Observed window", WINDOWS.find((item) => item.value === active.observedWindow)?.es ?? "Ventana observada")} {text("vs", "contra")} {active.reference === "baseline" ? text("Contextual 14-day baseline", "Baseline contextual de 14 días") : text(WINDOWS.find((item) => item.value === active.reference)?.en ?? "Reference window", WINDOWS.find((item) => item.value === active.reference)?.es ?? "Ventana de referencia")} · UTC</p></header>
                 <div className="comparison-metrics"><div><span>{text("Observed", "Observado")}</span><strong>{(active.observedRate * 100).toFixed(1)}%</strong></div><div><span>{text("Reference", "Referencia")}</span><strong>{(active.referenceRate * 100).toFixed(1)}%</strong></div><div><span>Delta</span><strong className={active.delta < -1 ? "is-negative" : ""}>{active.delta >= 0 ? "+" : ""}{active.delta.toFixed(1)} pp</strong></div></div>
                 <div className="comparison-bars"><div><span>{text("Observed approval", "Aprobación observada")}</span><i><b style={{ width: `${Math.max(2, active.observedRate * 100)}%` }} /></i></div><div><span>{text("Reference approval", "Aprobación de referencia")}</span><i><b style={{ width: `${Math.max(2, active.referenceRate * 100)}%` }} /></i></div></div>
-                <footer><div><span>{text("Sample", "Muestra")}</span><strong>{active.attempts.toLocaleString()} {text("attempts", "intentos")}</strong></div><div><span>{text("Estimated revenue at risk", "Ingreso estimado en riesgo")}</span><strong>${Math.round(active.revenueRisk).toLocaleString()}/h</strong></div><p>{text("Estimate based on approval gap, observed throughput and average ticket. It is not reconciled revenue.", "Estimación basada en brecha de aprobación, throughput observado y ticket promedio. No es ingreso conciliado.")}</p></footer>
+                <ComparisonFinding result={active} />
+                <footer><div><span>{text("Samples", "Muestras")}</span><strong>{active.attempts.toLocaleString()} / {active.referenceAttempts.toLocaleString()}</strong><small>{text("observed / reference attempts", "intentos observados / referencia")}</small></div><div><span>{text("Estimated revenue at risk", "Ingreso estimado en riesgo")}</span><strong>${Math.round(active.revenueRisk).toLocaleString()}/h</strong><small>{Math.round(active.lostApprovalsPerHour).toLocaleString()} {text("lost approvals/h", "aprobaciones perdidas/h")}</small></div><p>{text("Estimate based on approval gap, observed throughput and average ticket. It is not reconciled revenue.", "Estimación basada en brecha de aprobación, throughput observado y ticket promedio. No es ingreso conciliado.")}</p></footer>
               </>}
             </section>
           </main>
@@ -186,4 +229,26 @@ export function ComparisonWorkspace({ initialScope, onClose }: { initialScope?: 
       </section>
     </div>
   );
+}
+
+function ComparisonFinding({ result }: { result: ComparisonResult }) {
+  const { language, text } = useLanguage();
+  const candidate = result.candidate;
+  const candidateLabel = candidate ? scopeLabel(candidate.scope, text("selected traffic", "tráfico seleccionado"), language) : scopeLabel(result.scope, text("selected traffic", "tráfico seleccionado"), language);
+  const confidence = result.confidence === "high" ? text("High confidence", "Confianza alta") : result.confidence === "medium" ? text("Medium confidence", "Confianza media") : text("Low confidence", "Confianza baja");
+  const title = result.finding === "supported"
+    ? text(`${candidateLabel} is the strongest degraded intersection.`, `${candidateLabel} es el cruce con mayor degradación.`)
+    : result.finding === "healthy"
+      ? text("No material degradation is visible in this comparison.", "No se observa una degradación material en esta comparación.")
+      : text("The comparison does not support a root-cause hypothesis yet.", "La comparación todavía no sustenta una hipótesis de causa raíz.");
+  const recommendation = result.finding === "supported"
+    ? text("Validate the same slice against healthy providers and decline-code evidence. If the contrast holds, prepare a controlled routing simulation for human review.", "Validá el mismo segmento contra proveedores sanos y evidencia de códigos de rechazo. Si el contraste se sostiene, prepará una simulación controlada de ruteo para revisión humana.")
+    : result.finding === "healthy"
+      ? text("Keep monitoring. No operational action is recommended from these windows.", "Seguí monitoreando. Estas ventanas no justifican una acción operativa.")
+      : text("Expand the observed window or narrow the payment scope before assigning ownership or recommending a change.", "Ampliá la ventana observada o acotá el segmento de pagos antes de asignar responsabilidad o recomendar un cambio.");
+  return <section className={`comparison-finding comparison-finding--${result.finding}`}>
+    <header><span>{text("Comparative diagnosis", "Diagnóstico comparativo")} · {confidence}</span><h4>{title}</h4></header>
+    {candidate && <div className="comparison-evidence"><p><Check size={13} /><span>{text("Intersection", "Cruce")}<strong>{candidateLabel}</strong></span></p><p><Check size={13} /><span>{text("Approval contrast", "Contraste de aprobación")}<strong>{(candidate.observedRate * 100).toFixed(1)}% {text("vs", "contra")} {(candidate.referenceRate * 100).toFixed(1)}%</strong></span></p><p><Check size={13} /><span>{text("Candidate sample", "Muestra del cruce")}<strong>{candidate.attempts.toLocaleString()} {text("attempts", "intentos")}</strong></span></p></div>}
+    <div className="comparison-recommendation"><span>{text("Recommended human action", "Acción humana recomendada")}</span><p>{recommendation}</p></div>
+  </section>;
 }

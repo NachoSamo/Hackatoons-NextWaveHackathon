@@ -60,6 +60,7 @@ export function CommandCenter({ preview = false }: { preview?: boolean }) {
   const [scope, setScope] = useState<DetectionScope>(DEFAULT_SCOPE);
   const [injectOptions, setInjectOptions] = useState<InjectOptions>(FALLBACK_OPTIONS);
   const [signalPoints, setSignalPoints] = useState<SignalPoint[]>([]);
+  const [incidentQueue, setIncidentQueue] = useState<ScoredIncident[]>([]);
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
@@ -104,11 +105,19 @@ export function CommandCenter({ preview = false }: { preview?: boolean }) {
   useEffect(() => {
     const snapshot = live.snapshot;
     if (!snapshot) return;
+    if (snapshot.prioritized.length) {
+      setIncidentQueue((current) => {
+        const accumulated = new Map(current.map((item) => [item.diagnosis.incident_id, item]));
+        snapshot.prioritized.forEach((item) => accumulated.set(item.diagnosis.incident_id, item));
+        return [...accumulated.values()].sort((left, right) => right.score - left.score);
+      });
+    }
     if (snapshot.error) setTowerState("ERROR");
     else if (snapshot.diagnoses.length) setTowerState("DIAGNOSED");
     else if (snapshot.engine_incidents.length || snapshot.active_injections.length) setTowerState("VALIDATING");
+    else if (incidentQueue.length) setTowerState("DIAGNOSED");
     else setTowerState("HEALTHY");
-  }, [live.snapshot]);
+  }, [live.snapshot, incidentQueue.length]);
 
   const start = async () => {
     if (preview || busy) return;
@@ -119,7 +128,7 @@ export function CommandCenter({ preview = false }: { preview?: boolean }) {
         setConnected(false); setTowerState("ERROR");
         return;
       }
-      setSignalPoints([]); setSelected(null);
+      setSignalPoints([]); setIncidentQueue([]); setSelected(null);
       setConnected(true); setTowerState("HEALTHY"); setStreamActive(true);
     } finally {
       setBusy(false);
@@ -135,7 +144,7 @@ export function CommandCenter({ preview = false }: { preview?: boolean }) {
         setConnected(false); setTowerState("ERROR");
         return;
       }
-      setSignalPoints([]); setSelected(null);
+      setSignalPoints([]); setIncidentQueue([]); setSelected(null);
       setConnected(true); setTowerState("READY"); setFiltersOpen(false);
     } finally {
       setBusy(false);
@@ -155,7 +164,8 @@ export function CommandCenter({ preview = false }: { preview?: boolean }) {
     }
   };
 
-  const prioritized = live.snapshot?.prioritized ?? [];
+  const prioritized = incidentQueue;
+  const currentIncidentIds = useMemo(() => new Set((live.snapshot?.prioritized ?? []).map((item) => item.diagnosis.incident_id)), [live.snapshot?.prioritized]);
   const latestPoint = signalPoints.at(-1);
   const observedRate = latestPoint?.observedRate ?? (live.overview?.observed_rate ?? 0.854) * 100;
   const expectedRate = latestPoint?.expectedRate ?? (live.overview?.expected_rate ?? 0.861) * 100;
@@ -236,7 +246,7 @@ export function CommandCenter({ preview = false }: { preview?: boolean }) {
 
       <main className="tower-main">
         <LiveWorkspace points={signalPoints} />
-        <IncidentWorkspace state={towerState} prioritized={prioritized} onSelect={setSelected} />
+        <IncidentWorkspace state={towerState} prioritized={prioritized} currentIncidentIds={currentIncidentIds} onSelect={setSelected} />
       </main>
 
       {selected && <DiagnosisWorkspace diagnosis={selected} onClose={() => setSelected(null)} />}
@@ -275,14 +285,14 @@ function LiveWorkspace({ points }: { points: SignalPoint[] }) {
   </section>;
 }
 
-function IncidentWorkspace({ state, prioritized, onSelect }: { state: TowerState; prioritized: ScoredIncident[]; onSelect: (diagnosis: Diagnosis) => void }) {
+function IncidentWorkspace({ state, prioritized, currentIncidentIds, onSelect }: { state: TowerState; prioritized: ScoredIncident[]; currentIncidentIds: Set<string>; onSelect: (diagnosis: Diagnosis) => void }) {
   const { language, text } = useLanguage();
   return <aside className={`tower-incidents ${state === "VALIDATING" ? "is-validating" : ""}`} aria-label={text("Prioritized incident queue", "Cola priorizada de incidentes")}>
-    <header><span>{text("Incident queue", "Cola de incidentes")}</span><strong>{prioritized.length}</strong></header>
+    <header><span>{text("Session incident stack", "Incidentes de la sesión")}</span><strong>{prioritized.length}</strong></header>
     {state === "VALIDATING" && <div className="tower-empty"><span className="signal-loader" /><strong>{text("Validating the signal", "Validando la señal")}</strong><p>{text("Waiting for persistence, sufficient sample and healthy controls before alerting.", "Esperando persistencia, muestra suficiente y controles sanos antes de alertar.")}</p></div>}
     {state !== "VALIDATING" && !prioritized.length && <div className="tower-empty is-healthy"><Check size={20} /><strong>{text("Trustworthy silence", "Silencio confiable")}</strong><p>{text("Traffic is inside its expected range. Centinel does not alert on noise.", "El tráfico está dentro de su rango esperado. Centinel no alerta por ruido.")}</p></div>}
     <div className="incident-grid">{prioritized.map((item, index) => <button className="tower-incident" key={item.diagnosis.incident_id} onClick={() => onSelect(item.diagnosis)}>
-      <div><span>P{index + 1}</span><small>{Math.round(item.score * 100)} {text("priority score", "puntaje de prioridad")}</small></div><h3>{diagnosisHeadline(item.diagnosis, language)}</h3><p>{diagnosisNarrative(item.diagnosis, "executive", language)}</p>
+      <div><span>P{index + 1}</span><small className={currentIncidentIds.has(item.diagnosis.incident_id) ? "is-live" : ""}>{currentIncidentIds.has(item.diagnosis.incident_id) ? text("Live signal", "Señal activa") : text("Retained in session", "Guardado en sesión")} · {Math.round(item.score * 100)}</small></div><h3>{diagnosisHeadline(item.diagnosis, language)}</h3><p>{diagnosisNarrative(item.diagnosis, "executive", language)}</p>
       <div className="priority-breakdown">{Object.entries(item.components).map(([name, value]) => <span key={name}><i>{localizeToken(name, language)}</i><b>{Math.round(value * 100)}</b></span>)}</div>
       <footer><strong>{item.diagnosis.cost ? `$${Math.round(item.diagnosis.cost.usd_per_hour).toLocaleString()}/h` : text("Impact unknown", "Impacto desconocido")}</strong><span>{text("Open playbook", "Abrir playbook")} →</span></footer>
     </button>)}</div>
