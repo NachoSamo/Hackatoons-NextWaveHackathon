@@ -172,6 +172,13 @@ export type Overview = {
 
 export type StreamSnapshot = { ts: string; observed_rate: number; expected_rate: number; tx_count: number };
 
+export type CopilotResponse = {
+  answer: string | null;
+  llm_used: boolean;
+  out_of_scope: boolean;
+  error?: string;
+};
+
 export type InjectBody =
   | { preset_id: string }
   | { filters?: Record<string, string>; magnitude: number; decline_code: string; duration_s?: number; label?: string };
@@ -194,6 +201,9 @@ export const api = {
   health: () => call<{ status: string }>("GET", "/health"),
   explain: (input: { fixture: string } | EngineOutput) =>
     call<ExplainResponse>("POST", "/api/agent/explain", input),
+  // Refina una respuesta que el frontend YA mostró. Si falla, el caller no cambia nada.
+  askCopilot: (diagnosis: Diagnosis, question: string) =>
+    call<CopilotResponse>("POST", "/api/copilot/ask", { diagnosis, question }),
   cube: (windowSeconds: number) =>
     call<CubeResponse>("GET", `/api/cube?window_s=${windowSeconds}`),
 

@@ -1083,3 +1083,106 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
   color: white;
   border-color: var(--signal-soft) !important;
 }
+
+/* ---- Copilot: refinado con LLM ------------------------------------------- */
+/* La respuesta determinística ya está en pantalla; esto sólo avisa que se está
+   contrastando contra el bundle. Nunca hay spinner bloqueante. */
+
+.copilot-answer.is-refining p { opacity: 0.72; transition: opacity 0.3s ease; }
+.copilot-answer small { display: flex; align-items: center; gap: 6px; }
+
+.copilot-dot {
+  width: 6px;
+  height: 6px;
+  flex: none;
+  border-radius: 50%;
+  background: var(--signal-soft);
+  animation: copilot-thinking 1.1s ease-in-out infinite;
+}
+
+@keyframes copilot-thinking {
+  0%, 100% { opacity: 0.25; transform: scale(0.8); }
+  50%      { opacity: 1; transform: scale(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .copilot-dot { animation: none; opacity: 1; }
+  .copilot-answer.is-refining p { opacity: 1; }
+}
+
+/* ---- Encabezados de sección del workspace en vivo ------------------------ */
+/* Los tres bloques (log, banda, velas) son un pipeline: entra → se compara
+   contra lo esperado → se dimensiona el volumen. Antes el header del log tenía
+   contenedor propio y los de los gráficos eran texto suelto, así que el título
+   se despegaba de su gráfico. Ahora los tres comparten el mismo tratamiento. */
+
+.pipeline-log > header,
+.tower-chart-heading {
+  min-height: 64px;
+  padding: 14px clamp(18px, 2.2vw, 34px);
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  border-bottom: 1px solid var(--line);
+}
+
+.pipeline-log > header > div,
+.tower-chart-heading > div {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  gap: 4px;
+}
+
+.pipeline-log > header strong,
+.tower-chart-heading strong {
+  font-size: 13px;
+  font-weight: 550;
+}
+
+/* La bajada explica CÓMO leer el gráfico, no cómo está implementado. */
+.pipeline-log > header span,
+.tower-chart-heading > div span {
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 1.45;
+}
+
+.section-num {
+  width: 20px;
+  height: 20px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--line-strong);
+  border-radius: 50%;
+  color: var(--muted);
+  font: 9px var(--mono);
+  font-style: normal;
+}
+
+.chart-legend {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #6f6f75;
+  font: 9px var(--mono);
+}
+
+@media (max-width: 900px) {
+  .chart-legend { display: none; }
+}
+
+/* ---- Altura real de los gráficos ---------------------------------------- */
+/* Los SVG usan viewBox 920×190 y sin preserveAspectRatio el navegador centra el
+   dibujo (xMidYMid meet): con un contenedor de 350 px quedaban ~95 px muertos
+   arriba y abajo. Con aspect-ratio la caja mide exactamente lo que se dibuja,
+   así que el gráfico se pega a su encabezado y desaparece el hueco. */
+
+.tower .signal-chart.band-chart,
+.tower .live-signal-chart {
+  height: auto;
+  min-height: 0;
+  aspect-ratio: 920 / 190;
+}

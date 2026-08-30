@@ -28,13 +28,14 @@ if str(PROJECT_ROOT) not in sys.path:
 load_dotenv(Path(__file__).resolve().parent / ".env")
 load_dotenv(PROJECT_ROOT / ".env")
 
-from backend.contracts import EngineOutput
+from backend.contracts import Diagnosis, EngineOutput
 from backend.data.cube import set_live_rows_source, set_observed_source
 from backend.data.injector import active as active_injections
 from backend.data.replayer import Replayer, TICK_SECONDS
 from backend.data.routes import router as data_router
 from backend import diagnosis_loop
 from backend.explain.build import diagnose
+from backend.explain.copilot import answer_question
 from backend.explain.prioritize import score_incidents
 from backend.logging_setup import log, recent_log, setup
 
@@ -242,6 +243,27 @@ def diagnosis_reset() -> dict[str, Any]:
     """Motor de diagnóstico nuevo. El frontend lo llama junto con /api/demo/reset."""
     diagnosis_loop.reset()
     return {"ok": True}
+
+
+@app.post("/api/copilot/ask")
+def copilot_ask(payload: dict[str, Any] = Body(...)) -> dict[str, Any]:
+    """Responde una pregunta sobre un diagnóstico ya resuelto.
+
+    El frontend manda el `Diagnosis` completo en vez de un id: `DIAGNOSES` sólo se llena
+    desde `/api/agent/explain` (el loop vivo no lo alimenta) y la cola de la UI es
+    acumulativa, así que un id viejo no se podría resolver acá.
+    """
+    question = str(payload.get("question", "")).strip()
+    try:
+        diagnosis = Diagnosis.model_validate(payload.get("diagnosis") or {})
+        log.info("[API]      → POST /api/copilot/ask  %s  \"%s\"", diagnosis.incident_id, question[:70])
+        result = answer_question(diagnosis.model_dump(mode="json"), question)
+        if result is None:
+            return {"answer": None, "llm_used": False, "out_of_scope": False}
+        return {"answer": result.answer, "llm_used": True, "out_of_scope": result.out_of_scope}
+    except Exception as exc:  # noqa: BLE001
+        log.warning("[API]      ← copilot no disponible: %s", exc)
+        return {"answer": None, "llm_used": False, "out_of_scope": False, "error": str(exc)}
 
 
 @app.get("/api/incidents/{incident_id}/diagnosis")

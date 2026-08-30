@@ -35,6 +35,12 @@ class Explanation(BaseModel):
 
 
 RULES_DIR = Path(__file__).with_name("rules")
+# Las 8 reglas de negocio de pagos, concatenadas una sola vez en import time.
+# `copilot.py` reusa exactamente esta base: el Copilot razona con las mismas reglas
+# con las que se redactó el diagnóstico, o podría contradecirlo en pantalla.
+DOMAIN_RULES = "\n\n".join(
+    path.read_text(encoding="utf-8") for path in sorted(RULES_DIR.glob("*.md"))
+)
 SYSTEM_PROMPT = (
     "You are a payment-operations writer for the Control Tower. Write concise English. "
     "Say 'the evidence indicates'; never claim proven causality and never say 'the AI discovered'. "
@@ -44,7 +50,7 @@ SYSTEM_PROMPT = (
     "Do not be alarmist: no 'immediate attention required', 'urgent', or 'act now'. State the facts and let them speak. "
     "If no dollar cost is supplied, do not invent one or quantify the impact in the executive line. "
     "When the evidence is not supported, say plainly that it is insufficient for an operational change.\n\n"
-) + "\n\n".join(path.read_text(encoding="utf-8") for path in sorted(RULES_DIR.glob("*.md")))
+) + DOMAIN_RULES
 
 
 def write_explanation(payload: dict) -> Explanation | None:
