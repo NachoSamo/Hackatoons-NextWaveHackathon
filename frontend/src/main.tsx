@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React from "react";
 import { createRoot } from "react-dom/client";
 import { E2EPanel } from "./e2e";
 import { useLive } from "./useLive";
@@ -24,6 +24,8 @@ import {
 } from "lucide-react";
 import "@fontsource-variable/geist";
 import "@fontsource-variable/geist-mono";
+import { App } from "./App";
+import { LanguageProvider } from "./i18n";
 import "./styles.css";
 import type { IncidentRow, PaymentSlice } from "./domain";
 import { formatPaymentSlice } from "./domain";
@@ -629,11 +631,15 @@ function App() {
     if (isLegacyIncident) window.history.replaceState({}, "", "/control-tower");
   }, [isLegacyIncident]);
   const content = useMemo(() => isControlTower || isLegacyIncident
-      ? <div className="app-shell"><CommandCenter /></div>
-      : <Landing />, [isControlTower, isLegacyIncident]);
+    ? <div className="app-shell"><CommandCenter /></div>
+    : <Landing />, [isControlTower, isLegacyIncident]);
   return content;
 }
 
 createRoot(document.getElementById("root")!).render(
-  <React.StrictMode><App /></React.StrictMode>,
+  <React.StrictMode>
+    <LanguageProvider>
+      <App />
+    </LanguageProvider>
+  </React.StrictMode>,
 );

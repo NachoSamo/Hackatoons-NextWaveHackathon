@@ -93,13 +93,12 @@ flowchart LR
 | **Command Center** | Is payment performance healthy right now? Which incident matters most? |
 | **Inline investigation** | What changed, since when, where and who is affected? |
 | **Centinel Copilot** | Why does the evidence support this diagnosis? What contradicts it? |
-| **Explore** | What changed between two custom historical windows for a defined payment scope? |
-| **PolicyDraft** | How could a useful analysis become a governed alert proposal? |
+| **Comparison Workspace** | How does one explicit payment scope behave across two rolling windows or its contextual baseline? |
 | **Executive view** | What is the estimated financial impact and current status in one line? |
 
-The live monitor, historical exploration and alert-policy configuration remain separate. A natural
-language request may compile into visible filters or a structured draft, but it cannot silently
-change detection rules.
+The timed demo keeps historical exploration and alert-policy authoring out of the primary surface.
+They remain valid future capabilities, but cannot compete with live detection, evidence and the
+trial by fire.
 
 ---
 
@@ -113,6 +112,7 @@ five minutes of live proof**:
 | Healthy silence | Synthetic traffic stays within its contextual baseline | Normal noise does not become an incident |
 | Provider degradation | Synthetic Adyen traffic starts over-declining PIX only in Brazil | Centinel must detect and localize the scoped drop |
 | Evidence-backed diagnosis | Baseline, sample, codes, latency and healthy controls | The diagnosis is traceable, not guessed |
+| Temporal comparison | Structured scope and multiple session queries over backend aggregate cubes | Operators can test hypotheses without rebuilding filters or sending raw transactions to AI |
 | Two audiences | Operations detail and an executive summary share one evidence bundle | Communication changes; facts do not |
 | Simultaneous incident | A Mexican issuer fails for one merchant | Independent causes stay separated and prioritized |
 | Weak signal | Centinel returns `Insufficient evidence` | Uncertainty is a product state, not a hidden failure |
@@ -225,7 +225,7 @@ For deeper technical decisions, see
 | In the explanation layer, the LLM cannot choose the diagnosis or action | [`backend/explain/build.py`](backend/explain/build.py) · [`backend/explain/catalog.yaml`](backend/explain/catalog.yaml) | Follow the deterministic assembly before the wording pass |
 | The demo survives without an API key | [`backend/explain/templates/`](backend/explain/templates/) | Run the self-check without `OPENAI_API_KEY` |
 | Simultaneous and ambiguous cases are represented | [`backend/fixtures/`](backend/fixtures/) | Compare provider, dual-incident and weak-signal fixtures |
-| The experience follows the pitch | [`frontend/src/main.tsx`](frontend/src/main.tsx) · [`frontend/src/styles.css`](frontend/src/styles.css) | Run the landing, live monitor, Explore and inline investigation |
+| The experience follows the pitch | [`frontend/src/pages/`](frontend/src/pages/) · [`frontend/src/components/`](frontend/src/components/) | Run the landing, guided live monitor and inline investigation |
 | Decisions remain auditable | [`harness/docs/decision-log.md`](harness/docs/decision-log.md) | Read the trade-offs and their rationale |
 
 ---
@@ -237,12 +237,12 @@ This is a hackathon prototype under active integration. The repository currently
 | Area | Status |
 |---|---|
 | Landing and Control Tower product experience | **Implemented** as an interactive React prototype |
-| Live-monitor view controls, Explore and inline investigation | **Implemented** with deterministic frontend scenarios |
+| Guided live monitor, multi-query comparison and inline investigation | **Implemented** against backend aggregate and debug contracts |
 | Synthetic payment world, baseline and fixture generation | **Implemented** and seeded for reproducibility |
 | Deterministic detection, localization and classification core | **Implemented** with an acceptance runner |
 | Typed diagnosis and explanation API | **Implemented** with OpenAI + deterministic fallback |
 | Live stream, parametric injector and query API | **Implemented**; PostgreSQL persistence activates when `DATABASE_URL` is configured |
-| Frontend API wiring | **Integration in progress** |
+| Frontend API wiring | **Implemented for the hackathon debug pipeline**; production SSE remains separate |
 | Production remediation | **Intentionally out of scope**; Centinel diagnoses and recommends |
 
 This distinction is deliberate: synthetic behavior is labeled, incomplete integration is not

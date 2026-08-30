@@ -16,10 +16,9 @@
 | 2:20–2:35 | 0:15 | Judge injector | Inject prepared Adyen × Brazil degradation |
 | 2:35–3:20 | 0:45 | Validating → incident | Detection, localization, impact and likely ownership |
 | 3:20–4:10 | 0:50 | Investigation + Copilot | Evidence, temporal comparison, Operations / Executive, human action |
-| 4:10–4:50 | 0:40 | Explore + PolicyDraft | Custom historical comparison and governed alert proposal |
-| 4:50–5:20 | 0:30 | Two incidents | Separation and explainable prioritization |
-| 5:20–5:45 | 0:25 | Insufficient evidence | Honest uncertainty instead of fabricated certainty |
-| 5:45–7:00 | 1:15 | Trial by fire | Judge injects an unrehearsed valid combination; team stops touching the keyboard |
+| 4:10–4:40 | 0:30 | Two incidents | Separation and explainable prioritization |
+| 4:40–5:05 | 0:25 | Insufficient evidence | Honest uncertainty instead of fabricated certainty |
+| 5:05–7:00 | 1:55 | Trial by fire | Judge injects an unrehearsed valid combination; team stops touching the keyboard |
 
 ## 0:00–2:00 · Product / introduction
 
@@ -93,7 +92,9 @@ Click `Investigate with Centinel`.
 the evidence behind the conclusion: merchant-side truth, provider responses, latency and healthy
 controls.”
 
-Run the suggested comparison.
+Click `Compare windows`, interpret the suggested Adyen × Brazil query and run `Last 60 seconds`
+against the contextual 14-day baseline. Then run one second prepared query to show the session
+history; do not configure dates manually during the pitch.
 
 “Centinel Copilot is grounded in this immutable evidence bundle. We can ask what changed, since
 when, who is affected, why ownership points to Adyen and what evidence contradicts the diagnosis.”
@@ -108,26 +109,7 @@ Show the recommendation without applying it.
 “The recommendation is human-reviewed. This challenge diagnoses; it does not silently reroute real
 money.”
 
-### 4:10 — Explore and governed alerts
-
-Close the investigation and select `Explore`.
-
-“Live monitoring finds incidents before an operator asks. Explore answers a different question:
-what changed between any two historical windows for a specific payment scope?”
-
-Click `Interpret query`, then `Run analysis`.
-
-“The natural-language request becomes explicit ranges and filters before it runs. KPIs and chart
-now answer one visible question: PIX in Brazil, this window versus that historical window.”
-
-Click `Create alert from this analysis`.
-
-“A useful analysis can become an alert proposal, but never an active rule from a prompt. Centinel
-creates a structured draft, validates it against replay and requires human approval.”
-
-Close the draft.
-
-### 4:50 — Simultaneous incidents
+### 4:10 — Simultaneous incidents
 
 Return to `Live Monitoring`; trigger the prepared Mexican issuer case.
 
@@ -135,14 +117,14 @@ Return to `Live Monitoring`; trigger the prepared Mexican issuer case.
 both drops into one vague outage. It keeps separate scopes, evidence, owners and impact, then
 prioritizes them explainably.”
 
-### 5:20 — Honest uncertainty
+### 4:40 — Honest uncertainty
 
 Trigger or open the weak-signal fixture.
 
 “When the sample is too small, Centinel says `Insufficient evidence`, shows the alternatives and
 names the data it still needs. Trust also means knowing when not to conclude.”
 
-### 5:45 — Trial by fire
+### 5:05 — Trial by fire
 
 Hand control to the judge.
 
@@ -163,11 +145,11 @@ Stop. Do not add another closing paragraph.
 
 - At 2:00 the landing must already be open; no setup is shown.
 - The product introduction is a hard stop at 2:00, even if a sentence was missed.
-- Explore is capped at 40 seconds. Cut it before cutting evidence or trial by fire.
+- Historical Explore and PolicyDraft are already cut from the timed demo; describe them only in Q&A.
 - The judge receives only valid dropdowns, never JSON.
 - After `Inject incident`, the presenting team does not touch the keyboard.
 - If OpenAI fails, use the structured explanation fallback without apologizing.
-- If time reaches 5:45, jump immediately to trial by fire.
+- If time reaches 5:05, jump immediately to trial by fire.
 
 ## Likely judge questions + prepared answers
 

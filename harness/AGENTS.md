@@ -16,7 +16,7 @@ Los contratos de API (abajo) se completan cuando se cierren las decisiones core.
 ## Stack
 
 - **Backend:** Python + FastAPI + Uvicorn. Gestión con pip.
-- **Frontend:** TypeScript + React + Tailwind. Llamadas HTTP con axios.
+- **Frontend:** TypeScript + React + CSS authored. Cliente HTTP tipado sobre `fetch`.
 - **DB relacional:** PostgreSQL. Si hace falta embeddings/RAG → pgvector desde el día 1.
 - **DB no relacional (solo si el caso lo pide):** MongoDB.
 - **LLM:** API de OpenAI.

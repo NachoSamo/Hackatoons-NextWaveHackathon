@@ -11,6 +11,24 @@ export type PaymentSlice = {
   country: string | null;
 };
 
+export type CubeLeaf = {
+  merchant_id: string;
+  provider_id: string;
+  payment_method: string;
+  country: string;
+  attempts: number;
+  approved: number;
+  fc_attempts: number;
+  fc_approved: number;
+  amount_usd_sum: number;
+};
+
+export type CubeResponse = {
+  window_s: number;
+  leaves: CubeLeaf[];
+  error?: string;
+};
+
 export type CostEstimate = {
   usd_per_hour: number;
   lost_approvals_window: number;
