@@ -202,6 +202,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .legend-approved, .legend-declined { width: 8px; height: 8px; border-radius: 1px; background: var(--healthy); }
 .legend-declined { background: var(--incident); }
 .legend-reference { background: repeating-linear-gradient(90deg, #8b8b8f 0 5px, transparent 5px 9px); }
+.legend-band { width: 23px; height: 7px; border-radius: 2px; background: rgba(216,216,220,.16); border: 1px solid rgba(216,216,220,.28); }
 .system-state { padding: 5px 8px; border-radius: 4px; border: 1px solid var(--line); font: 10px var(--mono); color: var(--muted); }
 .system-state--running { color: #b5b9ff; border-color: rgba(89,100,242,.55); }
 .system-state--validating { color: var(--warning); border-color: rgba(242,198,109,.55); }
@@ -226,6 +227,13 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .volume-candle:hover { opacity: .72; }
 .volume-expected { fill: none; stroke: #d8d8dc; stroke-width: 1.6; stroke-dasharray: 5 5; stroke-linejoin: round; vector-effect: non-scaling-stroke; filter: drop-shadow(0 0 4px rgba(255,255,255,.16)); }
 @keyframes trace-line { from { stroke-dashoffset: 980; } to { stroke-dashoffset: 0; } }
+/* Banda de predicción al 95% sobre la tasa esperada (ExpectedBandChart). */
+.band-area { fill: rgba(216,216,220,.14); stroke: rgba(216,216,220,.26); stroke-width: 1; vector-effect: non-scaling-stroke; }
+.band-expected { fill: none; stroke: #d8d8dc; stroke-width: 1.4; stroke-dasharray: 5 5; stroke-linejoin: round; vector-effect: non-scaling-stroke; }
+.band-observed { fill: none; stroke: var(--healthy); stroke-width: 1.8; stroke-linejoin: round; stroke-linecap: round; vector-effect: non-scaling-stroke; transition: stroke 200ms ease; }
+.band-chart.is-breached .band-observed { stroke: var(--incident); filter: drop-shadow(0 0 5px rgba(255,107,96,.35)); }
+.band-breach { fill: var(--incident); }
+
 @keyframes reveal-marker { from { opacity: 0; } to { opacity: 1; } }
 
 .incident-queue { padding: 20px 16px; overflow: hidden; }

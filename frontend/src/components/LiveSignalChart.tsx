@@ -7,6 +7,8 @@ export type SignalPoint = {
   observedRate: number;
   expectedRate: number;
   cumulativeAttempts: number;
+  /** Intentos de la ventana de 60 s (overview.attempts). Es el n de la banda de confianza. */
+  windowAttempts?: number;
 };
 
 function expectedPath(points: SignalPoint[], maxVolume: number) {

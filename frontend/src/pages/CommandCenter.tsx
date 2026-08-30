@@ -4,6 +4,7 @@ import { api, type Diagnosis, type InjectOptions, type ScoredIncident } from "..
 import { Brand } from "../components/Brand";
 import { ComparisonWorkspace } from "../components/ComparisonWorkspace";
 import { DiagnosisWorkspace } from "../components/DiagnosisWorkspace";
+import { ExpectedBandChart } from "../components/ExpectedBandChart";
 import { LanguageToggle } from "../components/LanguageToggle";
 import { LiveSignalChart, type SignalPoint } from "../components/LiveSignalChart";
 import { SignalChart } from "../components/SignalChart";
@@ -97,6 +98,7 @@ export function CommandCenter({ preview = false }: { preview?: boolean }) {
         observedRate: live.ticker!.observed_rate * 100,
         expectedRate: live.ticker!.expected_rate * 100,
         cumulativeAttempts: live.ticker!.tx_count,
+        windowAttempts: live.overview?.attempts ?? 0,
       };
       return current.at(-1)?.at === point.at ? current : [...current, point].slice(-30);
     });
@@ -282,6 +284,8 @@ function LiveWorkspace({ points }: { points: SignalPoint[] }) {
     </section>
     <div className="tower-chart-heading"><div><strong>{text("Transaction volume by incoming snapshot", "Volumen de transacciones por snapshot entrante")}</strong><span><i className="legend-approved" />{text("Approved", "Aprobadas")} <i className="legend-declined" />{text("Declined", "Rechazadas")} <i className="legend-reference" />{text("Expected approvals", "Aprobaciones esperadas")}</span></div><small>{points.length}/30 {text("snapshots · rolling 60-second mix", "snapshots · mezcla móvil de 60 segundos")}</small></div>
     <LiveSignalChart points={points} />
+    <div className="tower-chart-heading"><div><strong>{text("Approval rate vs expected range", "Tasa de aprobación vs rango esperado")}</strong><span><i className="legend-observed" />{text("Observed", "Observada")} <i className="legend-reference" />{text("Expected", "Esperada")} <i className="legend-band" />{text("Expected range (95%)", "Rango esperado (95%)")}</span></div><small>{text("Prediction interval from the seasonal baseline and the 60-second sample size", "Intervalo de predicción del baseline estacional y el tamaño de muestra de 60 segundos")}</small></div>
+    <ExpectedBandChart points={points} />
   </section>;
 }
 
