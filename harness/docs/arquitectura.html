@@ -1,4 +1,4 @@
-<title>Torre de Control</title>
+<title>Centinel Architecture</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
@@ -335,31 +335,77 @@
     .layers .layer:nth-child(5) { animation-delay: .16s; }
     @keyframes rise { from { opacity: 0; transform: translateY(8px); } }
   }
+
+  /* ---- Export to PDF ---- */
+  .pdf-export {
+    position: fixed;
+    z-index: 50;
+    top: clamp(12px, 2vw, 20px);
+    right: clamp(12px, 2vw, 20px);
+    display: inline-flex;
+    align-items: center;
+    gap: .45rem;
+    padding: .5rem .85rem;
+    border: 1px solid var(--line-strong);
+    border-radius: 6px;
+    background: var(--surface);
+    color: var(--ink);
+    box-shadow: var(--shadow);
+    font-family: "IBM Plex Mono", monospace;
+    font-size: .74rem;
+    letter-spacing: .04em;
+    cursor: pointer;
+  }
+  .pdf-export:hover { border-color: var(--accent); color: var(--accent-ink); }
+
+  @media print {
+    /* Impresión en claro: el tema oscuro gasta tinta y se lee peor en papel. */
+    :root, :root[data-theme="dark"], :root:not([data-theme="light"]) {
+      --paper: #fff; --surface: #fff; --surface-2: #f4f6f7;
+      --ink: #000; --ink-soft: #26313a; --muted: #4a555e;
+      --line: #c9d2d6; --line-strong: #9fabb2;
+      --accent: #0f4d55; --accent-ink: #0f4d55; --accent-bg: #eaf2f3;
+      --shadow: none;
+    }
+    .pdf-export { display: none; }
+    body { background: #fff; }
+    .wrap { max-width: none; padding: 0 0 1rem; }
+    /* Nada de bloques partidos entre páginas. */
+    .layer, .card, .note, .diagram, section > dl > div { break-inside: avoid; page-break-inside: avoid; }
+    section { break-inside: auto; margin-top: 1.6rem; }
+    h1, h2, h3 { break-after: avoid; page-break-after: avoid; }
+    .diagram { overflow: visible; }
+    .diagram__inner, .diagram figcaption { min-width: 0; }
+    a { text-decoration: none; }
+    @page { margin: 14mm; }
+  }
 </style>
+
+<button class="pdf-export" type="button" onclick="window.print()" aria-label="Export this page to PDF">[ EXPORT PDF ]</button>
 
 <div class="wrap">
 
   <header class="top">
-    <span class="kicker">● NextWave 2026 · Challenge 2 · Yuno</span>
-    <h1>Torre de Control</h1>
-    <p class="sub">Detecta cuándo cae la conversión de pagos, aísla la causa raíz con evidencia y la explica en lenguaje humano — en near real time, antes de que el merchant se entere por Twitter.</p>
+    <span class="kicker">&#9679; NextWave 2026 &middot; Challenge 2 &middot; Yuno</span>
+    <h1>Centinel &middot; Control Tower</h1>
+    <p class="sub">Detects when payment conversion drops, isolates the root cause with evidence and explains it in human language &mdash; in near real time, before the merchant finds out on Twitter.</p>
     <div class="meta">
-      <div><span class="label">Estado</span><span class="v">pre-evento · arquitectura en borrador</span></div>
-      <div><span class="label">Alcance demo</span><span class="v">Opción A + 2 incidentes simultáneos</span></div>
-      <div><span class="label">Fuentes</span><span class="v">06-dominio-pagos · 07-decisiones-core</span></div>
+      <div><span class="label">Architecture</span><span class="v">five layers, one direction of flow</span></div>
+      <div><span class="label">Governing rule</span><span class="v">deterministic code decides &middot; AI only communicates</span></div>
+      <div><span class="label">Data</span><span class="v">synthetic, seeded, reproducible</span></div>
     </div>
   </header>
 
   <section>
-    <span class="label">El pipeline</span>
-    <h2>Cinco capas, un sentido de flujo</h2>
-    <p class="prose">Los datos entran por la izquierda y salen convertidos en un diagnóstico accionable por la derecha. La regla que ordena todo: <strong>lo determinístico calcula y decide; la IA sólo comunica</strong>. La detección, localización, clasificación y selección de acción son código auditable y reproducible; Pydantic AI sin tools sólo redacta el resultado para dos audiencias.</p>
+    <span class="label">The pipeline</span>
+    <h2>Five layers, one direction of flow</h2>
+    <p class="prose">Data enters on the left and leaves on the right as an actionable diagnosis. The rule that orders everything: <strong>deterministic code computes and decides; the AI only communicates</strong>. Detection, localization, classification and action selection are auditable, reproducible code. The language model phrases the result for two audiences and answers questions about it &mdash; it never produces a number and never changes a verdict.</p>
 
     <figure class="diagram">
       <div class="diagram__inner">
         <svg viewBox="0 0 1180 300" role="img" aria-labelledby="diagTitle diagDesc">
-          <title id="diagTitle">Diagrama del pipeline de la Torre de Control</title>
-          <desc id="diagDesc">Flujo de cinco capas: Generador de tráfico, Motor determinístico (detector, localizador y clasificador), Capa de explicación, Playbook y templates, y Entrega. El motor entrega un output estructurado a la capa de explicación; Pydantic AI sin tools sólo redacta. El Playbook realimenta el generador con un botón de aplicar simulado.</desc>
+          <title id="diagTitle">Control Tower pipeline diagram</title>
+          <desc id="diagDesc">Five-layer flow: traffic generator, deterministic engine (detector, localizer and classifier), explanation layer, playbook and templates, and delivery. The engine hands a structured output to the explanation layer; the language model only writes prose. The playbook feeds back into the generator through a simulated apply button.</desc>
 
           <defs>
             <marker id="ah" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
@@ -367,149 +413,139 @@
             </marker>
           </defs>
 
-          <!-- injection panel -->
           <rect class="tag-rect" x="20" y="18" width="176" height="30" rx="5"></rect>
-          <text class="tag-text" x="108" y="37" text-anchor="middle">panel de inyección · juez</text>
+          <text class="tag-text" x="108" y="37" text-anchor="middle">signal simulator</text>
           <path class="flow flow--dash" d="M108 48 L108 96" marker-end="url(#ah)"></path>
 
-          <!-- nodes row: y=100, h=96 -->
-          <!-- node 0 -->
           <rect class="node-rect" x="20" y="100" width="200" height="96" rx="9"></rect>
           <text class="node-num" x="36" y="122">0</text>
-          <text class="node-name" x="36" y="146">Generador</text>
-          <text class="node-sub" x="36" y="166">stream sintético</text>
-          <text class="node-sub" x="36" y="181">replay + inyección</text>
+          <text class="node-name" x="36" y="146">Generator</text>
+          <text class="node-sub" x="36" y="166">synthetic stream</text>
+          <text class="node-sub" x="36" y="181">replay + injection</text>
 
-          <!-- node 1 -->
           <rect class="node-rect node-rect--engine" x="264" y="100" width="216" height="96" rx="9"></rect>
           <text class="node-num" x="280" y="122">1</text>
-          <text class="node-name" x="280" y="146">Motor determinístico</text>
-          <text class="node-sub" x="280" y="166">detector·localizador·clasif.</text>
-          <text class="node-sub" x="280" y="181">sin LLM · auditable</text>
+          <text class="node-name" x="280" y="146">Deterministic engine</text>
+          <text class="node-sub" x="280" y="166">detect&middot;localize&middot;classify</text>
+          <text class="node-sub" x="280" y="181">no LLM &middot; auditable</text>
 
-          <!-- node 2 -->
           <rect class="node-rect" x="524" y="100" width="200" height="96" rx="9"></rect>
           <text class="node-num" x="540" y="122">2</text>
-          <text class="node-name" x="540" y="146">Capa de explicación</text>
-          <text class="node-sub" x="540" y="166">reglas de negocio .md</text>
-          <text class="node-sub" x="540" y="181">redacta · no decide</text>
+          <text class="node-name" x="540" y="146">Explanation layer</text>
+          <text class="node-sub" x="540" y="166">business rules in .md</text>
+          <text class="node-sub" x="540" y="181">phrases &middot; never decides</text>
 
-          <!-- node 3 -->
           <rect class="node-rect" x="768" y="100" width="200" height="96" rx="9"></rect>
           <text class="node-num" x="784" y="122">3</text>
           <text class="node-name" x="784" y="146">Playbook</text>
-          <text class="node-sub" x="784" y="166">catálogo + templates</text>
-          <text class="node-sub" x="784" y="181">2 formatos de salida</text>
+          <text class="node-sub" x="784" y="166">catalog + templates</text>
+          <text class="node-sub" x="784" y="181">two output formats</text>
 
-          <!-- node 4 -->
           <rect class="node-rect" x="1012" y="100" width="148" height="96" rx="9"></rect>
           <text class="node-num" x="1028" y="122">4</text>
-          <text class="node-name" x="1028" y="146">Entrega</text>
+          <text class="node-name" x="1028" y="146">Delivery</text>
           <text class="node-sub" x="1028" y="166">dashboard</text>
-          <text class="node-sub" x="1028" y="181">+ canal ejec.</text>
+          <text class="node-sub" x="1028" y="181">+ Slack channel</text>
 
-          <!-- flows -->
           <path class="flow" d="M220 148 L262 148" marker-end="url(#ah)"></path>
           <path class="flow" d="M480 148 L522 148" marker-end="url(#ah)"></path>
           <text class="flow-label" x="501" y="140" text-anchor="middle">json</text>
           <path class="flow" d="M724 148 L766 148" marker-end="url(#ah)"></path>
           <path class="flow" d="M968 148 L1010 148" marker-end="url(#ah)"></path>
 
-          <!-- engine output to LLM tag -->
           <path class="flow flow--dash" d="M372 196 L372 236" marker-end="url(#ah)"></path>
           <rect class="tag-rect" x="264" y="236" width="216" height="30" rx="5"></rect>
-          <text class="tag-text" x="372" y="255" text-anchor="middle">output estructurado → capa IA</text>
+          <text class="tag-text" x="372" y="255" text-anchor="middle">structured output &rarr; AI layer</text>
 
-          <!-- feedback loop: playbook back to generator -->
           <path class="flow flow--dash" d="M868 196 C868 280, 120 286, 120 200" marker-end="url(#ah)"></path>
-          <text class="flow-label" x="470" y="292" text-anchor="middle">acción recomendada · botón “aplicar (simulado)”</text>
+          <text class="flow-label" x="470" y="292" text-anchor="middle">recommended action &middot; &ldquo;apply (simulated)&rdquo;</text>
         </svg>
       </div>
-      <figcaption>Líneas llenas = flujo de datos. Líneas punteadas = handoff estructurado y loop simulado de remediación. El challenge <em>diagnostica, no ejecuta</em>: el loop de vuelta al generador existe solo para la demo.</figcaption>
+      <figcaption>Solid lines carry data. Dashed lines carry the structured handoff and the simulated remediation loop. Centinel <em>diagnoses, it does not execute</em>: the loop back to the generator exists so the effect of an action can be shown, never to change live routing.</figcaption>
     </figure>
   </section>
 
   <section>
-    <span class="label">Capa por capa</span>
-    <h2>Qué hace cada una — y qué no</h2>
+    <span class="label">Layer by layer</span>
+    <h2>What each one does &mdash; and what it does not</h2>
 
     <div class="layers">
 
       <article class="layer">
         <div class="layer__head">
           <span class="layer__num">0</span>
-          <div><h3>Generador de tráfico</h3><span class="mono">stream sintético · replay + inyección</span></div>
-          <span class="chip chip--crit">Riesgo alto</span>
+          <div><h3>Traffic generator</h3><span class="mono">synthetic stream &middot; replay + injection</span></div>
+          <span class="chip chip--ok">Implemented</span>
         </div>
         <dl class="layer__body">
-          <div><dt>Hace</dt><dd>Produce transacciones sintéticas creíbles (merchant, proveedor, método, país, aprobada s/n, código de rechazo, monto). Se pre-genera una historia “normal” determinística con perfil diurno; en la demo se reproduce como un replay. Un módulo aparte superpone incidentes.</dd></div>
-          <div><dt>No hace</dt><dd class="no">No se genera en vivo — se pre-genera para poder calibrar el detector contra <span class="k">los mismos datos que se muestran</span>. No decide nada.</dd></div>
-          <div><dt>Stack</dt><dd><span class="mono">Python · pandas</span> · replay determinístico a 65 tx/s · el injector degrada probabilidades (no inserta rechazos falsos).</dd></div>
-          <div><dt>Almacenamiento</dt><dd><span class="k">Ring buffer</span> (memoria, ~30 min): camino caliente — cubo de 60 s, evidencia, dinero. <span class="k">Parquet</span> (estático, en el repo): <span class="mono">baseline_profile</span> (forecast de 14 días) + <span class="mono">fixture</span> (90 min sanos que el replayer loopea). <span class="k">Postgres</span> (<em>opcional</em>): archivo de transacciones para auditoría — nadie del camino caliente depende de él.</dd></div>
-          <div><dt>Dueño</dt><dd>Pena — camino crítico, arranca primero. Sin esto no hay demo.</dd></div>
+          <div><dt>Does</dt><dd>Produces credible synthetic transactions (merchant, provider, method, country, approved y/n, decline code, amount). A deterministic history with a diurnal and weekday profile is pre-generated and replayed at 65 tx/s. A separate injector overlays incidents by degrading approval probability for a chosen dimensional slice.</dd></div>
+          <div><dt>Does not</dt><dd class="no">It does not generate live, so the detector can be calibrated against <span class="k">the same data that is displayed</span>. The injector never inserts fabricated declines: it shifts probabilities and lets the world respond.</dd></div>
+          <div><dt>Stack</dt><dd><span class="mono">Python &middot; pandas</span> &middot; seeded replay &middot; parametric injector with scope, magnitude and duration.</dd></div>
+          <div><dt>Storage</dt><dd><span class="k">Ring buffer</span> (in memory, 30 min) is the hot path: 60-second cube, evidence, money. <span class="k">Parquet</span> holds the static artifacts: <span class="mono">baseline_profile</span> (14-day contextual forecast) and the healthy fixture the replayer loops. <span class="k">PostgreSQL</span> is <em>optional</em>, a cold transaction archive for auditability &mdash; nothing on the hot path depends on it.</dd></div>
+          <div><dt>Verification</dt><dd>The world is reproducible from its seed: regenerating the baseline and the fixture yields byte-identical artifacts, so any detection result can be replayed exactly.</dd></div>
         </dl>
       </article>
 
       <article class="layer">
         <div class="layer__head">
           <span class="layer__num">1</span>
-          <div><h3>Motor determinístico — Detector → Localizador</h3><span class="mono">el corazón · sin LLM</span></div>
-          <span class="chip chip--crit">Riesgo alto</span>
+          <div><h3>Deterministic engine &mdash; Detector &rarr; Localizer</h3><span class="mono">the core &middot; no LLM</span></div>
+          <span class="chip chip--ok">Implemented</span>
         </div>
         <dl class="layer__body">
-          <div><dt>Detector</dt><dd>Modela la conversión <span class="k">esperada por hora</span> y corre CUSUM sobre el residuo; dispara cuando el desvío acumulado cruza el umbral. Filtra el ruido diurno, el fin de semana y la varianza estadística.</dd></div>
-          <div><dt>Localizador</dt><dd>Por cada slice candidato simula el <span class="k">efecto ripple</span> (“si esta fuera la causa, ¿cómo se vería el resto del cubo?”), lo compara con lo observado y se queda con la explicación que mejor cubre lo observado siendo la más chica. Puede devolver 2 causas.</dd></div>
-          <div><dt>Clasificador</dt><dd>Módulo determinístico aparte: combina slice + <span class="mono">decline_shift</span> + evidencia de issuer + confianza → <span class="mono">diagnosis_category</span> (`provider_degradation`, `issuer_unavailable`, …). El LLM río abajo no lo puede cambiar.</dd></div>
-          <div><dt>No hace</dt><dd class="no">No usa LLM. No ejecuta acciones. No inventa: si la muestra es chica (intervalo de Wilson ancho) marca <span class="mono">diagnosis_status ≠ supported</span>.</dd></div>
-          <div><dt>Stack</dt><dd><span class="mono">Python puro · pandas/numpy</span> · ~200–400 líneas · determinístico y reproducible. Base conceptual: <span class="mono">Squeeze / HotSpot</span>.</dd></div>
-          <div><dt>Salida</dt><dd>Objeto estructurado (JSON): qué cayó, dónde (slice/s), desde cuándo, magnitud, a quién afecta, volumen, intervalo de confianza. → es el “output para LLM”.</dd></div>
-          <div><dt>Dueño</dt><dd>Luca (+ Samo). <span class="k">Spike de riesgo #1</span>: probarlo contra combinaciones no usadas en desarrollo antes de la demo.</dd></div>
+          <div><dt>Detector</dt><dd>Models the <span class="k">expected hourly</span> conversion and runs a one-sided binomial CUSUM over the residual, per slice. Working from successes and attempts rather than the ratio folds volume into the decision: a drop across 5 attempts and a drop across 500 stop being treated alike. This filters diurnal noise, weekends and ordinary variance.</dd></div>
+          <div><dt>Localizer</dt><dd>For each candidate slice it simulates the <span class="k">ripple effect</span> &mdash; if this were the cause, how would the rest of the cube look? &mdash; compares that against what was observed and keeps the smallest explanation that best covers it.</dd></div>
+          <div><dt>Simultaneous causes</dt><dd>Multiplicative residualization: once a cause wins, its ripple is discounted from both the deficit and the still-available baseline before searching again. This separates two concurrent incidents even when they share a country and cube leaves, without turning issuer or decline code into dimensions.</dd></div>
+          <div><dt>Classifier</dt><dd>A separate deterministic module combines slice + <span class="mono">decline_shift</span> + issuer evidence + confidence into <span class="mono">diagnosis_category</span> (<span class="mono">provider_degradation</span>, <span class="mono">issuer_unavailable</span>, &hellip;). A plain response-code lookup would not be enough: the same code means different causes depending on the shape of the slice and which control segments stay healthy.</dd></div>
+          <div><dt>Does not</dt><dd class="no">No language model. No action execution. No invention: when the sample is small and the Wilson interval wide, it marks <span class="mono">diagnosis_status &ne; supported</span> and the system recommends monitoring instead of an intervention.</dd></div>
+          <div><dt>Stack</dt><dd><span class="mono">Pure Python &middot; pandas/numpy</span>. Conceptual basis: <span class="mono">Squeeze / HotSpot</span>.</dd></div>
+          <div><dt>Verification</dt><dd>An acceptance runner replays 90 healthy windows with no incident and requires additional persistence for weak, low-volume slices. Scenarios cover healthy silence, concurrent incidents, overlap, recovery and a dimensional combination never used during development.</dd></div>
         </dl>
       </article>
 
       <article class="layer">
         <div class="layer__head">
           <span class="layer__num">2</span>
-          <div><h3>Capa de explicación — Comunicación</h3><span class="mono">reglas de negocio en .md · estáticas</span></div>
-          <span class="chip chip--warn">Riesgo medio</span>
+          <div><h3>Explanation layer &mdash; Communication</h3><span class="mono">business rules in .md &middot; static</span></div>
+          <span class="chip chip--ok">Implemented</span>
         </div>
         <dl class="layer__body">
-          <div><dt>Hace</dt><dd>Recibe el output estructurado del motor, la acción ya seleccionada desde catálogo, la evidencia y el costo. Carga reglas de negocio <span class="mono">.md</span> y usa Pydantic AI sin tools sólo para redactar en dos audiencias.</dd></div>
-          <div><dt>No hace</dt><dd class="no">No busca la causa raíz, no calcula ni elige la acción: todo eso ya vino resuelto y auditable del motor y del playbook. La base <span class="mono">.md</span> es estática y no se toca en la demo.</dd></div>
-          <div><dt>Copilot</dt><dd>Segunda superficie del LLM: responde <span class="k">preguntas del operador</span> sobre un diagnóstico ya resuelto (<span class="mono">explain/copilot.py</span>, <span class="mono">gpt-4o-mini</span>, 6 s). Comparte las mismas reglas <span class="mono">.md</span> (<span class="mono">DOMAIN_RULES</span>) que la redacción, para no contradecir en pantalla lo que esa misma base ya escribió. Sigue sin poder elegir diagnóstico ni acción; si la pregunta excede el bundle responde <span class="mono">out_of_scope</span> en vez de inventar. La UI muestra primero una respuesta determinística y sólo la reemplaza si el LLM contesta a tiempo.</dd></div>
-          <div><dt>Stack</dt><dd>Pydantic AI (OpenAI, sin tools) + archivos <span class="mono">.md</span> · salida estructurada · temperatura 0.</dd></div>
-          <div><dt>Dueño</dt><dd>Samo. Mitigación de riesgo: salida validada contra un esquema y templates determinísticos si OpenAI falla.</dd></div>
+          <div><dt>Does</dt><dd>Receives the structured output from the engine, the action already selected from the catalog, the evidence and the cost. It loads the payment business rules held as <span class="mono">.md</span> files and uses a language model, without tools, only to write for two audiences: an executive line and an operational readout.</dd></div>
+          <div><dt>Does not</dt><dd class="no">It does not look for the root cause, compute anything or choose the action. All of that arrives already resolved and auditable. The rule base is static at runtime.</dd></div>
+          <div><dt>Copilot</dt><dd>The second surface of the model: it answers operator questions about an already-resolved diagnosis. It shares the same rule base used to write that diagnosis, so it cannot contradict on screen what the same rules already produced. It cannot change the diagnosis or the action, and when a question exceeds the evidence bundle it says so instead of inventing an answer. The interface renders a deterministic answer immediately and replaces it only if the model responds in time.</dd></div>
+          <div><dt>Stack</dt><dd>Pydantic AI (OpenAI, no tools) + <span class="mono">.md</span> rule files &middot; schema-validated output &middot; temperature 0.</dd></div>
+          <div><dt>Verification</dt><dd>Every path runs without an API key: deterministic Jinja templates render the same evidence, the same cost and the same action, so wording quality degrades but operational truth does not. A self-check exercises the three reference incidents offline.</dd></div>
         </dl>
       </article>
 
       <article class="layer">
         <div class="layer__head">
           <span class="layer__num">3</span>
-          <div><h3>Playbook + Templates — Entregable</h3><span class="mono">donde vive el valor percibido</span></div>
-          <span class="chip chip--ok">Riesgo bajo</span>
+          <div><h3>Playbook + Templates</h3><span class="mono">from diagnosis to a next action</span></div>
+          <span class="chip chip--ok">Implemented</span>
         </div>
         <dl class="layer__body">
-          <div><dt>Acción</dt><dd>Se elige del <span class="k">catálogo YAML propio</span> por <span class="mono">diagnosis_category</span> (una entrada por categoría + <span class="mono">monitor</span> para evidencia insuficiente). Trae `owner`, `params_to_change`, `expected_impact`, `reevaluate_after`. Todo determinístico.</dd></div>
-          <div><dt>Evidencia + headline</dt><dd>Bullets legibles armados desde <span class="mono">decline_shift</span> / <span class="mono">issuer_evidence</span> / <span class="mono">reason_codes</span>. El <span class="k">headline</span> es un template con la plata + el slice — no lo escribe el LLM.</dd></div>
-          <div><dt>Costo</dt><dd>Viene de <span class="mono">money_lost(slice, window)</span> de la capa de datos (ticket promedio por celda + extrapolación horaria). Fallback con ticket fijo si esa capa no está. Assumptions explícitas.</dd></div>
-          <div><dt>No hace</dt><dd class="no">No ejecuta la acción (<span class="mono">simulation_only: true</span>). El botón “aplicar (simulado)” es de la capa de datos.</dd></div>
-          <div><dt>Stack</dt><dd>Catálogo en <span class="mono">YAML</span> + Jinja para el fallback. Sin LLM en esta capa.</dd></div>
-          <div><dt>Dueño</dt><dd>Samo. <span class="k">Invertir acá</span>: los mentores dicen que la acción recomendada de calidad es lo que da valor al producto.</dd></div>
+          <div><dt>Action</dt><dd>Selected deterministically from a YAML catalog keyed by <span class="mono">diagnosis_category</span>, with one entry per category plus a <span class="mono">monitor</span> entry for insufficient evidence. Each carries the likely owner, the parameters to change, the expected impact and a re-evaluation window.</dd></div>
+          <div><dt>Evidence + headline</dt><dd>Readable bullets built from the decline shift, issuer evidence and reason codes. The <span class="k">headline</span> is a template carrying the situation, the slice and the money at risk &mdash; the model does not write it, so the figure on screen always comes from the cost calculation.</dd></div>
+          <div><dt>Cost</dt><dd>Derived from the data layer: average ticket for the affected cells against the baseline, extrapolated hourly. When that layer is unavailable it falls back to a fixed ticket and states the assumption explicitly in the output.</dd></div>
+          <div><dt>Does not</dt><dd class="no">It does not execute the action. Every recommendation carries <span class="mono">simulation_only: true</span>.</dd></div>
+          <div><dt>Stack</dt><dd><span class="mono">YAML</span> catalog + Jinja templates. No language model in this layer.</dd></div>
+          <div><dt>Verification</dt><dd>Each supported category of the deterministic taxonomy resolves to a distinct catalog action, and an insufficient-evidence incident resolves to monitoring with no cost figure attached.</dd></div>
         </dl>
       </article>
 
       <article class="layer">
         <div class="layer__head">
           <span class="layer__num">4</span>
-          <div><h3>Entrega — Dashboard + canal</h3><span class="mono">lo que el juez opera</span></div>
-          <span class="chip chip--warn">Riesgo medio</span>
+          <div><h3>Delivery &mdash; Dashboard + channel</h3><span class="mono">where the operator acts</span></div>
+          <span class="chip chip--ok">Implemented</span>
         </div>
         <dl class="layer__body">
-          <div><dt>Dashboard</dt><dd>La torre de control: stream en vivo, incidentes activos, panel de diagnóstico con evidencia, y el <span class="k">panel de inyección para el juez</span>. Es lo que se opera en el trial by fire.</dd></div>
-          <div><dt>Canal</dt><dd>Webhook real de Slack (workspace ficticio, sin depender de credenciales de un equipo real): por cada incidente <span class="mono">supported</span> con acción real del catálogo (no <span class="mono">monitor</span>) llega un mensaje al canal de devs — headline + evidencia operativa + <span class="mono">incident_id</span>, marcado <span class="k">simulation only</span>. Guiño al Payments Concierge que Yuno ya tiene.</dd></div>
-          <div><dt>Stack</dt><dd><span class="mono">React + Tailwind</span> · SSE/WebSocket desde FastAPI para el stream · REST para la inyección. El canal es <span class="mono">backend/notify_slack.py</span>, llamado sólo desde el loop de diagnóstico vivo — un <span class="mono">set</span> en memoria hace dedup por <span class="mono">incident_id</span> (una alerta por incidente, sin importar cuántos ticks siga abierto) y se limpia junto con <span class="mono">/api/diagnosis/reset</span>.</dd></div>
-          <div><dt>Feedback visual</dt><dd>La entrega se ve en la torre: <span class="mono">SlackAlertToast</span> anima la alerta <span class="k">después</span> de que Slack devolvió 2xx — el backend publica sólo lo confirmado en <span class="mono">slack_alerts</span> (<span class="mono">GET /api/diagnosis</span>). Medido en vivo: <span class="mono">12–25 s</span> desde la inyección, porque el incidente recorre <span class="mono">validating → diagnosing → detected</span> antes de ser <span class="mono">supported</span>.</dd></div>
-          <div><dt>Dueño</dt><dd>Juani (+ Samo wiring). El panel de inyección tiene que ser a prueba de balas: si falla, falla el challenge.</dd></div>
+          <div><dt>Dashboard</dt><dd>The control tower: the live stream evaluated snapshot by snapshot, the approval rate against its expected range, transaction volume behind that rate, a prioritized incident queue and the diagnosis workspace with its full evidence trail.</dd></div>
+          <div><dt>Channel</dt><dd>A real Slack webhook. Every <span class="mono">supported</span> incident carrying a real catalog action &mdash; not the monitoring fallback &mdash; sends one message to the operations channel: headline, operational evidence and the incident id, marked simulation only. An alert that fired on statistical noise would stop being an alert.</dd></div>
+          <div><dt>Prioritization</dt><dd>Incidents are ranked by the product of impact, scope, persistence, confidence and merchant criticality, with impact measured relative to the largest incident in the batch. Every component is exposed alongside the score, so the ranking can be inspected rather than trusted.</dd></div>
+          <div><dt>Stack</dt><dd><span class="mono">React + authored CSS</span> &middot; SSE from FastAPI for the stream &middot; REST for queries and injection.</dd></div>
+          <div><dt>Verification</dt><dd>Delivery is confirmed, not assumed: the interface animates the channel alert only after Slack acknowledges it, and an incident open for minutes sends exactly one message. Measured end to end: <span class="mono">12&ndash;25 s</span> from an injected signal to a delivered alert.</dd></div>
         </dl>
       </article>
 
@@ -517,91 +553,90 @@
   </section>
 
   <section>
-    <span class="label">Momentos que definen el challenge</span>
-    <h2>Trial by fire, incidentes simultáneos, latencia</h2>
+    <span class="label">Hard cases</span>
+    <h2>What the architecture is built to survive</h2>
 
     <div class="grid2">
       <div class="card">
-        <h3>El trial by fire</h3>
-        <p>El juez usa el panel de inyección — acotado: elige dimensiones, magnitud y momento, y dispara. El sistema tiene que <strong>detectar + localizar + explicar sin que toquemos nada</strong>.</p>
-        <p>El localizador determinístico es lo que hace que esto funcione con una combinación que nunca vimos: no adivina por dimensión, prueba hipótesis completas y se queda con la que explica lo observado.</p>
+        <h3>An unrehearsed incident</h3>
+        <p>An operator picks dimensions, magnitude and duration, and fires. The system detects, localizes and explains with no human intervention.</p>
+        <p>The deterministic localizer is what makes this work on a combination never seen before: it does not guess dimension by dimension, it tests complete hypotheses and keeps the one that explains what was observed.</p>
       </div>
       <div class="card">
-        <h3>Dos incidentes simultáneos</h3>
-        <p>El localizador puede devolver más de una causa. Criterio de parada: cuando agregar una segunda causa <strong>no mejora significativamente</strong> la explicación de lo observado, hay una sola.</p>
-        <p>El dashboard los muestra separados y priorizados por plata. <span class="mono" style="color:var(--muted)">— overlap permitido entre ambos: a definir.</span></p>
+        <h3>Two incidents at once</h3>
+        <p>Residualization lets the localizer return more than one cause. The stopping criterion is explicit: when adding a second cause does not significantly improve the explanation, there is only one.</p>
+        <p>They are shown separated and ranked by money at risk, instead of merged into a single outage that hides one of the two failures.</p>
       </div>
-    </div>
-
-    <div class="note">
-      <p><strong>Latencia objetivo</strong> <span class="label" style="color:var(--accent-ink)">recomendación · a confirmar</span></p>
-      <p>Alerta (detección): <strong>&lt; 45 s</strong> de tiempo real desde el inicio del incidente. Diagnóstico completo con explicación del LLM: <strong>&lt; 90 s</strong>. El reloj de la demo corre a tiempo real o con compresión leve (máx. 1 min real ≈ 10 min simulados) para que la latencia mostrada sea creíble.</p>
-      <p style="margin-bottom:0">Contraste para el pitch: <em>hoy un humano tarda horas cruzando filtros a las 3 a.m. Nosotros, minuto y medio.</em> Esta ventana near real time es el diferencial que marcaron los mentores.</p>
+      <div class="card">
+        <h3>An unavailable dependency</h3>
+        <p>The hot path reads the in-memory ring buffer, never the database, and every external call carries a timeout. The system runs end to end with PostgreSQL down.</p>
+        <p>If the language model is unavailable, deterministic templates render the same diagnosis from the same evidence. Wording degrades; operational truth does not.</p>
+      </div>
+      <div class="card">
+        <h3>Signal that is only noise</h3>
+        <p>A low-volume slice can swing several points without meaning anything. The binomial detector weighs volume, the Wilson interval bounds the claim, and the classifier withholds a verdict when evidence is thin.</p>
+        <p>In that state the system recommends monitoring, attaches no cost figure and sends nothing to the operations channel.</p>
+      </div>
     </div>
   </section>
 
   <section>
-    <span class="label">Defensa técnica</span>
-    <h2>Por qué es AI-native y no “GPT sobre un CRUD”</h2>
-    <p class="prose">Un juez de Yuno va a preguntar exactamente esto. La respuesta está en la división de trabajo:</p>
+    <span class="label">Division of labour</span>
+    <h2>Why the intelligence is deterministic</h2>
+    <p class="prose">The two halves of the system answer different questions, and the boundary between them is the design:</p>
     <div class="grid2">
       <div class="card">
-        <h3>Lo determinístico — el cálculo</h3>
-        <p>Detección (CUSUM sobre residuo) y localización (ripple + scoring). Auditable, reproducible, generaliza a slices no vistos. Es la parte que <strong>tiene que ser correcta en vivo</strong>, y por eso no depende de un modelo.</p>
+        <h3>Deterministic &mdash; the computation</h3>
+        <p>Detection, localization, classification, cost and action selection. Auditable, reproducible, and it generalizes to slices never seen. This is the part that has to be correct under pressure, which is exactly why it does not depend on a model.</p>
       </div>
       <div class="card">
-        <h3>La IA — el entendimiento</h3>
-        <p>Interpreta el resultado contra las reglas de negocio, estima el impacto, redacta para dos audiencias y elige la acción del catálogo. <strong>La IA produce el entendimiento, no el número.</strong></p>
+        <h3>The model &mdash; the understanding</h3>
+        <p>It interprets the resolved result against the business rules, phrases it for two audiences and answers questions about the evidence. <strong>The model produces the understanding, never the number.</strong></p>
       </div>
     </div>
     <div class="note note--warn">
-      <p style="margin-bottom:.4rem"><strong>Munición extra para la defensa</strong></p>
-      <p style="margin-bottom:0">El problema tiene nombre y literatura: <span class="mono">multi-dimensional root cause localization</span> (Adtributor, HotSpot, Squeeze, RiskLoc). El drill-down goloso es esencialmente Adtributor y <strong>asume que la causa vive en una sola dimensión</strong> — falla ante la combinación que inyecta el juez. Elegimos base Squeeze porque la conversión es un <em>derived measure</em> (ratio, no suma): localizamos sobre intentos y aprobados por separado.</p>
+      <p style="margin-bottom:.4rem"><strong>Prior art</strong></p>
+      <p style="margin-bottom:0">The problem has a name and a literature: <span class="mono">multi-dimensional root cause localization</span> (Adtributor, HotSpot, Squeeze, RiskLoc). Greedy drill-down is essentially Adtributor, and it <strong>assumes the cause lives in a single dimension</strong> &mdash; it fails on a cross-dimensional combination. Squeeze is the closer basis here because conversion is a <em>derived measure</em>, a ratio rather than a sum, so localization runs over attempts and approvals separately.</p>
+    </div>
+  </section>
+
+  <section>
+    <span class="label">Trust contract</span>
+    <h2>What every diagnosis carries</h2>
+    <p class="prose">A diagnosis nobody can audit is worth nothing in payment operations. Each incident is emitted with the evidence needed to challenge it:</p>
+    <div class="grid2">
+      <div class="card">
+        <h3>Evidence</h3>
+        <p>Observed window and contextual reference. Sample size and approval delta in percentage points. Affected slice and the healthy controls that bound it. Dominant decline code and issuer-level evidence.</p>
+      </div>
+      <div class="card">
+        <h3>Limits</h3>
+        <p>Primary hypothesis, competing alternatives and missing data. Confidence level and estimated financial impact with its assumptions stated. Lifecycle is explicit: <span class="mono">observing &rarr; validating &rarr; diagnosing &rarr; detected / insufficient evidence &rarr; resolved</span>.</p>
+      </div>
     </div>
   </section>
 
   <section class="open">
-    <span class="label">Estado de integración (30/08)</span>
-    <h2>Pipeline entero, en vivo</h2>
+    <span class="label">With more time</span>
+    <h2>What we would build next</h2>
     <dl>
-      <dt>Loop de diagnóstico</dt>
-      <dd><code>backend/diagnosis_loop.py</code>: un <code>CentinelEngine</code> stateful que cada ~5 s toma el cubo de 60 s del ring buffer, corre detector → localizador → clasificador, lo pasa por el bridge <code>core.EngineOutput → contracts.EngineOutput</code> y por <code>diagnose()</code>. Guarda el snapshot (<code>GET /api/diagnosis</code>) y narra la cadena completa en español por la consola (<code>[GENERADOR] → [INYECTOR] → [MOTOR] → [BRIDGE] → [EXPLAIN] → [PRIORIDAD]</code>). Se monta en el <code>lifespan</code> al lado del supervisor del replay.</dd>
-      <dt>Datos reales</dt>
-      <dd>El costo sale de <code>money_lost</code> de Pena (ticket promedio real por celda), la evidencia de <code>get_evidence</code> sobre el ring. Postgres es opcional: <code>get_evidence</code>/<code>money_lost</code> van ring-first y <code>connect()</code> tiene <code>connect_timeout</code> — la demo corre sin base.</dd>
-      <dt>Frontend</dt>
-      <dd><code>/e2e</code>: panel de debug contra los endpoints reales (inyección con presets, <code>GET /api/diagnosis</code>, ticker SSE, el trace en el feed). <code>/control-tower</code>: la CommandCenter usa <code>useLive()</code> — muestra los incidentes reales del loop cuando los hay, cae al mock si no. Botones de inyección en la barra de stream.</dd>
-      <dt>Follow-up con Juani</dt>
-      <dd>El bloque "Selected incident" y el <code>SignalChart</code> de la CommandCenter siguen mock; pulir con evidencia real. Panel del juez como surface propia (<code>/demo-control</code>).</dd>
-    </dl>
-  </section>
+      <dt>Historical context per merchant and country</dt>
+      <dd>The engine compares against a seasonal baseline, but it does not yet know that a given merchant has failed three times this month. Feeding recurrence into the priority score would move the product from reporting to anticipating.</dd>
 
-  <section class="open">
-    <span class="label">Todavía sin cerrar</span>
-    <h2>Decisiones abiertas</h2>
-    <dl>
-      <dt>Dimensiones exactas del cubo de búsqueda</dt>
-      <dd><span class="rec">Recomendación:</span> <code>merchant × proveedor × método × país</code>. Banco emisor y código de rechazo entran como <em>evidencia</em> del slice ganador, no como ejes — alineado con lo que dijeron los mentores (sacar banco como dimensión).</dd>
+      <dt>Segmented stream for the view filter</dt>
+      <dd>The view filter narrows KPIs and the incident queue by cube dimension, while the charts stay global because the stream ticker is not segmented. Segmenting it would let an operator watch a single provider in isolation, end to end.</dd>
 
-      <dt>Cardinalidades y throughput del generador</dt>
-      <dd>Cuántos merchants / proveedores / métodos / países, y cuántas transacciones por minuto. Define el modelo de datos de Pena y el tamaño del cubo.</dd>
+      <dt>Threshold calibration against production traffic</dt>
+      <dd>The detector thresholds are calibrated against the synthetic world and validated over 90 healthy windows. That is calibration evidence for this dataset, not a production false-positive guarantee; real traffic would move them.</dd>
 
-      <dt>Números finales de latencia</dt>
-      <dd>Confirmar los <code>&lt; 45 s</code> / <code>&lt; 90 s</code> y el factor de compresión del reloj de la demo.</dd>
-
-      <dt>Overlap entre los dos incidentes simultáneos</dt>
-      <dd>¿Tienen que estar en dimensiones disjuntas (más fácil de separar) o pueden solaparse?</dd>
-
-      <dt>Nombre del producto</dt>
-      <dd>“Torre de Control” es el nombre de trabajo. Para el pitch conviene uno propio.</dd>
-
-      <dt>Alcance de la mini demo de las ~2 h</dt>
-      <dd>Recomendación de arranque: esqueleto end-to-end con todo falso — generador emitiendo, detector disparando sobre una caída hardcodeada, explicación stub, dashboard mostrando el incidente. Confirmar con el mentor qué espera ver.</dd>
+      <dt>Remediation with governed approval</dt>
+      <dd>Every action is simulation-only today. Executing one would require an approval trail, a rollback path and a policy the merchant signs off on &mdash; deliberately out of scope.</dd>
     </dl>
   </section>
 
   <footer>
-    <p>Borrador de trabajo · interno · español. La versión entregable (inglés, diagrama final) se arma en <code>arquitectura.md</code> cuando cierren las decisiones core.</p>
-    <p>Contexto: <code>06-dominio-pagos.md</code> · <code>07-decisiones-core.md</code> · <code>05-challenges.md</code> · registro en <code>decision-log.md</code>.</p>
+    <p>Centinel by toons &middot; NextWave Hackathon 2026 &middot; Yuno &times; Nauta &middot; supported by OpenAI.</p>
+    <p>Synthetic demo data throughout. Centinel diagnoses and recommends; it never executes a remediation.</p>
   </footer>
 
 </div>
