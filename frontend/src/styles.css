@@ -828,6 +828,31 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .comparison-recommendation { padding: 16px 20px 18px; }
 .comparison-recommendation span { color: var(--muted); font: 8px var(--mono); text-transform: uppercase; }
 .comparison-recommendation p { max-width: 760px; margin: 8px 0 0; color: #d3d3d7; font-size: 11px; line-height: 1.55; }
+.comparison-cause, .comparison-impact { margin-top: 24px; border: 1px solid var(--line-strong); background: #0a0a0c; }
+.comparison-cause > header, .comparison-impact > header { padding: 16px 18px; display: flex; align-items: flex-start; gap: 10px; border-bottom: 1px solid var(--line); }
+.comparison-cause > header svg, .comparison-impact > header svg { flex: 0 0 auto; margin-top: 2px; color: var(--signal-soft); }
+.comparison-cause > header div, .comparison-impact > header div { display: grid; gap: 6px; }
+.comparison-cause > header span, .comparison-impact > header span { color: var(--signal-soft); font: 8px var(--mono); text-transform: uppercase; letter-spacing: .05em; }
+.comparison-cause > header strong, .comparison-impact > header strong { font-size: 14px; font-weight: 520; }
+.comparison-cause--consistent { border-color: rgba(242,198,109,.32); }
+.comparison-cause--consistent > header svg, .comparison-cause--consistent > header span { color: var(--warning); }
+.comparison-cause--insufficient > header svg, .comparison-cause--insufficient > header span { color: #8e8e94; }
+.comparison-cause > div { display: grid; grid-template-columns: repeat(3, 1fr); border-bottom: 1px solid var(--line); }
+.comparison-cause p { min-width: 0; min-height: 78px; margin: 0; padding: 13px 15px; display: grid; align-content: start; gap: 7px; border-right: 1px solid var(--line); }
+.comparison-cause p:last-child { border-right: 0; }
+.comparison-cause p span { color: var(--muted); font-size: 9px; }
+.comparison-cause p strong { overflow: hidden; color: #dedee1; font: 10px/1.4 var(--mono); text-overflow: ellipsis; }
+.comparison-cause p small { color: #77777c; font: 8px var(--mono); }
+.comparison-cause > small, .comparison-impact > small { padding: 11px 15px; display: block; color: #77777c; font: 8px/1.45 var(--mono); }
+.comparison-impact-table { max-width: 100%; overflow-x: auto; }
+.comparison-impact table { width: 100%; border-collapse: collapse; white-space: nowrap; }
+.comparison-impact th { padding: 10px 12px; border-bottom: 1px solid var(--line); color: #77777c; font: 8px var(--mono); text-align: right; text-transform: uppercase; }
+.comparison-impact th:first-child, .comparison-impact td:first-child { text-align: left; }
+.comparison-impact td { padding: 12px; border-bottom: 1px solid #171719; color: #cfcfd3; font: 9px var(--mono); text-align: right; }
+.comparison-impact tbody tr:last-child td { border-bottom: 0; }
+.comparison-impact td strong { color: white; font-weight: 540; }
+.comparison-impact td small { margin-top: 4px; display: block; color: #77777c; font-size: 8px; }
+.comparison-impact td.is-negative { color: var(--incident); }
 .comparison-output footer { margin-top: 42px; padding-top: 20px; display: grid; grid-template-columns: 1fr 1fr; gap: 18px; border-top: 1px solid var(--line-strong); }
 .comparison-output footer div { display: grid; gap: 7px; }
 .comparison-output footer strong { font-size: 18px; font-weight: 520; }
@@ -883,6 +908,8 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
   .comparison-results > nav { max-height: 210px; border-right: 0; border-bottom: 1px solid var(--line); }
   .comparison-evidence { grid-template-columns: 1fr; }
   .comparison-evidence p { border-right: 0; border-bottom: 1px solid var(--line); }
+  .comparison-cause > div { grid-template-columns: 1fr; }
+  .comparison-cause p { border-right: 0; border-bottom: 1px solid var(--line); }
 }
 
 /* ---- Slack delivery toast ------------------------------------------------ */

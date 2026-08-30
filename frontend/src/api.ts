@@ -29,6 +29,24 @@ export type CubeResponse = {
   error?: string;
 };
 
+export type EvidenceResponse = {
+  window_s: number;
+  filters: Record<string, string>;
+  decline_codes: {
+    before: Record<string, number>;
+    after: Record<string, number>;
+  };
+  issuers: {
+    issuer_bank: string;
+    attempts: number;
+    approval_rate: number;
+    delta_pts: number;
+  }[];
+  sample_size: number;
+  wilson_ci: [number, number];
+  error?: string;
+};
+
 export type CostEstimate = {
   usd_per_hour: number;
   lost_approvals_window: number;
@@ -206,6 +224,13 @@ export const api = {
     call<CopilotResponse>("POST", "/api/copilot/ask", { diagnosis, question }),
   cube: (windowSeconds: number) =>
     call<CubeResponse>("GET", `/api/cube?window_s=${windowSeconds}`),
+  evidence: (windowSeconds: number, filters?: Record<string, string>) => {
+    const query = new URLSearchParams({
+      window_s: String(windowSeconds),
+      ...Object.fromEntries(Object.entries(filters ?? {}).filter(([, value]) => value)),
+    }).toString();
+    return call<EvidenceResponse>("GET", `/api/evidence?${query}`);
+  },
 
   // loop de diagnóstico vivo
   getSnapshot: () => call<DiagnosisSnapshot>("GET", "/api/diagnosis"),
