@@ -17,8 +17,8 @@ const Z_95 = 1.96;
 // El eje se acerca todo lo posible para que la banda sea legible: el dominio mínimo es apenas más
 // ancho que la banda misma (±1,04 pts con n≈3.900). No se ensancha el intervalo — eso mentiría —
 // se acerca el zoom. Cuando entra un incidente el dominio se expande solo para contener la caída.
-const MIN_RANGE_PTS = 4;
-const PAD_PTS = 0.8;
+const MIN_RANGE_PTS = 2.6;
+const PAD_PTS = 0.35;
 
 const LEFT = 54;
 const WIDTH = 846;

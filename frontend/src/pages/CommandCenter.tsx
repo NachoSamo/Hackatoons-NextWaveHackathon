@@ -284,10 +284,10 @@ function LiveWorkspace({ points }: { points: SignalPoint[] }) {
         })}
       </tbody></table></div>
     </section>
-    <div className="tower-chart-heading"><div><strong>{text("Transaction volume by incoming snapshot", "Volumen de transacciones por snapshot entrante")}</strong><span><i className="legend-approved" />{text("Approved", "Aprobadas")} <i className="legend-declined" />{text("Declined", "Rechazadas")} <i className="legend-reference" />{text("Expected approvals", "Aprobaciones esperadas")}</span></div><small>{points.length}/30 {text("snapshots · rolling 60-second mix", "snapshots · mezcla móvil de 60 segundos")}</small></div>
-    <LiveSignalChart points={points} />
     <div className="tower-chart-heading"><div><strong>{text("Approval rate vs expected range", "Tasa de aprobación vs rango esperado")}</strong><span><i className="legend-observed" />{text("Observed", "Observada")} <i className="legend-reference" />{text("Expected", "Esperada")} <i className="legend-band" />{text("Expected range (95%)", "Rango esperado (95%)")}</span></div><small>{text("Prediction interval from the seasonal baseline and the 60-second sample size", "Intervalo de predicción del baseline estacional y el tamaño de muestra de 60 segundos")}</small></div>
     <ExpectedBandChart points={points} />
+    <div className="tower-chart-heading"><div><strong>{text("Transaction volume by incoming snapshot", "Volumen de transacciones por snapshot entrante")}</strong><span><i className="legend-approved" />{text("Approved", "Aprobadas")} <i className="legend-declined" />{text("Declined", "Rechazadas")} <i className="legend-reference" />{text("Expected approvals", "Aprobaciones esperadas")}</span></div><small>{points.length}/30 {text("snapshots · 6-second candles", "snapshots · velas de 6 segundos")}</small></div>
+    <LiveSignalChart points={points} />
   </section>;
 }
 
