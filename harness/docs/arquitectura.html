@@ -476,6 +476,7 @@
         <dl class="layer__body">
           <div><dt>Hace</dt><dd>Recibe el output estructurado del motor, la acción ya seleccionada desde catálogo, la evidencia y el costo. Carga reglas de negocio <span class="mono">.md</span> y usa Pydantic AI sin tools sólo para redactar en dos audiencias.</dd></div>
           <div><dt>No hace</dt><dd class="no">No busca la causa raíz, no calcula ni elige la acción: todo eso ya vino resuelto y auditable del motor y del playbook. La base <span class="mono">.md</span> es estática y no se toca en la demo.</dd></div>
+          <div><dt>Copilot</dt><dd>Segunda superficie del LLM: responde <span class="k">preguntas del operador</span> sobre un diagnóstico ya resuelto (<span class="mono">explain/copilot.py</span>, <span class="mono">gpt-4o-mini</span>, 6 s). Comparte las mismas reglas <span class="mono">.md</span> (<span class="mono">DOMAIN_RULES</span>) que la redacción, para no contradecir en pantalla lo que esa misma base ya escribió. Sigue sin poder elegir diagnóstico ni acción; si la pregunta excede el bundle responde <span class="mono">out_of_scope</span> en vez de inventar. La UI muestra primero una respuesta determinística y sólo la reemplaza si el LLM contesta a tiempo.</dd></div>
           <div><dt>Stack</dt><dd>Pydantic AI (OpenAI, sin tools) + archivos <span class="mono">.md</span> · salida estructurada · temperatura 0.</dd></div>
           <div><dt>Dueño</dt><dd>Samo. Mitigación de riesgo: salida validada contra un esquema y templates determinísticos si OpenAI falla.</dd></div>
         </dl>

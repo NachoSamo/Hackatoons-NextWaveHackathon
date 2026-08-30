@@ -319,7 +319,7 @@ function LiveWorkspace({ points }: { points: SignalPoint[] }) {
   const rows = [...points].reverse();
   return <section className="signal-surface live-workspace">
     <section className="pipeline-log">
-      <header><div><strong>{text("Incoming transaction log", "Log de transacciones entrantes")}</strong><span>{text("Every snapshot evaluated by detection · newest first", "Todos los snapshots evaluados por detección · más recientes primero")}</span></div><b>{rows.length}/30 {text("snapshots", "snapshots")}</b></header>
+      <header><i className="section-num">1</i><div><strong>{text("Incoming transaction log", "Log de transacciones entrantes")}</strong><span>{text("Everything that arrives, evaluated one by one — even when nothing happens", "Todo lo que entra, evaluado una por una — incluso cuando no pasa nada")}</span></div><b>{rows.length}/30 {text("snapshots", "snapshots")}</b></header>
       <div className="pipeline-table-wrap"><table><thead><tr><th>{text("Time", "Hora")}</th><th>{text("Transactions", "Transacciones")}</th><th>{text("Approved", "Aprobadas")}</th><th>{text("Declined", "Rechazadas")}</th><th>{text("Approval", "Approval")}</th><th>{text("Expected", "Esperado")}</th><th>{text("Signal", "Señal")}</th></tr></thead><tbody>
         {!rows.length && <tr className="pipeline-empty"><td colSpan={7}>{text("Start the stream to see every incoming snapshot evaluated by Centinel.", "Iniciá el stream para ver cada snapshot entrante evaluado por Centinel.")}</td></tr>}
         {rows.map((point) => {
@@ -335,9 +335,9 @@ function LiveWorkspace({ points }: { points: SignalPoint[] }) {
         })}
       </tbody></table></div>
     </section>
-    <div className="tower-chart-heading"><div><strong>{text("Approval rate vs expected range", "Tasa de aprobación vs rango esperado")}</strong><span><i className="legend-observed" />{text("Observed", "Observada")} <i className="legend-reference" />{text("Expected", "Esperada")} <i className="legend-band" />{text("Expected range (95%)", "Rango esperado (95%)")}</span></div><small>{text("Prediction interval from the seasonal baseline and the 60-second sample size", "Intervalo de predicción del baseline estacional y el tamaño de muestra de 60 segundos")}</small></div>
+    <div className="tower-chart-heading"><i className="section-num">2</i><div><strong>{text("Approval rate vs expected range", "Tasa de aprobación vs rango esperado")}</strong><span>{text("If the line leaves the band, the drop is not statistical noise", "Si la línea sale de la banda, la caída no es ruido estadístico")}</span></div><small className="chart-legend"><i className="legend-observed" />{text("Observed", "Observada")} <i className="legend-reference" />{text("Expected", "Esperada")} <i className="legend-band" />{text("Expected range (95%)", "Rango esperado (95%)")}</small></div>
     <ExpectedBandChart points={points} />
-    <div className="tower-chart-heading"><div><strong>{text("Transaction volume by incoming snapshot", "Volumen de transacciones por snapshot entrante")}</strong><span><i className="legend-approved" />{text("Approved", "Aprobadas")} <i className="legend-declined" />{text("Declined", "Rechazadas")} <i className="legend-reference" />{text("Expected approvals", "Aprobaciones esperadas")}</span></div><small>{points.length}/30 {text("snapshots · 6-second candles", "snapshots · velas de 6 segundos")}</small></div>
+    <div className="tower-chart-heading"><i className="section-num">3</i><div><strong>{text("Transaction volume by incoming snapshot", "Volumen de transacciones por snapshot entrante")}</strong><span>{text("How much volume backs that rate — a drop with little volume is not an incident", "Cuánto volumen respalda esa tasa — una caída con poco volumen no es un incidente")}</span></div><small className="chart-legend"><i className="legend-approved" />{text("Approved", "Aprobadas")} <i className="legend-declined" />{text("Declined", "Rechazadas")} <i className="legend-reference" />{text("Expected approvals", "Aprobaciones esperadas")}</small></div>
     <LiveSignalChart points={points} />
   </section>;
 }

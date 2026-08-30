@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { ArrowRight, Bot, CalendarRange, Check, ChevronDown, X } from "lucide-react";
-import type { Diagnosis } from "../api";
+import { api, type Diagnosis } from "../api";
 import { useLanguage } from "../i18n";
 import { diagnosisHeadline, diagnosisNarrative, localizeAction, localizeEvidence, localizeScope, localizeToken } from "../localization";
 import { LanguageToggle } from "./LanguageToggle";
@@ -14,6 +14,10 @@ export function DiagnosisWorkspace({ diagnosis, onClose }: Props) {
   const [audience, setAudience] = useState<"operations" | "executive">("operations");
   const [question, setQuestion] = useState("");
   const [answer, setAnswer] = useState<string | null>(null);
+  const [refining, setRefining] = useState(false);
+  const [grounded, setGrounded] = useState(false);
+  // Descarta respuestas que llegan tarde si el operador ya preguntó otra cosa.
+  const askSeq = useRef(0);
   const [comparisonOpen, setComparisonOpen] = useState(false);
   const dialogRef = useDialogFocus(onClose);
   const action = diagnosis.recommended_action ? localizeAction(diagnosis.recommended_action, diagnosis, language) : null;
@@ -30,31 +34,49 @@ export function DiagnosisWorkspace({ diagnosis, onClose }: Props) {
     text("What should we do next?", "¿Qué hacemos ahora?"),
   ], [text]);
 
-  const ask = (value: string) => {
-    setQuestion(value);
+  const deterministicAnswer = (value: string): string => {
     const normalized = value.toLowerCase();
     if (normalized.includes("next") || normalized.includes("ahora") || normalized.includes("hacer")) {
-      setAnswer(action?.rationale ?? text("Keep monitoring until the evidence is sufficient.", "Seguí monitoreando hasta que la evidencia sea suficiente."));
+      return (action?.rationale ?? text("Keep monitoring until the evidence is sufficient.", "Seguí monitoreando hasta que la evidencia sea suficiente."));
     } else if (normalized.includes("owner") || normalized.includes("responsable")) {
-      setAnswer(action
+      return (action
         ? text(`Likely owner: ${action.owner}. ${action.rationale}`, `Responsable probable: ${action.owner}. ${action.rationale}`)
         : text("The evidence does not support assigning an owner yet.", "La evidencia todavía no permite asignar un responsable."));
     } else if (normalized.includes("when") || normalized.includes("since") || normalized.includes("cuándo") || normalized.includes("desde")) {
       const started = new Date(diagnosis.estimated_start).toLocaleTimeString(language === "es" ? "es-AR" : "en-US", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
-      setAnswer(text(`The earliest supported start is ${started}.`, `El inicio más temprano respaldado por evidencia es ${started}.`));
+      return (text(`The earliest supported start is ${started}.`, `El inicio más temprano respaldado por evidencia es ${started}.`));
     } else if (normalized.includes("affect") || normalized.includes("afecta") || normalized.includes("impact")) {
-      setAnswer(text(`Affected scope: ${scope}. Estimated impact: ${diagnosis.cost ? `$${diagnosis.cost.usd_per_hour.toLocaleString()}/h` : "not available"}.`, `Alcance afectado: ${scope}. Impacto estimado: ${diagnosis.cost ? `$${diagnosis.cost.usd_per_hour.toLocaleString()}/h` : "no disponible"}.`));
+      return (text(`Affected scope: ${scope}. Estimated impact: ${diagnosis.cost ? `$${diagnosis.cost.usd_per_hour.toLocaleString()}/h` : "not available"}.`, `Alcance afectado: ${scope}. Impacto estimado: ${diagnosis.cost ? `$${diagnosis.cost.usd_per_hour.toLocaleString()}/h` : "no disponible"}.`));
     } else if (normalized.includes("alternative") || normalized.includes("contrad") || normalized.includes("alternativa")) {
-      setAnswer(diagnosis.alternatives.length
+      return (diagnosis.alternatives.length
         ? diagnosis.alternatives.map((item) => localizeEvidence(item, language)).join(" ")
         : text("No stronger alternative hypothesis is supported by the current evidence bundle.", "El paquete de evidencia actual no respalda una hipótesis alternativa más fuerte."));
     } else if (normalized.includes("change") || normalized.includes("cambió") || normalized.includes("cambio")) {
-      setAnswer(diagnosis.evidence.slice(0, 3).map((item) => localizeEvidence(item, language)).join(" "));
+      return (diagnosis.evidence.slice(0, 3).map((item) => localizeEvidence(item, language)).join(" "));
     } else if (normalized.includes("why") || normalized.includes("por qué") || normalized.includes("porque")) {
-      setAnswer(diagnosisNarrative(diagnosis, "operations", language));
+      return (diagnosisNarrative(diagnosis, "operations", language));
     } else {
-      setAnswer(text("I can answer what changed, when it started, who is affected, why ownership is likely, alternative hypotheses and the recommended next action.", "Puedo responder qué cambió, cuándo empezó, a quién afecta, por qué se asigna el responsable, hipótesis alternativas y la próxima acción recomendada."));
+      return (text("I can answer what changed, when it started, who is affected, why ownership is likely, alternative hypotheses and the recommended next action.", "Puedo responder qué cambió, cuándo empezó, a quién afecta, por qué se asigna el responsable, hipótesis alternativas y la próxima acción recomendada."));
     }
+  };
+
+  // Responde YA con la versión determinística y después la refina con el LLM.
+  // Si el LLM falla, tarda o no hay API key, queda la determinística y no se nota nada:
+  // nunca hay spinner vacío ni espera visible. Mismo principio que explain/build.py.
+  const ask = (value: string) => {
+    const seq = ++askSeq.current;
+    setQuestion(value);
+    setAnswer(deterministicAnswer(value));
+    setGrounded(false);
+    setRefining(true);
+    void api.askCopilot(diagnosis, value).then(({ data }) => {
+      if (seq !== askSeq.current) return; // llegó tarde: ya preguntaron otra cosa
+      setRefining(false);
+      if (data?.answer) {
+        setAnswer(data.answer);
+        setGrounded(true);
+      }
+    });
   };
 
   useEffect(() => {
@@ -125,7 +147,11 @@ export function DiagnosisWorkspace({ diagnosis, onClose }: Props) {
             </form>
             <div className="copilot-suggestions">{suggested.map((item) => <button key={item} onClick={() => ask(item)}>{item}<ArrowRight size={13} /></button>)}</div>
             <button className="copilot-compare" type="button" onClick={() => setComparisonOpen(true)}><CalendarRange size={14} />{text("Compare windows", "Comparar ventanas")}<ArrowRight size={13} /></button>
-            {answer && <div className="copilot-answer"><span>{question}</span><p>{answer}</p><small>{text("Sources: deterministic diagnosis + evidence bundle", "Fuentes: diagnóstico determinístico + paquete de evidencia")}</small></div>}
+            {answer && <div className={`copilot-answer ${refining ? "is-refining" : ""}`}><span>{question}</span><p>{answer}</p><small>{refining
+              ? <><i className="copilot-dot" aria-hidden="true" />{text("Grounding in the evidence bundle…", "Contrastando con el paquete de evidencia…")}</>
+              : grounded
+                ? text("Answered from this evidence bundle · the diagnosis and action are unchanged", "Respondido desde este paquete de evidencia · el diagnóstico y la acción no cambian")
+                : text("Sources: deterministic diagnosis + evidence bundle", "Fuentes: diagnóstico determinístico + paquete de evidencia")}</small></div>}
           </aside>
         </div>
       </section>
