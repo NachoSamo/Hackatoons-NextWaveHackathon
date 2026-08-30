@@ -44,9 +44,9 @@ Centinel:  The decline-code shift and latency increase are concentrated in Adyen
 
 > [!NOTE]
 > **Current branch:** the interactive product experience, reproducible synthetic dataset,
-> deterministic diagnosis core and typed explanation layer are implemented. The live stream,
-> injector and frontend API wiring are the active integration boundary. The sections below
-> distinguish the target demo from what can already be verified in the repository.
+> deterministic diagnosis core, typed explanation layer, live replay and parametric injector are
+> implemented. Frontend consumption of the live backend remains the active integration boundary.
+> The sections below distinguish the target demo from what can already be verified in the repository.
 
 ---
 
@@ -241,11 +241,26 @@ This is a hackathon prototype under active integration. The repository currently
 | Synthetic payment world, baseline and fixture generation | **Implemented** and seeded for reproducibility |
 | Deterministic detection, localization and classification core | **Implemented** with an acceptance runner |
 | Typed diagnosis and explanation API | **Implemented** with OpenAI + deterministic fallback |
-| Live stream, parametric injector and frontend API wiring | **Integration in progress** |
+| Live stream, parametric injector and query API | **Implemented**; PostgreSQL persistence activates when `DATABASE_URL` is configured |
+| Frontend API wiring | **Integration in progress** |
 | Production remediation | **Intentionally out of scope**; Centinel diagnoses and recommends |
 
 This distinction is deliberate: synthetic behavior is labeled, incomplete integration is not
 presented as production capability and no customer metrics or testimonials are fabricated.
+
+### Pitch refresh and recovery
+
+Before the pitch, re-anchor the deterministic fixture, reload PostgreSQL and create an external
+recovery snapshot in one explicit command. The target folder must be outside the repository and
+`DATABASE_URL` must point at the local demo database.
+
+```bash
+python -B backend/data/refresh.py --at 2026-08-30T07:30:00Z --seed-db --backup-dir /path/outside/repo
+```
+
+The snapshot includes the three Parquet artifacts and `centinel.pg_dump`. The generated
+`manifest.json` contains the matching `pg_restore` command. Use `--dry-run` first to inspect the
+anchor without modifying files.
 
 ---
 

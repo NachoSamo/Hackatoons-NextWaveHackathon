@@ -53,7 +53,9 @@ BASELINE_PATH = PROJECT_ROOT / "backend" / "data" / "out" / "baseline_profile.pa
 CellKey = tuple[str, str, str, str]
 ObservedCell = tuple[int, int, float]
 ObservedSource = Callable[[int], tuple[datetime, dict[CellKey, ObservedCell]] | None]
+LiveRowsSource = Callable[[int], list[dict[str, Any]]]
 _observed_source: ObservedSource | None = None
+_live_rows_source: LiveRowsSource | None = None
 _local_baseline: pd.DataFrame | None = None
 
 
@@ -61,6 +63,12 @@ def set_observed_source(source: ObservedSource | None) -> None:
     """Registra el ring buffer de T6 sin cambiar la firma pública del cubo."""
     global _observed_source
     _observed_source = source
+
+
+def set_live_rows_source(source: LiveRowsSource | None) -> None:
+    """Registra las filas del ring para evidencia sin depender de PostgreSQL."""
+    global _live_rows_source
+    _live_rows_source = source
 
 
 def _window_seconds(window_s: int) -> int:
@@ -214,6 +222,27 @@ def _local_baseline_profiles(anchor: datetime) -> list[tuple[Any, ...]]:
         ],
     ].sort_values(["merchant_id", "provider_id", "payment_method", "country"])
     return list(profiles.itertuples(index=False, name=None))
+
+
+def _local_baseline_rates(filters: Mapping[str, Any]) -> dict[tuple[int, str], float]:
+    """Rates del parquet para el fallback del ring buffer."""
+    global _local_baseline
+    if _local_baseline is None:
+        _local_baseline = pd.read_parquet(BASELINE_PATH)
+
+    profiles = _local_baseline
+    for column in DIMENSION_COLUMNS:
+        if column in filters:
+            profiles = profiles.loc[profiles[column] == filters[column]]
+    grouped = profiles.groupby(["hour_utc", "day_type"], sort=False)[
+        ["attempts", "approved"]
+    ].sum()
+    return {
+        (int(hour_utc), str(day_type)): float(row["approved"])
+        / float(row["attempts"])
+        for (hour_utc, day_type), row in grouped.iterrows()
+        if float(row["attempts"]) > 0
+    }
 
 
 def _forecast_profiles(anchor: datetime) -> list[tuple[Any, ...]]:
@@ -384,24 +413,198 @@ def _wilson_interval(approved: int, attempts: int) -> list[float]:
     return [round(max(0.0, center - margin), 6), round(min(1.0, center + margin), 6)]
 
 
+def _ring_rows(window_s: int) -> list[dict[str, Any]]:
+    if _live_rows_source is None:
+        return []
+    try:
+        return list(_live_rows_source(window_s))
+    except Exception:
+        return []
+
+
+def _row_matches(row: Mapping[str, Any], filters: Mapping[str, Any]) -> bool:
+    return all(str(row.get(column)) == str(value) for column, value in filters.items())
+
+
+def _decline_counts_from_rows(rows: list[dict[str, Any]]) -> dict[str, int]:
+    counts: dict[str, int] = {}
+    for row in rows:
+        code = row.get("decline_code")
+        if bool(row.get("approved")) or code is None or pd.isna(code):
+            continue
+        name = str(code)
+        counts[name] = counts.get(name, 0) + 1
+    return dict(sorted(counts.items()))
+
+
+def _issuer_rollup_from_rows(rows: list[dict[str, Any]]) -> dict[str, tuple[int, int]]:
+    rollup: dict[str, list[int]] = {}
+    for row in rows:
+        issuer = str(row.get("issuer_bank", ""))
+        values = rollup.setdefault(issuer, [0, 0])
+        values[0] += 1
+        values[1] += int(bool(row.get("approved")))
+    return {issuer: (values[0], values[1]) for issuer, values in rollup.items()}
+
+
+def _row_simulation_at(row: Mapping[str, Any]) -> datetime:
+    value = row.get("simulation_at") or row.get("created_at")
+    return _utc(value)
+
+
+def _ring_evidence(filters: Mapping[str, Any], seconds: int) -> dict[str, Any]:
+    """Fallback visible: evidencia desde memoria cuando PostgreSQL no responde."""
+    rows = _ring_rows(seconds * 2)
+    if not rows:
+        empty_series = [
+            {
+                "ts": (datetime.now(timezone.utc) - timedelta(seconds=seconds - 1 - index)).isoformat(),
+                "attempts": 0,
+                "approval_rate": None,
+                "expected_rate": 0.0,
+            }
+            for index in range(seconds)
+        ]
+        return {
+            "decline_codes": {"before": {}, "after": {}},
+            "issuers": [],
+            "series": empty_series,
+            "sample_size": 0,
+            "wilson_ci": [0.0, 1.0],
+        }
+
+    end = _utc(rows[-1]["created_at"])
+    after_start = end - timedelta(seconds=seconds)
+    before_start = after_start - timedelta(seconds=seconds)
+    before_rows = [
+        row
+        for row in rows
+        if before_start < _utc(row["created_at"]) <= after_start
+        and _row_matches(row, filters)
+    ]
+    after_rows = [
+        row
+        for row in rows
+        if after_start < _utc(row["created_at"]) <= end
+        and _row_matches(row, filters)
+    ]
+    before_issuers = _issuer_rollup_from_rows(before_rows)
+    after_issuers = _issuer_rollup_from_rows(after_rows)
+    baseline_rates = _local_baseline_rates(filters)
+
+    issuers: list[dict[str, Any]] = []
+    for issuer_bank in set(before_issuers) | set(after_issuers):
+        before_attempts, before_approved = before_issuers.get(issuer_bank, (0, 0))
+        attempts, approved = after_issuers.get(issuer_bank, (0, 0))
+        approval_rate = approved / attempts if attempts else 0.0
+        before_rate = before_approved / before_attempts if before_attempts else 0.0
+        issuers.append(
+            {
+                "issuer_bank": issuer_bank,
+                "attempts": attempts,
+                "approval_rate": round(approval_rate, 6),
+                "delta_pts": round(
+                    (approval_rate - before_rate) * 100 if before_attempts else 0.0,
+                    3,
+                ),
+            }
+        )
+    issuers.sort(
+        key=lambda item: (-abs(item["delta_pts"]), -item["attempts"], item["issuer_bank"])
+    )
+
+    series_rows: dict[datetime, list[float]] = {}
+    for row in after_rows:
+        timestamp = _utc(row["created_at"]).replace(microsecond=0)
+        values = series_rows.setdefault(timestamp, [0, 0, 0.0])
+        values[0] += 1
+        values[1] += int(bool(row.get("approved")))
+        simulation_at = _row_simulation_at(row)
+        values[2] += baseline_rates.get(
+            (simulation_at.hour, _day_type(simulation_at)), 0.0
+        )
+
+    series: list[dict[str, Any]] = []
+    total_attempts = 0
+    total_approved = 0
+    first_second = end.replace(microsecond=0) - timedelta(seconds=seconds - 1)
+    for offset in range(seconds):
+        timestamp = first_second + timedelta(seconds=offset)
+        attempts, approved, expected_total = series_rows.get(timestamp, [0, 0, 0.0])
+        series.append(
+            {
+                "ts": timestamp.isoformat(),
+                "attempts": int(attempts),
+                "approval_rate": round(approved / attempts, 6) if attempts else None,
+                "expected_rate": round(expected_total / attempts, 6) if attempts else 0.0,
+            }
+        )
+        total_attempts += int(attempts)
+        total_approved += int(approved)
+
+    return {
+        "decline_codes": {
+            "before": _decline_counts_from_rows(before_rows),
+            "after": _decline_counts_from_rows(after_rows),
+        },
+        "issuers": issuers,
+        "series": series,
+        "sample_size": total_attempts,
+        "wilson_ci": _wilson_interval(total_approved, total_attempts),
+    }
+
+
+def _ring_money_lost(filters: Mapping[str, Any], seconds: int) -> dict[str, float]:
+    if _live_rows_source is None:
+        raise RuntimeError("Live ring source unavailable")
+    rows = [row for row in _ring_rows(seconds) if _row_matches(row, filters)]
+    if not rows:
+        return {"lost_attempts": 0.0, "avg_ticket_usd": 0.0, "usd_per_hour": 0.0}
+
+    baseline_rates = _local_baseline_rates(filters)
+    attempts = len(rows)
+    approved = sum(int(bool(row.get("approved"))) for row in rows)
+    expected_rate = sum(
+        baseline_rates.get(
+            (_row_simulation_at(row).hour, _day_type(_row_simulation_at(row))), 0.0
+        )
+        for row in rows
+    ) / attempts
+    observed_rate = approved / attempts
+    average_ticket = sum(float(row.get("amount_usd", 0.0)) for row in rows) / attempts
+    lost_attempts = max(0.0, attempts * (expected_rate - observed_rate))
+    return {
+        "lost_attempts": round(lost_attempts, 4),
+        "avg_ticket_usd": round(average_ticket, 2),
+        "usd_per_hour": round(lost_attempts * average_ticket * SECONDS_PER_HOUR / seconds, 2),
+    }
+
+
 def get_evidence(filters: dict[str, Any], window_s: int) -> dict[str, Any]:
     """Compara ventanas consecutivas y expone evidencia para el localizador."""
     selected_filters = _filters(filters)
     seconds = _window_seconds(window_s)
 
-    with connect() as connection:
-        after_start, end = _window_bounds(connection, seconds)
-        before_start = after_start - timedelta(seconds=seconds)
-        before_declines = _decline_counts(
-            connection, before_start, after_start, selected_filters
-        )
-        after_declines = _decline_counts(connection, after_start, end, selected_filters)
-        before_issuers = _issuer_rollup(
-            connection, before_start, after_start, selected_filters
-        )
-        after_issuers = _issuer_rollup(connection, after_start, end, selected_filters)
-        series_rows = _series_rollup(connection, after_start, end, selected_filters)
-        baseline_rates = _baseline_rates(connection, selected_filters)
+    try:
+        with connect() as connection:
+            after_start, end = _window_bounds(connection, seconds)
+            before_start = after_start - timedelta(seconds=seconds)
+            before_declines = _decline_counts(
+                connection, before_start, after_start, selected_filters
+            )
+            after_declines = _decline_counts(
+                connection, after_start, end, selected_filters
+            )
+            before_issuers = _issuer_rollup(
+                connection, before_start, after_start, selected_filters
+            )
+            after_issuers = _issuer_rollup(
+                connection, after_start, end, selected_filters
+            )
+            series_rows = _series_rollup(connection, after_start, end, selected_filters)
+            baseline_rates = _baseline_rates(connection, selected_filters)
+    except Exception:
+        return _ring_evidence(selected_filters, seconds)
 
     issuers: list[dict[str, Any]] = []
     for issuer_bank in set(before_issuers) | set(after_issuers):
@@ -455,21 +658,24 @@ def money_lost(filters: dict[str, Any], window_s: int) -> dict[str, float]:
     selected_filters = _filters(filters)
     seconds = _window_seconds(window_s)
 
-    with connect() as connection:
-        start, end = _window_bounds(connection, seconds)
-        where, values = _transaction_where(start, end, selected_filters)
-        with connection.cursor() as cursor:
-            cursor.execute(
-                f"""
-                SELECT count(*), count(*) FILTER (WHERE approved),
-                       COALESCE(avg(amount_usd), 0)
-                FROM transactions
-                WHERE {where}
-                """,
-                values,
-            )
-            attempts, approved, avg_ticket_usd = cursor.fetchone()
-        baseline_rates = _baseline_rates(connection, selected_filters)
+    try:
+        with connect() as connection:
+            start, end = _window_bounds(connection, seconds)
+            where, values = _transaction_where(start, end, selected_filters)
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    f"""
+                    SELECT count(*), count(*) FILTER (WHERE approved),
+                           COALESCE(avg(amount_usd), 0)
+                    FROM transactions
+                    WHERE {where}
+                    """,
+                    values,
+                )
+                attempts, approved, avg_ticket_usd = cursor.fetchone()
+            baseline_rates = _baseline_rates(connection, selected_filters)
+    except Exception:
+        return _ring_money_lost(selected_filters, seconds)
 
     attempts = int(attempts)
     approved = int(approved)

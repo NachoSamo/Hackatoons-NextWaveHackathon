@@ -43,6 +43,43 @@ POST /api/agent/explain
 
 GET /api/incidents/{id}/diagnosis
   response: { diagnosis: Diagnosis | null, error?: string }
+
+GET /api/stream
+  SSE data: { ts, observed_rate, expected_rate, tx_count }
+
+GET /api/overview?window_s=60
+  response: { window_s, stream, attempts, approved, observed_rate, expected_rate,
+              active_incidents: Incident[], replay_error, copy_error, simulation_only: true }
+
+GET /api/cube?window_s=60
+  response: { window_s, leaves: Leaf[] }
+
+GET /api/evidence?window_s=60&provider_id=adyen&country=BR
+  response: { window_s, filters, decline_codes: { before, after }, issuers, series,
+              sample_size, wilson_ci }
+
+GET /api/inject/options
+  response: { filter_fields, merchants, providers, countries, methods_by_country,
+              issuers_by_country, decline_codes, magnitude, presets, simulation_only: true }
+
+POST /api/inject
+  request: { filters, magnitude, decline_code, duration_s?, label? }
+        | { preset_id: "provider_br" | "issuer_mx" | "weak_signal" }
+  response: { incident_id, incident: Incident }
+
+POST /api/inject/{id}/stop
+  response: { incident_id, incident: Incident }
+
+GET /api/incidents/active
+  response: { incidents: Incident[] }
+
+POST /api/actions/apply
+  request: { incident_id }
+  response: { incident_id, incident: Incident, simulation_only: true, message }
+
+POST /api/demo/reset
+  response: { reset: true, deleted_live_transactions: int | null,
+              persistence_error: string | null, active_incidents: [], simulation_only: true }
 ```
 
 `EngineOutput` = `{ incidents: IncidentEvidence[] }` (lista → soporta 2 incidentes simultáneos).
@@ -59,6 +96,13 @@ plata + slice), `executive` / `operations` / `alternatives` (LLM, con fallback J
 (determinístico), `missing_data[]`, `cost` (`money_lost` de Pena, o fallback), `recommended_action`
 (del catálogo, `simulation_only: true`), `llm_used`. Cuando `diagnosis_status != supported` →
 acción `monitor_for_evidence`, `cost: null`, `missing_data` poblado.
+
+`Leaf` siempre separa `attempts` de `approved` y conserva `fc_attempts`, `fc_approved` y
+`amount_usd_sum`. `Incident` contiene `incident_id`, `filters`, `magnitude`,
+`current_multiplier`, `decline_code`, `label`, `started_at`, `duration_s`, `status`, `active`,
+`stopped_at`, `mitigated_at` y `simulation_only`. Los filtros válidos son cualquier subconjunto de
+`merchant_id`, `provider_id`, `payment_method`, `country` e `issuer_bank`; los valores permitidos
+se obtienen exclusivamente desde `/api/inject/options`.
 
 ## Propiedad del código
 
