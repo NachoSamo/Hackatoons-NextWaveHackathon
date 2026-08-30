@@ -41,6 +41,7 @@ export function useLive(active: boolean) {
     await api.resetDemo();
     setSnapshot(null);
     setOverview(null);
+    setTicker(null);
   }, []);
 
   const injectPreset = useCallback(

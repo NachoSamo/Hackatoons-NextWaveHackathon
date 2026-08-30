@@ -13,7 +13,7 @@
 | 1:20–1:50 | 0:30 | Product preview | Centinel detects, diagnoses, explains and recommends; it does not remediate |
 | 1:50–2:00 | 0:10 | CTA transition | Move from promise to operational proof |
 | 2:00–2:20 | 0:20 | Healthy Command Center | Normal noise produces trustworthy silence |
-| 2:20–2:35 | 0:15 | Judge injector | Inject prepared Adyen × Brazil degradation |
+| 2:20–2:35 | 0:15 | Detection filters | Select Adyen × Brazil, then simulate the signal in that scope |
 | 2:35–3:20 | 0:45 | Validating → incident | Detection, localization, impact and likely ownership |
 | 3:20–4:10 | 0:50 | Investigation + Copilot | Evidence, temporal comparison, Operations / Executive, human action |
 | 4:10–4:40 | 0:30 | Two incidents | Separation and explainable prioritization |
@@ -65,9 +65,9 @@ Click `Start live stream`.
 “Payments are entering in real time. Observed approval moves around its contextual fourteen-day
 baseline, but Centinel stays silent. Variation is normal. Noise is not an incident.”
 
-### 2:20 — Prepared injection
+### 2:20 — Detection scope
 
-Inject the prepared provider degradation: `Adyen × PIX × Brazil`.
+Open `Detection filters`, select `Adyen × Brazil`, then click `Simulate signal in scope`.
 
 “A provider now starts over-declining only in Brazil. Nobody refreshes a dashboard and nobody
 changes a filter.”
@@ -111,7 +111,7 @@ money.”
 
 ### 4:10 — Simultaneous incidents
 
-Return to `Live Monitoring`; trigger the prepared Mexican issuer case.
+Return to `Live stream`; select `Rappido × Mexico` and simulate the second signal.
 
 “At the same time, one Mexican issuing bank fails for a single merchant. Centinel does not merge
 both drops into one vague outage. It keeps separate scopes, evidence, owners and impact, then
@@ -146,7 +146,7 @@ Stop. Do not add another closing paragraph.
 - At 2:00 the landing must already be open; no setup is shown.
 - The product introduction is a hard stop at 2:00, even if a sentence was missed.
 - Historical Explore and PolicyDraft are already cut from the timed demo; describe them only in Q&A.
-- The judge receives only valid dropdowns, never JSON.
+- The judge receives the same dimensional filter surface used by operations, never a hidden prepared-scenario menu or raw JSON.
 - After `Inject incident`, the presenting team does not touch the keyboard.
 - If OpenAI fails, use the structured explanation fallback without apologizing.
 - If time reaches 5:05, jump immediately to trial by fire.

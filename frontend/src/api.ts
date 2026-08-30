@@ -166,19 +166,33 @@ export type InjectBody =
   | { preset_id: string }
   | { filters?: Record<string, string>; magnitude: number; decline_code: string; duration_s?: number; label?: string };
 
+export type InjectOptions = {
+  filter_fields: string[];
+  merchants: string[];
+  providers: string[];
+  countries: string[];
+  methods_by_country: Record<string, string[]>;
+  issuers_by_country: Record<string, string[]>;
+  decline_codes: { code: string; name?: string; type?: string; [key: string]: unknown }[];
+  magnitude: { min: number; max: number; step: number; meaning: string };
+  simulation_only: boolean;
+};
+
 const BASE_URL = BASE || "";
 
 export const api = {
   health: () => call<{ status: string }>("GET", "/health"),
   explain: (input: { fixture: string } | EngineOutput) =>
     call<ExplainResponse>("POST", "/api/agent/explain", input),
+  cube: (windowSeconds: number) =>
+    call<CubeResponse>("GET", `/api/cube?window_s=${windowSeconds}`),
 
   // loop de diagnóstico vivo
   getSnapshot: () => call<DiagnosisSnapshot>("GET", "/api/diagnosis"),
   getOverview: () => call<Overview>("GET", "/api/overview"),
 
   // injector real de Pena
-  getInjectOptions: () => call<Record<string, unknown>>("GET", "/api/inject/options"),
+  getInjectOptions: () => call<InjectOptions>("GET", "/api/inject/options"),
   inject: (body: InjectBody) =>
     call<{ incident_id?: string; incident?: unknown; error?: string }>("POST", "/api/inject", body),
   stopIncident: (id: string) =>

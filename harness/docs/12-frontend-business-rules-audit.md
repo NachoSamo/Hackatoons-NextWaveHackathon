@@ -11,6 +11,11 @@ La experiencia principal ya cubre el relato obligatorio `watch → validate → 
 recommend`, pero la limpieza había eliminado una parte P0: comparar el incidente activo contra una
 referencia y ejecutar más de una consulta sin perder contexto.
 
+El Command Center vuelve a mostrar el proceso que produce esa conclusión, sin fingir un feed que el
+contrato no ofrece: cada tick agrega un punto al gráfico y filas normalizadas de ventana, scope,
+detector y diagnóstico. La cola de incidentes vive en una pestaña propia y refleja sólo el snapshot
+priorizado vigente, para no acumular IDs transitorios de ventanas anteriores.
+
 Se reincorpora como `ComparisonWorkspace`, no como otro dashboard:
 
 - ventanas móviles `60 s / 5 min / 15 min / 1 h / 2 h`;
@@ -29,6 +34,8 @@ No se muestran selectores de fechas arbitrarias: el backend actual acepta `windo
 | Regla de negocio / demo | Fuente real | Estado UI | Observación |
 |---|---|---:|---|
 | Silencio saludable antes de alertar | `EngineConfig`, US-03 | ✅ | Estado explícito, stream controlable y cola vacía. |
+| Gráfico que crece con el stream | SSE `/api/stream` | ✅ | Cada snapshot agrega observed/expected real del ring buffer; conserva las últimas 30 muestras. |
+| Logs visibles con parámetros | `/api/diagnosis.log_tail` | ✅ | Tabla del loop vivo: ventana, inyector, motor, bridge y explain. No se inventan transacciones crudas. |
 | Estados `validating → diagnosing → detected` | `IncidentStatus`, US-05 | 🟡 | La progresión es visible, pero faltan timestamps por transición. |
 | Comparar observed contra baseline contextual | `get_cube(window_s)`, US-04/10 | ✅ | Ejecuta sobre agregados reales y conserva UTC, scope y muestra. |
 | Ejecutar varias consultas temporales | US-10 + pedido de demo | ✅ | Historial local de sesión; cada resultado mantiene su pregunta estructurada. |
@@ -43,23 +50,33 @@ No se muestran selectores de fechas arbitrarias: el backend actual acepta `windo
 | Retry según hard/soft decline | classifier metadata + reglas `.md` | 🟡 | El backend gobierna la acción; falta una etiqueta humana hard/soft en evidencia. |
 | Prioridad explicable | `score_incidents` | ✅ | Se ven impacto, alcance, persistencia, confidence y criticidad merchant. |
 | Dos incidentes simultáneos separados | core residualization + US-08 | ✅ | La cola soporta múltiples resultados y scroll propio. |
-| Evidencia insuficiente | weak fixture + US-09 | ✅ | Preset visible; no muestra costo ni acción fuerte y lista evidencia faltante. |
+| Evidencia insuficiente | `streamplus × cash_oxxo × MX`, US-09 | ✅ demo | Se reproduce desde el mismo panel dimensional con señal 55% y código 51; no requiere menú Prepared. |
 | Operations / Executive | `Diagnosis.operations/executive` | ✅ | Cambia lenguaje, no hechos. |
 | Fallback sin OpenAI | templates + `llm_used` | 🟡 | Funciona en backend; la UI no etiqueta si el wording vino de LLM o template. |
-| Judge injection sólo con combinaciones válidas | `/api/inject/options`, US-11 | 🟡 | Hay controles, pero aún están hardcodeados y no consumen `inject/options`. |
-| Métricas globales sincronizadas con stream real | `/api/overview` | 🟡 | Comparison usa backend; los KPIs principales todavía usan valores de demo. |
+| Trial by fire sólo con combinaciones válidas | `/api/inject/options`, US-11 | ✅ | País limita método y banco emisor; el panel usa opciones del backend y nunca JSON crudo. |
+| Métricas sincronizadas con el pipeline vivo | `/api/stream` + `/api/overview` | ✅ | KPIs y timeline leen snapshots reales; diagnosis y revenue llegan por polling separado. |
 | Memoria de incidentes repetidos | bonus / Remember | P1 | No implementado. |
 | Evidence bundle para provider | US-13/14 | P1 | No implementado como export/handoff. |
 | PolicyDraft gobernado | gobernanza §2 | P1 | Correctamente fuera del pitch; no debe volver al hot path. |
+
+## Riesgos observados en la prueba viva
+
+- **P0 core/diagnóstico:** una única inyección `Adyen × BR` llegó a abrir más tarde un segundo
+  incidente residual `payment_method=card`; el incidente original también derivó de
+  `provider_degradation / high` a `unclassified / low` después de varias ventanas. La UI refleja el
+  snapshot vigente y no lo oculta, pero el equipo debe calibrar persistencia/residualización antes
+  del ensayo.
+- **P0 traza:** `diagnosis_loop` lee `dominant_decline_code`, mientras `Incident.to_dict()` publica
+  `decline_code`; por eso el `log_tail` muestra `código=—` aunque `/api/inject` recibió `91`. El
+  selector y el scope visible conservan el código elegido, pero la traza backend debe unificar la
+  clave.
 
 ## Próximos gaps, en orden
 
 ### P0 antes del ensayo final
 
-1. Alimentar KPIs principales con `/api/overview` o el stream real; eliminar valores hardcodeados.
-2. Poblar Judge mode desde `/api/inject/options` para impedir combinaciones inválidas.
-3. Mostrar timestamps de cada transición del lifecycle.
-4. Si el contrato se amplía, transportar `evidence_ids`, baseline/sample estructurados y origen
+1. Mostrar timestamps de cada transición del lifecycle.
+2. Si el contrato se amplía, transportar `evidence_ids`, baseline/sample estructurados y origen
    `LLM/template` hasta la UI.
 
 ### P1 / Q&A

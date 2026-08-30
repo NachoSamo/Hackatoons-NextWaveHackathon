@@ -1,140 +1,169 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { AlertTriangle, ArrowLeftRight, Check, ChevronDown, Pause, Play, RotateCcw, ShieldCheck, Wifi, WifiOff } from "lucide-react";
-import { api, type Diagnosis, type TickResult } from "../api";
+import { useEffect, useMemo, useState } from "react";
+import { ArrowLeftRight, Check, ChevronDown, Filter, Pause, Play, RotateCcw, ShieldCheck, SlidersHorizontal, Wifi, WifiOff } from "lucide-react";
+import { api, type Diagnosis, type DiagnosisSnapshot, type InjectOptions, type ScoredIncident } from "../api";
 import { Brand } from "../components/Brand";
 import { ComparisonWorkspace } from "../components/ComparisonWorkspace";
 import { DiagnosisWorkspace } from "../components/DiagnosisWorkspace";
 import { LanguageToggle } from "../components/LanguageToggle";
+import { LiveSignalChart, type SignalPoint } from "../components/LiveSignalChart";
 import { SignalChart } from "../components/SignalChart";
 import { useLanguage } from "../i18n";
+import { useLive } from "../useLive";
 
 type TowerState = "READY" | "HEALTHY" | "VALIDATING" | "DIAGNOSED" | "PAUSED" | "ERROR";
+type WorkspaceTab = "stream" | "incidents";
+type DetectionScope = {
+  merchant_id: string;
+  provider_id: string;
+  payment_method: string;
+  country: string;
+  issuer_bank: string;
+  magnitude: string;
+  decline_code: string;
+};
+type PipelineLog = { id: string; at: string; window: number; stage: string; message: string };
 
-const PRESETS = [
-  { id: "provider_br", en: "Adyen degrades in Brazil", es: "Adyen se degrada en Brasil" },
-  { id: "issuer_mx", en: "Mexican issuer fails", es: "Falla un emisor mexicano" },
-  { id: "pix_outage", en: "PIX outage in Brazil", es: "Caída de PIX en Brasil" },
-  { id: "weak_signal", en: "Weak signal · insufficient evidence", es: "Señal débil · evidencia insuficiente" },
-];
+const DEFAULT_SCOPE: DetectionScope = {
+  merchant_id: "",
+  provider_id: "adyen",
+  payment_method: "",
+  country: "BR",
+  issuer_bank: "",
+  magnitude: "0.38",
+  decline_code: "91",
+};
+
+const FALLBACK_OPTIONS: InjectOptions = {
+  filter_fields: ["merchant_id", "provider_id", "payment_method", "country", "issuer_bank"],
+  merchants: ["rappido", "tiendita", "streamplus"],
+  providers: ["adyen", "dlocal", "mercadopago"],
+  countries: ["BR", "MX", "CO"],
+  methods_by_country: { BR: ["card", "pix", "wallet"], MX: ["card", "cash_oxxo", "wallet"], CO: ["card", "pse", "wallet"] },
+  issuers_by_country: { BR: ["itau", "nubank", "bradesco"], MX: ["banorte", "bbva_mx"], CO: ["bancolombia", "davivienda"] },
+  decline_codes: [{ code: "91", name: "Issuer unavailable" }, { code: "05", name: "Do not honor" }, { code: "96", name: "System malfunction" }, { code: "51", name: "Insufficient funds" }],
+  magnitude: { min: 0.05, max: 0.95, step: 0.01, meaning: "approval probability multiplier" },
+  simulation_only: true,
+};
+
+function stageFromLine(line: string) {
+  if (line.includes("VENTANA")) return "WINDOW";
+  return line.match(/\[([A-ZÁÉÍÓÚ]+)\]/)?.[1] ?? "SYSTEM";
+}
+
+function logsFromSnapshot(snapshot: DiagnosisSnapshot): PipelineLog[] {
+  let resetIndex = -1;
+  snapshot.log_tail.forEach((line, index) => {
+    if (line.includes("[LOOP]") && line.includes("reset")) resetIndex = index;
+  });
+  const lines = snapshot.log_tail.slice(Math.max(resetIndex, 0));
+  let currentWindow = 0;
+  return lines.map((line, index) => {
+    const match = line.match(/^(\d{2}:\d{2}:\d{2})\s+(.*)$/);
+    const windowMatch = line.match(/VENTANA (\d+)/);
+    if (windowMatch) currentWindow = Number(windowMatch[1]);
+    return {
+      id: `${currentWindow}-${index}-${line}`,
+      at: match?.[1] ?? snapshot.ts?.slice(11, 19) ?? "—",
+      window: currentWindow,
+      stage: stageFromLine(line),
+      message: match?.[2] ?? line,
+    };
+  }).filter((log) => log.message.trim()).reverse();
+}
+
+function options(values: string[], allLabel = "All") {
+  return [["", allLabel], ...values.map((value) => [value, value.replaceAll("_", " ")])];
+}
 
 export function CommandCenter({ preview = false }: { preview?: boolean }) {
   const { text } = useLanguage();
+  const [streamActive, setStreamActive] = useState(false);
+  const live = useLive(streamActive && !preview);
   const [towerState, setTowerState] = useState<TowerState>(preview ? "DIAGNOSED" : "READY");
-  const [tick, setTick] = useState<TickResult | null>(null);
   const [connected, setConnected] = useState<boolean | null>(preview ? true : null);
   const [selected, setSelected] = useState<Diagnosis | null>(null);
   const [comparisonOpen, setComparisonOpen] = useState(false);
-  const [demoControlsOpen, setDemoControlsOpen] = useState(false);
-  const [judgeMode, setJudgeMode] = useState(false);
-  const [judgeFilters, setJudgeFilters] = useState({ merchant_id: "", provider_id: "dlocal", payment_method: "card", country: "CO", magnitude: "0.45" });
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const [scope, setScope] = useState<DetectionScope>(DEFAULT_SCOPE);
+  const [appliedScope, setAppliedScope] = useState<DetectionScope>(DEFAULT_SCOPE);
+  const [injectOptions, setInjectOptions] = useState<InjectOptions>(FALLBACK_OPTIONS);
+  const [workspaceTab, setWorkspaceTab] = useState<WorkspaceTab>("stream");
+  const [signalPoints, setSignalPoints] = useState<SignalPoint[]>([]);
+  const [pipelineLogs, setPipelineLogs] = useState<PipelineLog[]>([]);
   const [busy, setBusy] = useState(false);
-  const timer = useRef<number | null>(null);
-
-  const stopTimer = useCallback(() => {
-    if (timer.current) window.clearInterval(timer.current);
-    timer.current = null;
-  }, []);
-
-  const updateFromTick = useCallback((next: TickResult | null) => {
-    if (!next?.ok) {
-      setTowerState("ERROR");
-      return;
-    }
-    setTick(next);
-    if (next.diagnoses.length) setTowerState("DIAGNOSED");
-    else if (next.engine_incidents.length) setTowerState("VALIDATING");
-    else setTowerState("HEALTHY");
-  }, []);
-
-  const runTick = useCallback(async () => {
-    const { data, call } = await api.debugTick();
-    setConnected(call.status !== "ERR" && Number(call.status) < 500);
-    updateFromTick(data);
-  }, [updateFromTick]);
 
   useEffect(() => {
     if (preview) return;
     api.health().then(({ data }) => setConnected(data?.status === "ok"));
-    return stopTimer;
-  }, [preview, stopTimer]);
+    api.getInjectOptions().then(({ data }) => { if (data) setInjectOptions(data); });
+  }, [preview]);
+
+  useEffect(() => {
+    if (!live.ticker) return;
+    const point: SignalPoint = {
+      at: live.ticker.ts.slice(11, 19),
+      observed: live.ticker.observed_rate * 100,
+      expected: live.ticker.expected_rate * 100,
+    };
+    setSignalPoints((current) => current.at(-1)?.at === point.at ? current : [...current, point].slice(-30));
+  }, [live.ticker]);
+
+  useEffect(() => {
+    const snapshot = live.snapshot;
+    if (!snapshot) return;
+    setPipelineLogs(logsFromSnapshot(snapshot));
+    if (snapshot.error) setTowerState("ERROR");
+    else if (snapshot.diagnoses.length) setTowerState("DIAGNOSED");
+    else if (snapshot.engine_incidents.length || snapshot.active_injections.length) setTowerState("VALIDATING");
+    else setTowerState("HEALTHY");
+  }, [live.snapshot]);
 
   const start = async () => {
     if (preview || busy) return;
     setBusy(true);
-    stopTimer();
-    const reset = await api.debugReset();
-    setConnected(reset.call.status !== "ERR");
-    setTick(null);
-    setSelected(null);
-    await runTick();
-    timer.current = window.setInterval(runTick, 2500);
-    setBusy(false);
+    await live.reset();
+    setSignalPoints([]); setPipelineLogs([]); setSelected(null);
+    setTowerState("HEALTHY"); setStreamActive(true); setBusy(false);
   };
-
-  const pause = () => { stopTimer(); setTowerState("PAUSED"); };
-  const resume = () => { setTowerState("HEALTHY"); runTick(); timer.current = window.setInterval(runTick, 2500); };
+  const pause = () => { setStreamActive(false); setTowerState("PAUSED"); };
+  const resume = () => { setStreamActive(true); setTowerState("HEALTHY"); };
   const reset = async () => {
-    stopTimer();
-    if (!preview) await api.debugReset();
-    setTick(null); setSelected(null); setTowerState("READY"); setDemoControlsOpen(false);
+    setStreamActive(false); setBusy(true); await live.reset();
+    setSignalPoints([]); setPipelineLogs([]); setSelected(null);
+    setTowerState("READY"); setFiltersOpen(false); setWorkspaceTab("stream"); setBusy(false);
   };
-  const inject = async (preset: string) => {
+  const applyScope = () => { setAppliedScope(scope); setFiltersOpen(false); };
+  const simulateScope = async () => {
     setBusy(true);
-    if (preset === "weak_signal") {
-      stopTimer();
-      const { data, call } = await api.explain({ fixture: "weak_signal" });
-      setConnected(call.status !== "ERR" && Number(call.status) < 500);
-      if (data && !data.error) {
-        setTick((current) => ({
-          ok: true,
-          window: current?.window ?? 0,
-          t: current?.t ?? new Date().toISOString(),
-          engine_incidents: data.diagnoses.map((diagnosis) => ({ id: diagnosis.incident_id, status: "insufficient_evidence", category: diagnosis.diagnosis_category, slice: Object.values(diagnosis.slice).filter(Boolean).join("/") })),
-          diagnoses: data.diagnoses,
-          prioritized: data.prioritized,
-          steps: [],
-        }));
-        setTowerState("DIAGNOSED");
-      } else {
-        setTowerState("ERROR");
-      }
-      setDemoControlsOpen(false);
-      setBusy(false);
-      return;
-    }
-    await api.debugInject(preset);
-    setTowerState("VALIDATING");
-    setDemoControlsOpen(false);
-    await runTick();
-    setBusy(false);
-  };
-  const injectJudgeCase = async () => {
-    setBusy(true);
-    const { magnitude, ...values } = judgeFilters;
+    const { magnitude, decline_code, ...values } = scope;
     const filters = Object.fromEntries(Object.entries(values).filter(([, value]) => value));
-    await api.debugInject({ filters, magnitude: Number(magnitude), decline_code: "96" });
-    setTowerState("VALIDATING");
-    setDemoControlsOpen(false);
-    await runTick();
-    setBusy(false);
+    const response = await api.inject({ filters, magnitude: Number(magnitude), decline_code, label: "Control Tower trial" });
+    if (response.data?.error || response.call.status === "ERR" || Number(response.call.status) >= 400) setTowerState("ERROR");
+    else { setAppliedScope(scope); setTowerState("VALIDATING"); setWorkspaceTab("stream"); }
+    setFiltersOpen(false); setBusy(false);
   };
 
-  const prioritized = tick?.prioritized ?? [];
-  const incidentActive = preview || prioritized.length > 0 || towerState === "VALIDATING";
-  const observedRate = preview ? 0.724 : incidentActive ? 0.724 : 0.854;
-  const expectedRate = 0.861;
-  const delta = (observedRate - expectedRate) * 100;
+  const prioritized = live.snapshot?.prioritized ?? [];
+  const latestPoint = signalPoints.at(-1);
+  const observedRate = latestPoint?.observed ?? (live.overview?.observed_rate ?? 0.854) * 100;
+  const expectedRate = latestPoint?.expected ?? (live.overview?.expected_rate ?? 0.861) * 100;
+  const delta = observedRate - expectedRate;
   const revenueRisk = prioritized.reduce((sum, item) => sum + (item.diagnosis.cost?.usd_per_hour ?? 0), 0);
+  const scopeParts = Object.entries(appliedScope).filter(([key, value]) => !["magnitude", "decline_code"].includes(key) && value).map(([, value]) => value);
+  const scopeLabel = `${scopeParts.join(" × ") || text("All payment traffic", "Todo el tráfico de pagos")} · ${text("code", "código")} ${appliedScope.decline_code}`;
   const stateMessage = useMemo(() => {
     if (towerState === "READY") return text("Ready to watch payment traffic", "Listo para observar el tráfico de pagos");
     if (towerState === "HEALTHY") return text("Normal variance. No action required.", "Variación normal. No requiere acción.");
     if (towerState === "VALIDATING") return text("Signal found. Checking persistence and controls…", "Señal encontrada. Validando persistencia y controles…");
-    if (towerState === "DIAGNOSED") return text(`${prioritized.length} separate incident${prioritized.length === 1 ? "" : "s"} diagnosed`, `${prioritized.length} incidente${prioritized.length === 1 ? "" : "s"} separado${prioritized.length === 1 ? "" : "s"} y diagnosticado${prioritized.length === 1 ? "" : "s"}`);
+    if (towerState === "DIAGNOSED") return text(`${prioritized.length} separate incident${prioritized.length === 1 ? "" : "s"} diagnosed`, `${prioritized.length} incidente${prioritized.length === 1 ? "" : "s"} diagnosticado${prioritized.length === 1 ? "" : "s"}`);
     if (towerState === "PAUSED") return text("Stream paused", "Stream pausado");
-    return text("Backend unavailable — use the deterministic fallback", "Backend no disponible — usar fallback determinístico");
+    return text("Backend unavailable or injection rejected", "Backend no disponible o inyección rechazada");
   }, [towerState, prioritized.length, text]);
 
   if (preview) return <PreviewTower />;
+
+  const methodValues = scope.country ? injectOptions.methods_by_country[scope.country] ?? [] : [...new Set(Object.values(injectOptions.methods_by_country).flat())];
+  const issuerValues = scope.country ? injectOptions.issuers_by_country[scope.country] ?? [] : [...new Set(Object.values(injectOptions.issuers_by_country).flat())];
 
   return (
     <section className="tower" aria-label={text("Centinel payment control tower", "Torre de control de pagos Centinel")}>
@@ -145,11 +174,7 @@ export function CommandCenter({ preview = false }: { preview?: boolean }) {
       </header>
 
       <div className="tower-flow" aria-label={text("Detection flow", "Flujo de detección")}>
-        {[
-          ["HEALTHY", text("Watch", "Observar")],
-          ["VALIDATING", text("Validate", "Validar")],
-          ["DIAGNOSED", text("Diagnose", "Diagnosticar")],
-        ].map(([key, label], index) => {
+        {[["HEALTHY", text("Watch", "Observar")], ["VALIDATING", text("Validate", "Validar")], ["DIAGNOSED", text("Diagnose", "Diagnosticar")]].map(([key, label], index) => {
           const rank = towerState === "READY" ? -1 : towerState === "HEALTHY" || towerState === "PAUSED" ? 0 : towerState === "VALIDATING" ? 1 : 2;
           return <div className={rank >= index ? "is-active" : ""} key={key}><i>{index + 1}</i><span>{label}</span></div>;
         })}
@@ -157,46 +182,84 @@ export function CommandCenter({ preview = false }: { preview?: boolean }) {
       </div>
 
       <div className="tower-toolbar">
-        <div className="comparison-context"><span>{text("Observed", "Observado")} <strong>{text("Last 60 seconds", "Últimos 60 segundos")}</strong></span><i>vs</i><span>{text("Expected", "Esperado")} <strong>{text("Contextual 14-day baseline", "Baseline contextual de 14 días")}</strong></span><small>UTC · {tick ? "3,900" : "0"} {text("attempts", "intentos")}</small></div>
+        <div className="comparison-context"><span>{text("Observed", "Observado")} <strong>{text("Last 60 seconds", "Últimos 60 segundos")}</strong></span><i>vs</i><span>{text("Expected", "Esperado")} <strong>{text("Contextual 14-day baseline", "Baseline contextual de 14 días")}</strong></span><small>UTC · {live.snapshot ? text(`window ${live.snapshot.window}`, `ventana ${live.snapshot.window}`) : text("waiting", "esperando")}</small></div>
         <div className="tower-actions">
           <button className="compare-trigger" onClick={() => setComparisonOpen(true)}><ArrowLeftRight size={15} />{text("Compare periods", "Comparar períodos")}</button>
           {towerState === "READY" && <button className="button button--signal" onClick={start} disabled={busy}><Play size={15} fill="currentColor" />{text("Start live stream", "Iniciar stream")}</button>}
           {towerState !== "READY" && towerState !== "PAUSED" && <button onClick={pause}><Pause size={15} />{text("Pause", "Pausar")}</button>}
           {towerState === "PAUSED" && <button className="button button--signal" onClick={resume}><Play size={15} />{text("Resume", "Reanudar")}</button>}
-          <button onClick={reset}><RotateCcw size={15} />{text("Reset", "Reiniciar")}</button>
-          {towerState !== "READY" && <div className="demo-menu"><button className="demo-menu__trigger" onClick={() => setDemoControlsOpen((open) => !open)}><AlertTriangle size={15} />{text("Inject test incident", "Inyectar incidente de prueba")}<ChevronDown size={14} /></button>{demoControlsOpen && <div className={`demo-menu__panel ${judgeMode ? "is-judge" : ""}`}><div className="demo-menu__tabs"><button className={!judgeMode ? "is-active" : ""} onClick={() => setJudgeMode(false)}>{text("Prepared", "Preparados")}</button><button className={judgeMode ? "is-active" : ""} onClick={() => setJudgeMode(true)}>{text("Judge mode", "Modo juez")}</button></div>{!judgeMode ? PRESETS.map((preset) => <button disabled={busy} key={preset.id} onClick={() => inject(preset.id)}>{text(preset.en, preset.es)}</button>) : <div className="judge-fields"><label><span>Merchant</span><select value={judgeFilters.merchant_id} onChange={(event) => setJudgeFilters({ ...judgeFilters, merchant_id: event.target.value })}><option value="">All</option><option value="rappido">Rappido</option><option value="tiendita">Tiendita</option><option value="streamplus">Streamplus</option></select></label><label><span>Provider</span><select value={judgeFilters.provider_id} onChange={(event) => setJudgeFilters({ ...judgeFilters, provider_id: event.target.value })}><option value="adyen">Adyen</option><option value="dlocal">dLocal</option><option value="mercadopago">MercadoPago</option></select></label><label><span>{text("Method", "Método")}</span><select value={judgeFilters.payment_method} onChange={(event) => setJudgeFilters({ ...judgeFilters, payment_method: event.target.value })}><option value="card">Card</option><option value="pix">PIX</option><option value="pse">PSE</option></select></label><label><span>{text("Country", "País")}</span><select value={judgeFilters.country} onChange={(event) => setJudgeFilters({ ...judgeFilters, country: event.target.value })}><option value="BR">Brazil</option><option value="MX">Mexico</option><option value="CO">Colombia</option></select></label><label><span>{text("Approval multiplier", "Multiplicador de aprobación")}</span><select value={judgeFilters.magnitude} onChange={(event) => setJudgeFilters({ ...judgeFilters, magnitude: event.target.value })}><option value="0.70">70%</option><option value="0.45">45%</option><option value="0.25">25%</option></select></label><button className="judge-inject" disabled={busy} onClick={injectJudgeCase}>{text("Inject unrehearsed case", "Inyectar caso no ensayado")}</button></div>}</div>}</div>}
+          <button onClick={reset} disabled={busy}><RotateCcw size={15} />{text("Reset", "Reiniciar")}</button>
+          <div className="demo-menu">
+            <button className="demo-menu__trigger detection-trigger" onClick={() => setFiltersOpen((open) => !open)}><Filter size={15} />{text("Detection filters", "Filtros de detección")}<ChevronDown size={14} /></button>
+            {filtersOpen && <div className="demo-menu__panel detection-panel">
+              <header><SlidersHorizontal size={14} /><div><strong>{text("Detection scope", "Alcance de detección")}</strong><span>{text("Choose the dimensional intersection to inspect", "Elegí el cruce dimensional a inspeccionar")}</span></div></header>
+              <div className="judge-fields">
+                <ScopeField label="Merchant" value={scope.merchant_id} onChange={(merchant_id) => setScope({ ...scope, merchant_id })} options={options(injectOptions.merchants)} />
+                <ScopeField label="Provider" value={scope.provider_id} onChange={(provider_id) => setScope({ ...scope, provider_id })} options={options(injectOptions.providers)} />
+                <ScopeField label={text("Country", "País")} value={scope.country} onChange={(country) => setScope({ ...scope, country, payment_method: "", issuer_bank: "" })} options={options(injectOptions.countries)} />
+                <ScopeField label={text("Method", "Método")} value={scope.payment_method} onChange={(payment_method) => setScope({ ...scope, payment_method })} options={options(methodValues)} />
+                <ScopeField label={text("Issuing bank", "Banco emisor")} value={scope.issuer_bank} onChange={(issuer_bank) => setScope({ ...scope, issuer_bank })} options={options(issuerValues)} />
+                <ScopeField label={text("Decline code", "Código de rechazo")} value={scope.decline_code} onChange={(decline_code) => setScope({ ...scope, decline_code })} options={injectOptions.decline_codes.map((item) => [item.code, `${item.code} · ${String(item.name ?? "Decline")} · ${String(item.type ?? "")}`])} />
+                <ScopeField label={text("Simulation strength", "Intensidad de simulación")} value={scope.magnitude} onChange={(magnitude) => setScope({ ...scope, magnitude })} options={[["0.70", "Mild · 70%"], ["0.55", "Weak-signal · 55%"], ["0.45", "Strong · 45%"], ["0.38", "Critical · 38%"], ["0.25", "Severe · 25%"]]} />
+              </div>
+              <footer><button onClick={applyScope}>{text("Apply view", "Aplicar vista")}</button><button className="simulate-scope" disabled={busy || towerState === "READY"} onClick={simulateScope}>{text("Simulate signal in scope", "Simular señal en el alcance")}</button></footer>
+              <small>{text("Options come from the backend contract. Filtering and demo simulation remain separate actions.", "Las opciones vienen del contrato backend. Filtrar y simular siguen siendo acciones separadas.")}</small>
+            </div>}
+          </div>
         </div>
       </div>
 
-      <main className="tower-main">
-        <section className="signal-surface">
-          <div className="tower-metrics">
-            <div><span>{text("Approval observed", "Aprobación observada")}</span><strong>{(observedRate * 100).toFixed(1)}%</strong></div>
-            <div><span>{text("Delta vs expected", "Delta vs esperado")}</span><strong className={delta < -1 ? "is-negative" : ""}>{delta >= 0 ? "+" : ""}{delta.toFixed(1)} pp</strong></div>
-            <div><span>{text("Estimated revenue at risk", "Ingreso estimado en riesgo")}</span><strong>{revenueRisk ? `$${Math.round(revenueRisk).toLocaleString()}/h` : "$0/h"}</strong><small>{text("Estimate · assumptions in diagnosis", "Estimación · supuestos en diagnóstico")}</small></div>
-          </div>
-          <div className="tower-chart-heading"><div><strong>{text("Approval rate over time", "Tasa de aprobación en el tiempo")}</strong><span><i className="legend-observed" />{text("Observed", "Observado")} <i className="legend-reference" />{text("Expected", "Esperado")}</span></div></div>
-          <SignalChart incidentActive={incidentActive} />
-        </section>
+      <section className="tower-metrics">
+        <div><span>{text("Approval observed", "Aprobación observada")}</span><strong>{observedRate.toFixed(1)}%</strong></div>
+        <div><span>{text("Delta vs expected", "Delta vs esperado")}</span><strong className={delta < -1 ? "is-negative" : ""}>{delta >= 0 ? "+" : ""}{delta.toFixed(1)} pp</strong></div>
+        <div><span>{text("Estimated revenue at risk", "Ingreso estimado en riesgo")}</span><strong>{revenueRisk ? `$${Math.round(revenueRisk).toLocaleString()}/h` : "$0/h"}</strong><small>{text("Estimate · assumptions in diagnosis", "Estimación · supuestos en diagnóstico")}</small></div>
+      </section>
 
-        <aside className={`tower-incidents ${towerState === "VALIDATING" ? "is-validating" : ""}`}>
-          <header><span>{text("Incident queue", "Cola de incidentes")}</span><strong>{prioritized.length}</strong></header>
-          {towerState === "VALIDATING" && <div className="tower-empty"><span className="signal-loader" /><strong>{text("Validating the signal", "Validando la señal")}</strong><p>{text("Waiting for persistence, sufficient sample and healthy controls before alerting.", "Esperando persistencia, muestra suficiente y controles sanos antes de alertar.")}</p></div>}
-          {towerState !== "VALIDATING" && !prioritized.length && <div className="tower-empty is-healthy"><Check size={20} /><strong>{text("Trustworthy silence", "Silencio confiable")}</strong><p>{text("Traffic is inside its expected range. Centinel does not alert on noise.", "El tráfico está dentro de su rango esperado. Centinel no alerta por ruido.")}</p></div>}
-          {prioritized.map((item, index) => <button className="tower-incident" key={item.diagnosis.incident_id} onClick={() => setSelected(item.diagnosis)}>
-            <div><span>P{index + 1}</span><small>{Math.round(item.score * 100)} {text("priority score", "score de prioridad")}</small></div>
-            <h3>{item.diagnosis.headline}</h3>
-            <p>{item.diagnosis.executive}</p>
-            <div className="priority-breakdown" aria-label={text("Priority components", "Componentes de prioridad")}>{Object.entries(item.components).map(([name, value]) => <span key={name}><i>{name.replace("merchant_criticality", "merchant").replace("_", " ")}</i><b>{Math.round(value * 100)}</b></span>)}</div>
-            <footer><strong>{item.diagnosis.cost ? `$${Math.round(item.diagnosis.cost.usd_per_hour).toLocaleString()}/h` : text("Impact unknown", "Impacto desconocido")}</strong><span>{text("Investigate", "Investigar")} →</span></footer>
-          </button>)}
-        </aside>
-      </main>
+      <nav className="tower-workspace-tabs" aria-label={text("Control tower views", "Vistas de la torre")}>
+        <button className={workspaceTab === "stream" ? "is-active" : ""} onClick={() => setWorkspaceTab("stream")}><span className="live-dot" />{text("Live stream", "Stream en vivo")}</button>
+        <button className={workspaceTab === "incidents" ? "is-active" : ""} onClick={() => setWorkspaceTab("incidents")}>{text("Incidents", "Incidentes")}<strong>{prioritized.length}</strong></button>
+        <p><span>{text("Scope", "Alcance")}</span>{scopeLabel}</p>
+      </nav>
+
+      <main className="tower-main">{workspaceTab === "stream" ? <LiveWorkspace points={signalPoints} logs={pipelineLogs} /> : <IncidentWorkspace state={towerState} prioritized={prioritized} onSelect={setSelected} />}</main>
 
       {selected && <DiagnosisWorkspace diagnosis={selected} onClose={() => setSelected(null)} />}
       {comparisonOpen && <ComparisonWorkspace onClose={() => setComparisonOpen(false)} />}
     </section>
   );
+}
+
+function ScopeField({ label, value, onChange, options: fieldOptions }: { label: string; value: string; onChange: (value: string) => void; options: string[][] }) {
+  return <label><span>{label}</span><select value={value} onChange={(event) => onChange(event.target.value)}>{fieldOptions.map(([optionValue, optionLabel]) => <option key={`${label}-${optionValue}`} value={optionValue}>{optionLabel}</option>)}</select></label>;
+}
+
+function LiveWorkspace({ points, logs }: { points: SignalPoint[]; logs: PipelineLog[] }) {
+  const { text } = useLanguage();
+  return <section className="signal-surface live-workspace">
+    <div className="tower-chart-heading"><div><strong>{text("Approval by incoming stream snapshot", "Aprobación por snapshot entrante")}</strong><span><i className="legend-observed" />{text("Observed", "Observado")} <i className="legend-reference" />{text("Expected", "Esperado")}</span></div><small>{points.length}/30 {text("snapshots", "snapshots")}</small></div>
+    <LiveSignalChart points={points} />
+    <section className="pipeline-log">
+      <header><div><strong>{text("Live diagnosis trace", "Traza viva del diagnóstico")}</strong><span>{text("Ring buffer → detector → localizer → explanation", "Ring buffer → detector → localizador → explicación")}</span></div><b>{logs.length} {text("events", "eventos")}</b></header>
+      <div className="pipeline-table-wrap"><table><thead><tr><th>{text("Time", "Hora")}</th><th>{text("Window", "Ventana")}</th><th>{text("Stage", "Etapa")}</th><th>{text("Evidence / parameters", "Evidencia / parámetros")}</th></tr></thead><tbody>
+        {!logs.length && <tr className="pipeline-empty"><td colSpan={4}>{text("No diagnosis windows yet. Start the stream to see the real pipeline trace.", "Todavía no hay ventanas de diagnóstico. Iniciá el stream para ver la traza real.")}</td></tr>}
+        {logs.map((log) => <tr key={log.id}><td>{log.at}</td><td>#{log.window}</td><td><span className={`log-stage log-stage--${log.stage.toLowerCase()}`}>{log.stage}</span></td><td>{log.message}</td></tr>)}
+      </tbody></table></div>
+    </section>
+  </section>;
+}
+
+function IncidentWorkspace({ state, prioritized, onSelect }: { state: TowerState; prioritized: ScoredIncident[]; onSelect: (diagnosis: Diagnosis) => void }) {
+  const { text } = useLanguage();
+  return <section className={`tower-incidents tower-incidents--full ${state === "VALIDATING" ? "is-validating" : ""}`}>
+    <header><span>{text("Incident queue", "Cola de incidentes")}</span><strong>{prioritized.length}</strong></header>
+    {state === "VALIDATING" && <div className="tower-empty"><span className="signal-loader" /><strong>{text("Validating the signal", "Validando la señal")}</strong><p>{text("Waiting for persistence, sufficient sample and healthy controls before alerting.", "Esperando persistencia, muestra suficiente y controles sanos antes de alertar.")}</p></div>}
+    {state !== "VALIDATING" && !prioritized.length && <div className="tower-empty is-healthy"><Check size={20} /><strong>{text("Trustworthy silence", "Silencio confiable")}</strong><p>{text("Traffic is inside its expected range. Centinel does not alert on noise.", "El tráfico está dentro de su rango esperado. Centinel no alerta por ruido.")}</p></div>}
+    <div className="incident-grid">{prioritized.map((item, index) => <button className="tower-incident" key={item.diagnosis.incident_id} onClick={() => onSelect(item.diagnosis)}>
+      <div><span>P{index + 1}</span><small>{Math.round(item.score * 100)} {text("priority score", "score de prioridad")}</small></div><h3>{item.diagnosis.headline}</h3><p>{item.diagnosis.executive}</p>
+      <div className="priority-breakdown">{Object.entries(item.components).map(([name, value]) => <span key={name}><i>{name.replace("merchant_criticality", "merchant").replace("_", " ")}</i><b>{Math.round(value * 100)}</b></span>)}</div>
+      <footer><strong>{item.diagnosis.cost ? `$${Math.round(item.diagnosis.cost.usd_per_hour).toLocaleString()}/h` : text("Impact unknown", "Impacto desconocido")}</strong><span>{text("Investigate", "Investigar")} →</span></footer>
+    </button>)}</div>
+  </section>;
 }
 
 function PreviewTower() {
