@@ -498,7 +498,7 @@ button:focus-visible, a:focus-visible { outline: 2px solid var(--signal-soft); o
   .investigation-action .button { grid-column: 2; justify-self: start; }
 }
 
-/* Control Tower v3 — live evidence first, incidents on demand. */
+/* Control Tower v3 — live evidence and prioritized incidents in one operational frame. */
 .detection-trigger { color: #d7d7db; border-color: var(--line-strong) !important; }
 .detection-trigger:hover { color: white; border-color: var(--signal-soft) !important; }
 .detection-panel { width: min(430px, calc(100vw - 32px)); padding: 12px; gap: 12px; }
@@ -516,15 +516,13 @@ button:focus-visible, a:focus-visible { outline: 2px solid var(--signal-soft); o
 
 .tower > .tower-metrics { border-bottom: 1px solid var(--line); }
 .tower-workspace-tabs { min-height: 54px; padding: 0 clamp(18px, 3vw, 44px); display: flex; align-items: stretch; gap: 4px; border-bottom: 1px solid var(--line); background: #080809; }
-.tower-workspace-tabs button { min-width: 145px; padding: 0 15px; display: flex; align-items: center; justify-content: center; gap: 8px; border: 0; border-bottom: 2px solid transparent; border-radius: 0; color: var(--muted); background: transparent; font-size: 11px; }
-.tower-workspace-tabs button.is-active { color: white; border-bottom-color: var(--signal-soft); }
-.tower-workspace-tabs button strong { min-width: 20px; height: 20px; display: grid; place-items: center; border-radius: 50%; color: #d4d4d7; background: #26262a; font: 9px var(--mono); }
+.tower-workspace-label { min-width: 145px; padding: 0 15px; display: flex; align-items: center; justify-content: center; gap: 8px; border-bottom: 2px solid var(--signal-soft); color: white; font-size: 11px; }
 .tower-workspace-tabs > p { margin: 0 0 0 auto; display: flex; align-items: center; gap: 9px; color: #c8c8cc; font: 10px var(--mono); }
 .tower-workspace-tabs > p span { color: #69696e; text-transform: uppercase; }
 .live-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--healthy); box-shadow: 0 0 0 4px rgba(103,211,165,.08); }
 
-.tower-main { height: auto; min-height: 520px; display: block; }
-.live-workspace { border-right: 0; }
+.tower-main { height: auto; min-height: 520px; }
+.live-workspace { min-width: 0; }
 .tower-chart-heading > small { color: #6f6f75; font: 9px var(--mono); }
 .tower .live-signal-chart { height: 260px; min-height: 260px; border-bottom: 1px solid var(--line); }
 .live-signal-chart .chart-observed, .live-signal-chart .chart-reference { transition: d 420ms ease; }
@@ -553,15 +551,11 @@ button:focus-visible, a:focus-visible { outline: 2px solid var(--signal-soft); o
 .log-stage--detector { color: #ffaaa3; border-color: rgba(255,107,96,.32); }
 .log-stage--diagnosis { color: var(--signal-soft); border-color: rgba(133,140,250,.32); }
 
-.tower-incidents--full { min-height: 520px; overflow: visible; }
-.tower-incidents--full > header { position: static; }
-.incident-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(330px, 1fr)); }
-.incident-grid .tower-incident { min-height: 250px; border-right: 1px solid var(--line) !important; }
-.tower-incidents--full .tower-empty { min-height: 450px; justify-content: center; }
+.incident-grid { display: grid; }
 
 @media (max-width: 900px) {
   .tower-workspace-tabs { padding: 0 14px; }
-  .tower-workspace-tabs button { min-width: auto; padding: 0 11px; }
+  .tower-workspace-label { min-width: auto; padding: 0 11px; }
   .tower-workspace-tabs > p { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .tower .live-signal-chart { height: 220px; min-height: 220px; }
   .pipeline-log th:nth-child(2), .pipeline-log td:nth-child(2) { display: none; }

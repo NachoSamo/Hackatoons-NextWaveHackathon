@@ -13,8 +13,9 @@ referencia y ejecutar más de una consulta sin perder contexto.
 
 El Command Center vuelve a mostrar el proceso que produce esa conclusión, sin fingir un feed que el
 contrato no ofrece: cada tick agrega un punto al gráfico y filas normalizadas de ventana, scope,
-detector y diagnóstico. La cola de incidentes vive en una pestaña propia y refleja sólo el snapshot
-priorizado vigente, para no acumular IDs transitorios de ventanas anteriores.
+detector y diagnóstico. La cola priorizada permanece visible a la derecha del stream y refleja sólo
+el snapshot vigente, para no acumular IDs transitorios de ventanas anteriores. Cada tarjeta abre el
+workspace inline de diagnóstico, evidencia y playbook sin perder el contexto temporal.
 
 Se reincorpora como `ComparisonWorkspace`, no como otro dashboard:
 

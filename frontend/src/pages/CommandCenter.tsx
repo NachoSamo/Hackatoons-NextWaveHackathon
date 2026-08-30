@@ -11,7 +11,6 @@ import { useLanguage } from "../i18n";
 import { useLive } from "../useLive";
 
 type TowerState = "READY" | "HEALTHY" | "VALIDATING" | "DIAGNOSED" | "PAUSED" | "ERROR";
-type WorkspaceTab = "stream" | "incidents";
 type DetectionScope = {
   merchant_id: string;
   provider_id: string;
@@ -87,7 +86,6 @@ export function CommandCenter({ preview = false }: { preview?: boolean }) {
   const [scope, setScope] = useState<DetectionScope>(DEFAULT_SCOPE);
   const [appliedScope, setAppliedScope] = useState<DetectionScope>(DEFAULT_SCOPE);
   const [injectOptions, setInjectOptions] = useState<InjectOptions>(FALLBACK_OPTIONS);
-  const [workspaceTab, setWorkspaceTab] = useState<WorkspaceTab>("stream");
   const [signalPoints, setSignalPoints] = useState<SignalPoint[]>([]);
   const [pipelineLogs, setPipelineLogs] = useState<PipelineLog[]>([]);
   const [busy, setBusy] = useState(false);
@@ -130,7 +128,7 @@ export function CommandCenter({ preview = false }: { preview?: boolean }) {
   const reset = async () => {
     setStreamActive(false); setBusy(true); await live.reset();
     setSignalPoints([]); setPipelineLogs([]); setSelected(null);
-    setTowerState("READY"); setFiltersOpen(false); setWorkspaceTab("stream"); setBusy(false);
+    setTowerState("READY"); setFiltersOpen(false); setBusy(false);
   };
   const applyScope = () => { setAppliedScope(scope); setFiltersOpen(false); };
   const simulateScope = async () => {
@@ -139,7 +137,7 @@ export function CommandCenter({ preview = false }: { preview?: boolean }) {
     const filters = Object.fromEntries(Object.entries(values).filter(([, value]) => value));
     const response = await api.inject({ filters, magnitude: Number(magnitude), decline_code, label: "Control Tower trial" });
     if (response.data?.error || response.call.status === "ERR" || Number(response.call.status) >= 400) setTowerState("ERROR");
-    else { setAppliedScope(scope); setTowerState("VALIDATING"); setWorkspaceTab("stream"); }
+    else { setAppliedScope(scope); setTowerState("VALIDATING"); }
     setFiltersOpen(false); setBusy(false);
   };
 
@@ -216,12 +214,14 @@ export function CommandCenter({ preview = false }: { preview?: boolean }) {
       </section>
 
       <nav className="tower-workspace-tabs" aria-label={text("Control tower views", "Vistas de la torre")}>
-        <button className={workspaceTab === "stream" ? "is-active" : ""} onClick={() => setWorkspaceTab("stream")}><span className="live-dot" />{text("Live stream", "Stream en vivo")}</button>
-        <button className={workspaceTab === "incidents" ? "is-active" : ""} onClick={() => setWorkspaceTab("incidents")}>{text("Incidents", "Incidentes")}<strong>{prioritized.length}</strong></button>
+        <span className="tower-workspace-label"><i className="live-dot" />{text("Live stream", "Stream en vivo")}</span>
         <p><span>{text("Scope", "Alcance")}</span>{scopeLabel}</p>
       </nav>
 
-      <main className="tower-main">{workspaceTab === "stream" ? <LiveWorkspace points={signalPoints} logs={pipelineLogs} /> : <IncidentWorkspace state={towerState} prioritized={prioritized} onSelect={setSelected} />}</main>
+      <main className="tower-main">
+        <LiveWorkspace points={signalPoints} logs={pipelineLogs} />
+        <IncidentWorkspace state={towerState} prioritized={prioritized} onSelect={setSelected} />
+      </main>
 
       {selected && <DiagnosisWorkspace diagnosis={selected} onClose={() => setSelected(null)} />}
       {comparisonOpen && <ComparisonWorkspace onClose={() => setComparisonOpen(false)} />}
@@ -250,16 +250,16 @@ function LiveWorkspace({ points, logs }: { points: SignalPoint[]; logs: Pipeline
 
 function IncidentWorkspace({ state, prioritized, onSelect }: { state: TowerState; prioritized: ScoredIncident[]; onSelect: (diagnosis: Diagnosis) => void }) {
   const { text } = useLanguage();
-  return <section className={`tower-incidents tower-incidents--full ${state === "VALIDATING" ? "is-validating" : ""}`}>
+  return <aside className={`tower-incidents ${state === "VALIDATING" ? "is-validating" : ""}`} aria-label={text("Prioritized incident queue", "Cola priorizada de incidentes")}>
     <header><span>{text("Incident queue", "Cola de incidentes")}</span><strong>{prioritized.length}</strong></header>
     {state === "VALIDATING" && <div className="tower-empty"><span className="signal-loader" /><strong>{text("Validating the signal", "Validando la señal")}</strong><p>{text("Waiting for persistence, sufficient sample and healthy controls before alerting.", "Esperando persistencia, muestra suficiente y controles sanos antes de alertar.")}</p></div>}
     {state !== "VALIDATING" && !prioritized.length && <div className="tower-empty is-healthy"><Check size={20} /><strong>{text("Trustworthy silence", "Silencio confiable")}</strong><p>{text("Traffic is inside its expected range. Centinel does not alert on noise.", "El tráfico está dentro de su rango esperado. Centinel no alerta por ruido.")}</p></div>}
     <div className="incident-grid">{prioritized.map((item, index) => <button className="tower-incident" key={item.diagnosis.incident_id} onClick={() => onSelect(item.diagnosis)}>
       <div><span>P{index + 1}</span><small>{Math.round(item.score * 100)} {text("priority score", "score de prioridad")}</small></div><h3>{item.diagnosis.headline}</h3><p>{item.diagnosis.executive}</p>
       <div className="priority-breakdown">{Object.entries(item.components).map(([name, value]) => <span key={name}><i>{name.replace("merchant_criticality", "merchant").replace("_", " ")}</i><b>{Math.round(value * 100)}</b></span>)}</div>
-      <footer><strong>{item.diagnosis.cost ? `$${Math.round(item.diagnosis.cost.usd_per_hour).toLocaleString()}/h` : text("Impact unknown", "Impacto desconocido")}</strong><span>{text("Investigate", "Investigar")} →</span></footer>
+      <footer><strong>{item.diagnosis.cost ? `$${Math.round(item.diagnosis.cost.usd_per_hour).toLocaleString()}/h` : text("Impact unknown", "Impacto desconocido")}</strong><span>{text("Open playbook", "Abrir playbook")} →</span></footer>
     </button>)}</div>
-  </section>;
+  </aside>;
 }
 
 function PreviewTower() {
